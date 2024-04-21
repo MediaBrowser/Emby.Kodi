@@ -975,6 +975,8 @@ class EmbyDatabase:
                     xbmc.log(f"EMBY.database.emby_db: Multiversion video detected, referenced item not found: {DataSource['Id']}", 0) # LOGDEBUG
                     continue
 
+                common.get_PresentationUniqueKey(ItemReferenced)
+
                 if item['Id'] != ItemReferenced['Id']:
                     KodiIds = self.get_item_by_id(ItemReferenced['Id'], None)
 
