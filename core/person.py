@@ -44,6 +44,10 @@ class Person:
     def set_favorite(self, KodiItemId, isFavorite):
         Name, ImageUrl, hasMusicVideos, hasMovies, hasTVShows = self.SQLs["video"].get_People(KodiItemId)
 
+        if not Name:
+            xbmc.log(f"EMBY.core.person: set_favorite, item not found {KodiItemId}", 2) # LOGWARNING
+            return
+
         if hasMovies or not isFavorite:
             utils.FavoriteQueue.put(((ImageUrl, isFavorite, f"videodb://movies/actors/{KodiItemId}/", f"{Name} (Movies)", "window", 10025),))
 

@@ -32,7 +32,7 @@ class EmbyServer:
 
     def worker_ServerReconnect(self):
         xbmc.log(f"EMBY.emby.emby: THREAD: --->[ Reconnecting ] {self.ServerData['ServerName']} / {self.ServerData['ServerId']}", 0) # LOGDEBUG
-        utils.Dialog.notification(heading=utils.addon_name, icon="DefaultIconError.png", message=utils.Translate(33575), time=5000, sound=True)
+        utils.Dialog.notification(heading=utils.addon_name, icon="DefaultIconError.png", message=utils.Translate(33575), time=utils.displayMessage, sound=True)
 
         if not self.ServerReconnecting:
             utils.SyncPause.update({f"server_reconnecting_{self.ServerData['ServerId']}": True, f"server_busy_{self.ServerData['ServerId']}": False})
@@ -69,7 +69,7 @@ class EmbyServer:
         self.Firstrun = False
 
         if utils.connectMsg:
-            utils.Dialog.notification(heading=utils.addon_name, message=f"{utils.Translate(33000)} {self.ServerData['UserName']}", icon=self.ServerData['UserImageUrl'], time=1500, sound=False)
+            utils.Dialog.notification(heading=utils.addon_name, message=f"{utils.Translate(33000)} {self.ServerData['UserName']}", icon=self.ServerData['UserImageUrl'], time=utils.displayMessage, sound=False)
 
         utils.SyncPause[f"server_starting_{self.ServerData['ServerId']}"] = False
         xbmc.log("EMBY.emby.emby: [ Server Online ]", 1) # LOGINFO
@@ -81,12 +81,13 @@ class EmbyServer:
             utils.SyncPause.update({f"server_starting_{self.ServerData['ServerId']}": True, f"server_busy_{self.ServerData['ServerId']}": False})
             playerops.delete_RemoteClient(self.ServerData['ServerId'], [self.EmbySession[0]['Id']], True, True)
             self.toggle_websocket(False)
-            self.http.stop_session()
             self.EmbySession = []
             self.ServerData['Online'] = False
             self.ShutdownInProgress = False
         else:
             xbmc.log("EMBY.emby.emby: Emby client already closed", 1) # LOGINFO
+
+        self.http.stop_session()
 
     def add_AdditionalUser(self, UserId, UserName):
         self.ServerData['AdditionalUsers'][UserId] = UserName
@@ -122,8 +123,7 @@ class EmbyServer:
         # Refresh EmbyConnect Emby server addresses (dynamic IP)
         if self.ServerData["LastConnectionMode"] in ("EmbyConnectLocalAddress", "EmbyConnectRemoteAddress"):
             xbmc.log("EMBY.emby.emby: Refresh Emby server urls from EmbyConnect", 1) # LOGINFO
-            request = {'type': "GET", 'url': f"https://connect.emby.media/service/servers?userId={self.ServerData['EmbyConnectUserId']}", 'headers': {'X-Connect-UserToken': self.ServerData['EmbyConnectAccessToken']}}
-            result = self.request_url(request)
+            result = self.request_url({'type': "GET", 'url': f"https://connect.emby.media/service/servers?userId={self.ServerData['EmbyConnectUserId']}", 'headers': {'X-Connect-UserToken': self.ServerData['EmbyConnectAccessToken']}})
 
             if result:
                 for server in result:
@@ -281,7 +281,7 @@ class EmbyServer:
         if not password:
             return {}  # password cannot be empty
 
-        result = self.request_url({'type': "POST", 'url': "https://connect.emby.media/service/user/authenticate", 'data': {'nameOrEmail': username, 'rawpw': password}})
+        result = self.request_url({'type': "POST", 'url': "https://connect.emby.media/service/user/authenticate", 'params': {'nameOrEmail': username, 'rawpw': password}})
 
         if not result:  # Failed to login
             return {}
@@ -291,8 +291,7 @@ class EmbyServer:
         xbmc.log("EMBY.emby.emby: Begin getConnectServers", 0) # LOGDEBUG
 
         if self.ServerData['EmbyConnectAccessToken'] and self.ServerData['EmbyConnectUserId']:
-            request = {'type': "GET", 'url': f"https://connect.emby.media/service/servers?userId={self.ServerData['EmbyConnectUserId']}", 'headers': {'X-Connect-UserToken': self.ServerData['EmbyConnectAccessToken']}}
-            EmbyConnectServers = self.request_url(request)
+            EmbyConnectServers = self.request_url({'type': "GET", 'url': f"https://connect.emby.media/service/servers?userId={self.ServerData['EmbyConnectUserId']}", 'headers': {'X-Connect-UserToken': self.ServerData['EmbyConnectAccessToken']}})
 
             if EmbyConnectServers:
                 for EmbyConnectServer in EmbyConnectServers:
@@ -443,7 +442,7 @@ class EmbyServer:
 
     def request_url(self, request):
         request.setdefault('headers', {})
-        request['headers'].update({'Accept': "application/json", 'Accept-Charset': "UTF-8,*", 'Accept-encoding': "gzip", 'X-Application': f"{utils.addon_name}/{utils.addon_version}", 'Content-type': 'application/x-www-form-urlencoded; charset=UTF-8'})
+        request['headers'].update({'Accept': "application/json", 'Accept-Charset': "UTF-8,*", 'Accept-encoding': "gzip", 'X-Application': f"{utils.addon_name}/{utils.addon_version}", 'Content-type': 'application/json'})
         return self.http.request(request, True, False)
 
     def _try_connect(self, address):
@@ -479,7 +478,7 @@ class EmbyServer:
 
                 if AddUser:
                     if utils.connectMsg:
-                        utils.Dialog.notification(heading=utils.addon_name, message=f"{utils.Translate(33067)} {self.ServerData['AdditionalUsers'][AdditionalUserId]}", icon=utils.icon, time=1500, sound=False)
+                        utils.Dialog.notification(heading=utils.addon_name, message=f"{utils.Translate(33067)} {self.ServerData['AdditionalUsers'][AdditionalUserId]}", icon=utils.icon, time=utils.displayMessage, sound=False)
                     self.API.session_add_user(self.EmbySession[0]['Id'], AdditionalUserId, True)
 
             if not self.ServerData['UserImageUrl']:

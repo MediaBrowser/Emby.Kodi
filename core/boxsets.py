@@ -19,7 +19,7 @@ class BoxSets:
         # Query assigned content for collections
         ContentsAssignedToBoxset = []
 
-        for ContentAssignedToBoxset in self.EmbyServer.API.get_Items(item['Id'], ["All"], True, True, {'GroupItemsIntoCollections': False}):
+        for ContentAssignedToBoxset in self.EmbyServer.API.get_Items(item['Id'], ["All"], True, True, {'GroupItemsIntoCollections': True}):
             ContentsAssignedToBoxset.append(ContentAssignedToBoxset)
 
         # Add new collection tag
@@ -77,6 +77,8 @@ class BoxSets:
 
     # This updates: Favorite, LastPlayedDate, PlaybackPositionTicks
     def userdata(self, Item):
+        self.SQLs["emby"].update_favourite(Item['IsFavorite'], Item['Id'], "BoxSet")
+        self.set_favorite(Item['IsFavorite'], Item['KodiItemId'])
         pluginmenu.reset_querycache("BoxSet")
         xbmc.log(f"EMBY.core.boxsets: USERDATA {Item['Id']}", 1) # LOGINFO
 
@@ -90,6 +92,11 @@ class BoxSets:
                 self.SQLs["video"].remove_from_boxset(KodiParentId)
 
             self.SQLs["video"].common_db.delete_artwork(Item['KodiItemId'], "set")
+            self.set_favorite(False, Item['KodiItemId'])
             self.SQLs["video"].delete_boxset(Item['KodiItemId'])
 
         xbmc.log(f"EMBY.core.boxsets: DELETE [{Item['KodiItemId']} / {Item['KodiFileId']}] {Item['Id']}", 1) # LOGINFO
+
+    def set_favorite(self, IsFavorite, KodiItemId):
+        _, Image, Itemname = self.SQLs["video"].get_favoriteData(None, KodiItemId, "set")
+        utils.FavoriteQueue.put(((Image, IsFavorite, f"videodb://movies/sets/{KodiItemId}/", Itemname, "window", 10025),))

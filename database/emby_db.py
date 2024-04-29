@@ -6,7 +6,6 @@ from . import common_db
 EmbyTypes = ("Movie", "Series", "Season", "Episode", "Audio", "MusicAlbum", "MusicArtist", "Genre", "MusicGenre", "Video", "MusicVideo", "BoxSet", "Folder", "Tag", "Studio", "Playlist", "Person")
 TablesWith_KodiId_KodiFileId_EmbyFolder_EmbyPresentationKey = ("Movie", "Video", "Episode", "MusicVideo")
 TablesWith_KodiId_EmbyFolder = ("Audio",)
-TablesWith_KodiId_EmbyPresentationKey = ("Series", "Season")
 TablesWith_KodiId = ("Genre", "MusicGenre", "Tag", "Person", "MusicArtist", "MusicAlbum", "Studio", "Playlist", "Audio", "BoxSet")
 TablesWith_KodiId_total = ('Genre', 'Episode', 'MusicVideo', 'Series', 'Studio', 'Person', 'MusicArtist', 'Playlist', 'Season', 'MusicGenre', 'Audio', 'MusicAlbum', 'Tag', 'Video', 'Movie', 'BoxSet')
 
@@ -274,8 +273,6 @@ class EmbyDatabase:
         self.cursor.execute("CREATE INDEX IF NOT EXISTS idx_VideoStreams_EmbyId_MediaIndex on VideoStreams (EmbyId, MediaIndex)")
         self.cursor.execute("CREATE INDEX IF NOT EXISTS idx_AudioStreams_EmbyId_MediaIndex on AudioStreams (EmbyId, MediaIndex)")
         self.cursor.execute("CREATE INDEX IF NOT EXISTS idx_Subtitles_EmbyId_MediaIndex on Subtitles (EmbyId, MediaIndex)")
-        self.cursor.execute("CREATE INDEX IF NOT EXISTS idx_Series_EmbyPresentationKey on Series (EmbyPresentationKey)")
-        self.cursor.execute("CREATE INDEX IF NOT EXISTS idx_Season_EmbyPresentationKey on Season (EmbyPresentationKey)")
         self.cursor.execute("CREATE INDEX IF NOT EXISTS idx_Movie_EmbyFolder on Movie (EmbyFolder)")
         self.cursor.execute("CREATE INDEX IF NOT EXISTS idx_Video_EmbyFolder on Video (EmbyFolder)")
         self.cursor.execute("CREATE INDEX IF NOT EXISTS idx_Episode_EmbyFolder on Episode (EmbyFolder)")
@@ -595,19 +592,25 @@ class EmbyDatabase:
             Data = self.cursor.fetchone()
 
             if Data:
-                RemoveItems += ((EmbyId, Data[0], Data[1], TableWith_KodiId_KodiFileId_EmbyFolder_EmbyPresentationKey, Data[2]),)
+                RemoveItems += ((EmbyId, Data[0], Data[1], TableWith_KodiId_KodiFileId_EmbyFolder_EmbyPresentationKey, Data[2], None),)
                 ItemFound = True
                 break
 
         if not ItemFound:
-            for TableWith_KodiId_EmbyPresentationKey in TablesWith_KodiId_EmbyPresentationKey:
-                self.cursor.execute(f"SELECT KodiId, EmbyPresentationKey FROM {TableWith_KodiId_EmbyPresentationKey} WHERE EmbyId = ?", (EmbyId,))
-                Data = self.cursor.fetchone()
+            self.cursor.execute("SELECT KodiId, EmbyPresentationKey FROM Series WHERE EmbyId = ?", (EmbyId,))
+            Data = self.cursor.fetchone()
 
-                if Data:
-                    RemoveItems += ((EmbyId, Data[0], None, TableWith_KodiId_EmbyPresentationKey, Data[1]),)
-                    ItemFound = True
-                    break
+            if Data:
+                RemoveItems += ((EmbyId, Data[0], None, "Series", Data[1], None),)
+                ItemFound = True
+
+        if not ItemFound:
+            self.cursor.execute("SELECT KodiId, EmbyPresentationKey, KodiParentId FROM Season WHERE EmbyId = ?", (EmbyId,))
+            Data = self.cursor.fetchone()
+
+            if Data:
+                RemoveItems += ((EmbyId, Data[0], None, "Season", Data[1], Data[2]),)
+                ItemFound = True
 
         if not ItemFound:
             for TableWith_KodiId in TablesWith_KodiId:
@@ -615,7 +618,7 @@ class EmbyDatabase:
                 Data = self.cursor.fetchone()
 
                 if Data:
-                    RemoveItems += ((EmbyId, Data[0], None, TableWith_KodiId, None),)
+                    RemoveItems += ((EmbyId, Data[0], None, TableWith_KodiId, None, None),)
                     ItemFound = True
                     break
 
@@ -624,7 +627,7 @@ class EmbyDatabase:
             EmbyFolder = self.cursor.fetchone()
 
             if EmbyFolder:
-                RemoveItems += ((EmbyId, None, None, "Folder", None),)
+                RemoveItems += ((EmbyId, None, None, "Folder", None, None),)
 
                 # Delete items by same folder
                 if not EmbyLibraryId:
@@ -633,14 +636,14 @@ class EmbyDatabase:
                         Datas = self.cursor.fetchall()
 
                         for Data in Datas:
-                            RemoveItems += ((Data[0], Data[1], Data[2], TableWith_KodiId_KodiFileId_EmbyFolder_EmbyPresentationKey, Data[3]),)
+                            RemoveItems += ((Data[0], Data[1], Data[2], TableWith_KodiId_KodiFileId_EmbyFolder_EmbyPresentationKey, Data[3], None),)
 
                     for TableWith_KodiId_EmbyFolder in TablesWith_KodiId_EmbyFolder:
                         self.cursor.execute(f"SELECT EmbyId, KodiId FROM {TableWith_KodiId_EmbyFolder} WHERE EmbyFolder LIKE ?", (f"{EmbyFolder[0]}%",))
                         Datas = self.cursor.fetchall()
 
                         for Data in Datas:
-                            RemoveItems += ((Data[0], Data[1], None, TableWith_KodiId_EmbyFolder, None),)
+                            RemoveItems += ((Data[0], Data[1], None, TableWith_KodiId_EmbyFolder, None, None),)
 
         RemoveItems = set(RemoveItems) # Filter doubles
         return RemoveItems
@@ -649,6 +652,7 @@ class EmbyDatabase:
         self.cursor.execute("SELECT EmbyId, EmbyLibraryId FROM EmbyLibraryMapping WHERE EmbyLibraryId = ?", (EmbyLibraryId,))
         Items = self.cursor.fetchall()
         self.cursor.executemany("INSERT OR REPLACE INTO RemoveItems (EmbyId, EmbyLibraryId) VALUES (?, ?)", Items)
+        self.cursor.execute("DELETE FROM UpdateItems WHERE EmbyLibraryId = ?", (EmbyLibraryId,))
 
     def remove_library_items_person(self):
         self.cursor.execute("SELECT EmbyId, '999999999' FROM Person")
@@ -873,6 +877,9 @@ class EmbyDatabase:
 
         return KodiIds
 
+    def remove_item_by_memo(self, Memo):
+        self.cursor.execute("DELETE FROM Tag WHERE Memo = ?", (Memo,))
+
     def get_KodiId_by_EmbyId(self, EmbyId):
         for TableWith_KodiId in TablesWith_KodiId_total:
             self.cursor.execute(f"SELECT KodiId FROM {TableWith_KodiId} WHERE EmbyId = ?", (EmbyId,))
@@ -975,7 +982,7 @@ class EmbyDatabase:
                     xbmc.log(f"EMBY.database.emby_db: Multiversion video detected, referenced item not found: {DataSource['Id']}", 0) # LOGDEBUG
                     continue
 
-                common.get_PresentationUniqueKey(ItemReferenced)
+                common.set_PresentationUniqueKey(ItemReferenced)
 
                 if item['Id'] != ItemReferenced['Id']:
                     KodiIds = self.get_item_by_id(ItemReferenced['Id'], None)

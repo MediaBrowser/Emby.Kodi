@@ -1,32 +1,20 @@
 from _thread import start_new_thread
-import socket
-import requests
+import _socket
+import urllib3
 import xbmc
 import xbmcgui
 from helper import utils, queue, artworkcache
 from database import dbio
 from core import common
 
-# Patching requests to disable Nagle
-try:
-    from requests.packages.urllib3 import connectionpool
-    _HTTPConnection = connectionpool.HTTPConnection
-    _HTTPSConnection = connectionpool.HTTPSConnection
+TimeoutPriority = urllib3.util.timeout.Timeout(connect=1, read=0.5)
+TimeoutRegular = urllib3.util.timeout.Timeout(connect=15, read=300)
+TimeoutAsync = urllib3.util.timeout.Timeout(connect=5, read=2)
+urllib3v1 = False
 
-    class HTTPConnection(_HTTPConnection):
-        def connect(self):
-            _HTTPConnection.connect(self)
-            self.sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
-
-    class HTTPSConnection(_HTTPSConnection):
-        def connect(self):
-            _HTTPSConnection.connect(self)
-            self.sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
-
-    connectionpool.HTTPConnection = HTTPConnection
-    connectionpool.HTTPSConnection = HTTPSConnection
-except Exception as NagleError:
-    xbmc.log(f"EMBY.emby.http: disable Nagle failed, error: {NagleError}", 2) # LOGWARNING
+if urllib3.__version__[:1] == "1":
+    import json
+    urllib3v1 = True
 
 class HTTP:
     def __init__(self, EmbyServer):
@@ -50,47 +38,51 @@ class HTTP:
                 break
 
             self.wait_for_priority_request()
-            data = Command[0]
-            Download = Command[1]
 
-            if utils.getFreeSpace(Download["Path"]) < (2097152 + Download["FileSize"] / 1024): # check if free space below 2GB
-                utils.Dialog.notification(heading=utils.addon_name, message=utils.Translate(33429), icon=utils.icon, time=5000, sound=True)
+            if utils.getFreeSpace(Command[1]["Path"]) < (2097152 + Command[1]["FileSize"] / 1024): # check if free space below 2GB
+                utils.Dialog.notification(heading=utils.addon_name, message=utils.Translate(33429), icon=utils.icon, time=utils.displayMessage, sound=True)
                 xbmc.log("EMBY.emby.http: THREAD: ---<[ async file download ] terminated by filesize", 2) # LOGWARNING
                 return
 
             ProgressBar = xbmcgui.DialogProgressBG()
-            ProgressBar.create("Download", Download["Name"])
-            ProgressBarTotal = Download["FileSize"] / 100
+            ProgressBar.create("Download", Command[1]["Name"])
+            ProgressBarTotal = Command[1]["FileSize"] / 100
             ProgressBarCounter = 0
             Terminate = False
 
             try:
-                with self.session.get(**data, stream=True) as r:
-                    with open(Download["FilePath"], 'wb') as outfile:
-                        for chunk in r.iter_content(chunk_size=4194304): # 4 MB chunks
-                            outfile.write(chunk)
-                            ProgressBarCounter += 4194304
+                if urllib3v1:
+                    r = self.session.request("GET", Command[0]['url'], body=json.dumps(Command[1].get("params", {})).encode('utf-8'), preload_content=False)
+                else:
+                    r = self.session.request("GET", Command[0]['url'], json=Command[1].get("params", {}), preload_content=False)
 
-                            if ProgressBarCounter > Download["FileSize"]:
-                                ProgressBarCounter = Download["FileSize"]
+                with open(Command[1]["FilePath"], 'wb') as outfile:
+                    for chunk in r.stream(4194304): # 4 MB chunks
+                        outfile.write(chunk)
+                        ProgressBarCounter += 4194304
 
-                            ProgressBar.update(int(ProgressBarCounter / ProgressBarTotal), "Download", Download["Name"])
+                        if ProgressBarCounter > Command[1]["FileSize"]:
+                            ProgressBarCounter = Command[1]["FileSize"]
 
-                            if utils.SystemShutdown:
-                                r.close()
-                                Terminate = True
-                                break
+                        ProgressBar.update(int(ProgressBarCounter / ProgressBarTotal), "Download", Command[1]["Name"])
+
+                        if utils.SystemShutdown:
+                            r.close()
+                            Terminate = True
+                            break
+
+                r.release_conn()
 
                 if Terminate:
-                    utils.delFile(Download["FilePath"])
+                    utils.delFile(Command[1]["FilePath"])
                 else:
-                    if "KodiId" in Download:
+                    if "KodiId" in Command[1]:
                         SQLs = dbio.DBOpenRW(self.EmbyServer.ServerData['ServerId'], "download_item", {})
-                        SQLs['emby'].add_DownloadItem(Download["Id"], Download["KodiPathIdBeforeDownload"], Download["KodiFileId"], Download["KodiId"], Download["KodiType"])
+                        SQLs['emby'].add_DownloadItem(Command[1]["Id"], Command[1]["KodiPathIdBeforeDownload"], Command[1]["KodiFileId"], Command[1]["KodiId"], Command[1]["KodiType"])
                         dbio.DBCloseRW(self.EmbyServer.ServerData['ServerId'], "download_item", {})
                         SQLs = dbio.DBOpenRW("video", "download_item_replace", {})
                         Artworks = ()
-                        ArtworksData = SQLs['video'].get_artworks(Download["KodiId"], Download["KodiType"])
+                        ArtworksData = SQLs['video'].get_artworks(Command[1]["KodiId"], Command[1]["KodiType"])
 
                         for ArtworkData in ArtworksData:
                             if ArtworkData[3] in ("poster", "thumb", "landscape"):
@@ -99,21 +91,26 @@ class HTTP:
                                 SQLs['video'].update_artwork(ArtworkData[0], UrlMod)
                                 Artworks += ((UrlMod,),)
 
-                        SQLs['video'].update_Name(Download["KodiId"], Download["KodiType"], True)
-                        SQLs['video'].replace_Path_ContentItem(Download["KodiId"], Download["KodiType"], Download["Path"])
+                        SQLs['video'].update_Name(Command[1]["KodiId"], Command[1]["KodiType"], True)
+                        SQLs['video'].replace_Path_ContentItem(Command[1]["KodiId"], Command[1]["KodiType"], Command[1]["Path"])
 
-                        if Download["KodiType"] == "episode":
-                            KodiPathId = SQLs['video'].get_add_path(Download["Path"], None, Download["ParentPath"])
-                            Artworks = SQLs['video'].set_Subcontent_download_tags(Download["KodiId"], True)
+                        if Command[1]["KodiType"] == "episode":
+                            KodiPathId = SQLs['video'].get_add_path(Command[1]["Path"], None, Command[1]["ParentPath"])
+                            Artworks = SQLs['video'].set_Subcontent_download_tags(Command[1]["KodiId"], True)
 
                             if Artworks:
                                 artworkcache.CacheAllEntries(Artworks, None)
-                        elif Download["KodiType"] == "movie":
-                            KodiPathId = SQLs['video'].get_add_path(Download["Path"], "movie", None)
-                        elif Download["KodiType"] == "musicvideo":
-                            KodiPathId = SQLs['video'].get_add_path(Download["Path"], "musicvideos", None)
+                        elif Command[1]["KodiType"] == "movie":
+                            KodiPathId = SQLs['video'].get_add_path(Command[1]["Path"], "movie", None)
+                        elif Command[1]["KodiType"] == "musicvideo":
+                            KodiPathId = SQLs['video'].get_add_path(Command[1]["Path"], "musicvideos", None)
+                        else:
+                            KodiPathId = None
+                            xbmc.log(f"EMBY.emby.http: Download invalid: KodiPathId: {Command[1]['Path']} / {Command[1]['KodiType']}", 2) # LOGWARNING
 
-                        SQLs['video'].replace_PathId(Download["KodiFileId"], KodiPathId)
+                        if KodiPathId:
+                            SQLs['video'].replace_PathId(Command[1]["KodiFileId"], KodiPathId)
+
                         dbio.DBCloseRW("video", "download_item_replace", {})
                         artworkcache.CacheAllEntries(Artworks, ProgressBar)
 
@@ -144,21 +141,20 @@ class HTTP:
 
                 self.wait_for_priority_request()
 
-                if Command[0] == "POST":
-                    Command[1]['timeout'] = (5, 2)
-                    r = self.session.post(**Command[1])
-                    r.close()
-                elif Command[0] == "DELETE":
-                    Command[1]['timeout'] = (5, 2)
-                    r = self.session.delete(**Command[1])
+                if Command['type'] in ("POST", "DELETE"):
+                    if urllib3v1:
+                        r = self.session.request(Command['type'], Command['url'], body=json.dumps(Command.get("params", {})).encode('utf-8'), timeout=TimeoutAsync)
+                    else:
+                        r = self.session.request(Command['type'], Command['url'], json=Command.get("params", {}), timeout=TimeoutAsync)
+
                     r.close()
 
-                if Command[1]['url'].find("System/Ping") != -1:
+                if Command['url'].find("System/Ping") != -1:
                     PingTimeoutCounter = 0
             except Exception as error:
                 xbmc.log(f"EMBY.emby.http: Async_commands Emby server did not respond: error: {error}", 2) # LOGWARNING
 
-                if Command[1]['url'].find("System/Ping") != -1: # ping timeout
+                if Command['url'].find("System/Ping") != -1: # ping timeout
                     if PingTimeoutCounter == 4:
                         xbmc.log("EMBY.emby.http: Ping re-establish connection", 2) # LOGWARNING
                         self.EmbyServer.ServerReconnect()
@@ -187,16 +183,14 @@ class HTTP:
             xbmc.log("EMBY.emby.http: Session close: No session found", 0) # LOGDEBUG
             return
 
-        LocalSession = self.session  # Use local var -> self.session must be set to "none" instantly -> self var is also used to detect open sessions
-        self.session = None
-        self.AsyncCommandQueue.put("QUIT")
-        self.FileDownloadQueue.put("QUIT")
-
         try:
-            LocalSession.close()
+            self.session.clear()
         except Exception as error:
             xbmc.log(f"EMBY.emby.http: Session close error: {error}", 2) # LOGWARNING
 
+        self.session = None
+        self.AsyncCommandQueue.put("QUIT")
+        self.FileDownloadQueue.put("QUIT")
         xbmc.log("EMBY.emby.http: Session close", 1) # LOGINFO
 
     # decide threaded or wait for response
@@ -205,8 +199,6 @@ class HTTP:
 
         if Priority:
             self.Priority = True
-
-        RequestType = data.pop('type', "GET")
 
         if 'url' not in data:
             data['url'] = f"{self.EmbyServer.ServerData['ServerUrl']}/emby/{data.pop('handler', '')}"
@@ -225,16 +217,14 @@ class HTTP:
             else:
                 Header.update({'Authorization': auth})
 
-        if not ForceReceiveData and (Priority or RequestType in ("POST", "DELETE")):
-            data['timeout'] = (1, 0.5)
-            RepeatSend = 20 # retry 20 times (10 seconds)
+        if not ForceReceiveData and (Priority or data['type'] in ("POST", "DELETE")):
+            Timeout = TimeoutPriority
+            RepeatSend = 20
         else:
-            data['timeout'] = (15, 300)
+            Timeout = TimeoutRegular
             RepeatSend = 2
 
         xbmc.log(f"EMBY.emby.http: [ http ] {data}", 0) # LOGDEBUG
-        data['verify'] = utils.sslverify
-
         for Index in range(RepeatSend): # timeout 10 seconds
             if not Priority:
                 self.wait_for_priority_request()
@@ -250,7 +240,12 @@ class HTTP:
             # start session
             if not self.session:
                 self.HeaderCache = {}
-                self.session = requests.Session()
+
+                if utils.sslverify:
+                    self.session = urllib3.PoolManager(10, None, socket_options=[(_socket.IPPROTO_TCP, _socket.TCP_NODELAY, 1)])
+                else:
+                    self.session = urllib3.PoolManager(10, None, cert_reqs='CERT_NONE', assert_hostname=False, socket_options=[(_socket.IPPROTO_TCP, _socket.TCP_NODELAY, 1)])
+
                 start_new_thread(self.async_commands, ())
                 start_new_thread(self.download_file, ())
 
@@ -261,71 +256,86 @@ class HTTP:
 
             # http request
             try:
-                if RequestType == "HEAD":
-                    r = self.session.head(**data)
+                if data['type'] == "HEAD":
+                    if urllib3v1:
+                        r = self.session.request('HEAD', data['url'], body=json.dumps(data.get("params", {})).encode('utf-8'), timeout=Timeout)
+                    else:
+                        r = self.session.request('HEAD', data['url'], json=data.get("params", {}), timeout=Timeout)
+
                     r.close()
                     self.Priority = False
-                    return r.status_code
+                    return r.status
 
-                if RequestType == "GET":
+                if data['type'] == "GET":
                     if Download:
                         self.FileDownloadQueue.put(((data, Download),))
                         return None
 
-                    r = self.session.get(**data)
+                    if urllib3v1:
+                        r = self.session.request('GET', data['url'], body=json.dumps(data.get("params", {})).encode('utf-8'), timeout=Timeout)
+                    else:
+                        r = self.session.request('GET', data['url'], json=data.get("params", {}), timeout=Timeout)
+
                     r.close()
                     self.Priority = False
 
-                    if r.status_code == 200:
+                    if r.status == 200:
                         if Binary:
                             if GetHeaders:
-                                return r.content, r.headers
+                                return r.data, r.headers
 
-                            return r.content
+                            return r.data
+
+                        if urllib3v1:
+                            return json.loads(r.data.decode('utf-8'))
 
                         return r.json()
 
-                    if r.status_code == 401:
-                        utils.Dialog.notification(heading=utils.addon_name, message=utils.Translate(33147))
+                    if r.status == 401:
+                        utils.Dialog.notification(heading=utils.addon_name, message=utils.Translate(33147), time=utils.displayMessage)
 
-                    xbmc.log(f"EMBY.emby.http: [ Statuscode ] {r.status_code}", 3) # LOGERROR
+                    xbmc.log(f"EMBY.emby.http: [ Statuscode ] {r.status}", 3) # LOGERROR
                     xbmc.log(f"EMBY.emby.http: [ Statuscode ] {data}", 0) # LOGDEBUG
                     return self.noData(Binary, GetHeaders)
-                if RequestType == "POST":
+
+                if data['type'] == "POST":
                     if Priority or ForceReceiveData:
-                        r = self.session.post(**data)
+                        if urllib3v1:
+                            r = self.session.request('POST', data['url'], body=json.dumps(data.get("params", {})).encode('utf-8'), timeout=Timeout)
+                        else:
+                            r = self.session.request('POST', data['url'], json=data.get("params", {}), timeout=Timeout)
+
                         r.close()
                         self.Priority = False
 
                         if GetHeaders:
-                            return r.content, r.headers
+                            return r.data, r.headers
+
+                        if urllib3v1:
+                            return json.loads(r.data.decode('utf-8'))
 
                         return r.json()
 
-                    self.AsyncCommandQueue.put((("POST", data),))
-                elif RequestType == "DELETE":
-                    self.AsyncCommandQueue.put((("DELETE", data),))
+                    self.AsyncCommandQueue.put(data)
+                elif data['type'] == "DELETE":
+                    self.AsyncCommandQueue.put(data)
 
                 return self.noData(Binary, GetHeaders)
-            except requests.exceptions.SSLError:
+            except urllib3.exceptions.SSLError:
                 xbmc.log("EMBY.emby.http: [ SSL error ]", 3) # LOGERROR
                 xbmc.log(f"EMBY.emby.http: [ SSL error ] {data}", 0) # LOGDEBUG
-                utils.Dialog.notification(heading=utils.addon_name, message=utils.Translate(33428))
+                utils.Dialog.notification(heading=utils.addon_name, message=utils.Translate(33428), time=utils.displayMessage)
                 self.stop_session()
                 return self.noData(Binary, GetHeaders)
-            except requests.exceptions.ConnectionError:
+            except urllib3.exceptions.ConnectionError:
                 xbmc.log("EMBY.emby.http: [ ServerUnreachable ]", 3) # LOGERROR
                 xbmc.log(f"EMBY.emby.http: [ ServerUnreachable ] {data}", 0) # LOGDEBUG
                 ServerUnreachable = True
                 continue
-            except requests.exceptions.ReadTimeout:
-                xbmc.log("EMBY.emby.http: [ ServerReadTimeout ]", 3) # LOGERROR
-                xbmc.log(f"EMBY.emby.http: [ ServerReadTimeout ] {data}", 0) # LOGDEBUG
-
-                if data['timeout'][0] < 10:
-                    continue
-
-                return self.noData(Binary, GetHeaders)
+            except urllib3.exceptions.TimeoutError:
+                xbmc.log("EMBY.emby.http: [ ServerTimeout ]", 3) # LOGERROR
+                xbmc.log(f"EMBY.emby.http: [ ServerTimeout ] {data}", 0) # LOGDEBUG
+                continue
             except Exception as error:
                 xbmc.log(f"EMBY.emby.http: [ Unknown ] {error}", 3) # LOGERROR
                 xbmc.log(f"EMBY.emby.http: [ Unknown ] {data} / {error}", 0) # LOGDEBUG
@@ -369,6 +379,7 @@ class HTTP:
         if Intro['Path'].find("http") == -1: # Local Trailer
             Intro['Path'], _ = common.get_path_type_from_item(self.EmbyServer.ServerData['ServerId'], Intro, False, True)
             self.Intros.append(Intro)
+            xbmc.log("EMBY.emby.http: THREAD: ---<[ verify intros ] valid local intro", 0) # LOGDEBUG
             return True
 
         status_code = self.EmbyServer.API.get_stream_statuscode(Intro['Id'], Intro['MediaSources'][0]['Id'])
@@ -376,9 +387,10 @@ class HTTP:
         if status_code == 200:
             Intro['Path'], _ = common.get_path_type_from_item(self.EmbyServer.ServerData['ServerId'], Intro, False, True)
             self.Intros.append(Intro)
-        else:
-            xbmc.log(f"EMBY.emby.http: Invalid Trailer: {Intro['Path']} / {status_code}", 3) # LOGERROR
+            xbmc.log("EMBY.emby.http: THREAD: ---<[ verify intros ] valid http", 0) # LOGDEBUG
+            return True
 
+        xbmc.log(f"EMBY.emby.http: Invalid Trailer: {Intro['Path']} / {status_code}", 3) # LOGERROR
         xbmc.log("EMBY.emby.http: THREAD: ---<[ verify intros ] invalid", 0) # LOGDEBUG
         return False
 

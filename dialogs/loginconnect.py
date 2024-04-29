@@ -82,7 +82,7 @@ class LoginConnect(xbmcgui.WindowXMLDialog):
             self._error(ERROR['Invalid'], utils.Translate(33009))
             return False
 
-        utils.Dialog.notification(heading=utils.addon_name, message=f"{utils.Translate(33000)} {result['User']['Name']}", icon=result['User'].get('ImageUrl') or utils.icon, time=2000, sound=False)
+        utils.Dialog.notification(heading=utils.addon_name, message=f"{utils.Translate(33000)} {result['User']['Name']}", icon=result['User'].get('ImageUrl') or utils.icon, time=utils.displayMessage, sound=False)
         return True
 
     def _error(self, state, message):

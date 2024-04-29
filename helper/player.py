@@ -9,7 +9,7 @@ from emby import listitem
 from helper import utils, pluginmenu, playerops, queue
 from dialogs import skipintrocredits
 
-
+SkipItem = ()
 TrailerStatus = "READY"
 PlaylistRemoveItem = -1
 result = utils.SendJson('{"jsonrpc": "2.0", "id": 1, "method": "Application.GetProperties", "params": {"properties": ["volume", "muted"]}}').get('result', {})
@@ -17,7 +17,7 @@ Volume = result.get('volume', 0)
 Muted = result.get('muted', False)
 NowPlayingQueue = [[], [], []]
 PlaylistKodiItems = [[], [], []]
-PlayingItem = [{}, None, None, None, None] # EmbySessionData (QueuedPlayingItem), IntroStartPositionTicks, IntroEndPositionTicks, CreditsPositionTicks, EmbyServer
+PlayingItem = [{}, 0, 0, 0, None] # EmbySessionData (QueuedPlayingItem), IntroStartPositionTicks, IntroEndPositionTicks, CreditsPositionTicks, EmbyServer
 QueuedPlayingItem = []
 MultiselectionDone = False
 playlistIndex = -1
@@ -26,7 +26,7 @@ PlayBackEnded = True
 SkipIntroJumpDone = False
 SkipCreditsJumpDone = False
 TasksRunning = []
-PlayerEvents = queue.Queue()
+PlayerEventsQueue = queue.Queue()
 SkipIntroDialog = skipintrocredits.SkipIntro("SkipIntroDialog.xml", *utils.CustomDialogParameters)
 SkipIntroDialogEmbuary = skipintrocredits.SkipIntro("SkipIntroDialogEmbuary.xml", *utils.CustomDialogParameters)
 SkipCreditsDialog = skipintrocredits.SkipIntro("SkipCreditsDialog.xml", *utils.CustomDialogParameters)
@@ -36,8 +36,8 @@ def PlayerCommands():
     xbmc.log("EMBY.hooks.player: THREAD: --->[ player commands ]", 0) # LOGDEBUG
 
     while True:
-        Commands = PlayerEvents.get()
-        xbmc.log(f"EMBY.hooks.player: playercommand received: {Commands}", 1) # LOGINFO
+        Commands = PlayerEventsQueue.get()
+        xbmc.log(f"EMBY.hooks.player: playercommand received: {Commands}", 0) # LOGDEBUG
 
         if Commands == "QUIT":
             xbmc.log("EMBY.hooks.player: THREAD: ---<[ player commands ] quit", 0) # LOGDEBUG
@@ -148,7 +148,7 @@ def PlayerCommands():
                         EmbyId = SubIds[1]
                         CachedItemFound = False
 
-                        # Try to load from cache
+                        # Try to load item from cache
                         for CachedItems in list(pluginmenu.QueryCache.values()):
                             if CachedItemFound:
                                 break
@@ -341,7 +341,7 @@ def PlayerCommands():
                     start_new_thread(PositionTracker, ())
 
             xbmc.log("EMBY.hooks.player: --< [ onAVStarted ]", 1) # LOGINFO
-        elif Commands == "playlistupdate":
+        elif Commands[0] == "playlistupdate":
             if not PlayingItem[0] or playerops.PlayerId == -1:
                 continue
 
@@ -359,13 +359,12 @@ def PlayerCommands():
 
             if not PlayBackEnded:
                 xbmc.log("EMBY.hooks.player: [ Playback was not stopped ]", 1) # LOGINFO
-                stop_playback(True, False)
-        elif Commands == "pause":
+                stop_playback(False, False)
+        elif Commands[0] == "pause":
             xbmc.log("EMBY.hooks.player: [ onPlayBackPaused ]", 1) # LOGINFO
             playerops.PlayerPause = True
 
             if not PlayingItem[0]:
-                playerops.RemoteCommandActive[0] -= 1
                 continue
 
             PositionTicks = playerops.PlayBackPosition()
@@ -378,21 +377,24 @@ def PlayerCommands():
             if PlayingItem[4] and PlayingItem[4].EmbySession:
                 playerops.RemoteCommand(PlayingItem[4].ServerData['ServerId'], PlayingItem[4].EmbySession[0]['Id'], "pause")
 
-            PlayingItem[4].API.session_progress(PlayingItem[0])
+            PlayingItemEvent = {"EventName": "pause"}
+            PlayingItemEvent.update(PlayingItem[0])
+            PlayingItem[4].API.session_progress(PlayingItemEvent)
             xbmc.log("EMBY.hooks.player: -->[ paused ]", 0) # LOGDEBUG
-        elif Commands == "resume":
+        elif Commands[0] == "resume":
             xbmc.log("EMBY.hooks.player: [ onPlayBackResumed ]", 1) # LOGINFO
             playerops.PlayerPause = False
 
             if not PlayingItem[0]:
-                playerops.RemoteCommandActive[1] -= 1
                 continue
 
             if PlayingItem[4] and PlayingItem[4].EmbySession:
                 playerops.RemoteCommand(PlayingItem[4].ServerData['ServerId'], PlayingItem[4].EmbySession[0]['Id'], "unpause")
 
             globals()["PlayingItem"][0]['IsPaused'] = False
-            PlayingItem[4].API.session_progress(PlayingItem[0])
+            PlayingItemEvent = {"EventName": "unpause"}
+            PlayingItemEvent.update(PlayingItem[0])
+            PlayingItem[4].API.session_progress(PlayingItemEvent)
             xbmc.log("EMBY.hooks.player: --<[ paused ]", 0) # LOGDEBUG
         elif Commands[0] == "stop":
             EventData = json.loads(Commands[1])
@@ -412,11 +414,11 @@ def PlayerCommands():
                 playerops.RemoteCommand(PlayingItem[4].ServerData['ServerId'], PlayingItem[4].EmbySession[0]['Id'], "stop")
 
             if EventData['end'] == "sleep":
-                stop_playback(False, True)
+                stop_playback(False, False)
             elif EventData['end']:
-                stop_playback(True, False)
-            else:
                 stop_playback(True, True)
+            else: # Stopped
+                stop_playback(True, False)
 
             xbmc.log("EMBY.hooks.player: --<[ playback ]", 1) # LOGINFO
         elif Commands[0] == "volume":
@@ -431,7 +433,7 @@ def PlayerCommands():
 
     xbmc.log("EMBY.hooks.player: THREAD: ---<[ player commands ]", 0) # LOGDEBUG
 
-def stop_playback(delete, Stopped):
+def stop_playback(delete, PlayTrailer):
     xbmc.log(f"EMBY.hooks.player: [ played info ] {PlayingItem} / {KodiMediaType}", 0) # LOGDEBUG
     PlayingItemLocal = PlayingItem.copy()
 
@@ -443,15 +445,16 @@ def stop_playback(delete, Stopped):
         xbmc.log("EMBY.hooks.player: stop_playback no PlayingItemLocal", 2) # LOGWARNING
         return
 
+    globals().update({"PlayBackEnded": True, "PlayingItem": [{}, 0, 0, 0, None]})
     PlayingItemLocal[4].API.session_stop(PlayingItemLocal[0])
-    globals().update({"PlayBackEnded": True, "PlayingItem": [{}, None, None, None, None]})
     close_SkipIntroDialog()
     close_SkipCreditsDialog()
 
-    if not Stopped and TrailerStatus == "PLAYING":
+    if PlayTrailer and TrailerStatus == "PLAYING":
         if not PlayingItemLocal[4].http.Intros:
             PlayingItemLocal[4].http.Intros = []
             globals()["TrailerStatus"] = "CONTENT"
+            globals()['SkipItem'] = ()
             playerops.PlayPlaylistItem(1, playlistIndex)
             return
 
@@ -462,6 +465,7 @@ def stop_playback(delete, Stopped):
 
     globals()["TrailerStatus"] = "READY"
     PlayingItemLocal[4].http.Intros = []
+    globals()['SkipItem'] = ()
 
     if not PlayingItemLocal[0]:
         return
@@ -492,7 +496,7 @@ def stop_playback(delete, Stopped):
 
     thread_sync_workers()
 
-def play_Trailer(EmbyServer): # for native content
+def play_Trailer(EmbyServer):
     MediasourceID = EmbyServer.http.Intros[0]['MediaSources'][0]['Id']
     globals()["QueuedPlayingItem"] = [{'CanSeek': True, 'QueueableMediaTypes': "Video,Audio", 'IsPaused': False, 'ItemId': int(EmbyServer.http.Intros[0]['Id']), 'MediaSourceId': MediasourceID, 'PlaySessionId': str(uuid.uuid4()).replace("-", ""), 'PositionTicks': 0, 'RunTimeTicks': 0, 'VolumeLevel': Volume, 'IsMuted': Muted}, None, None, None, EmbyServer]
     Path = EmbyServer.http.Intros[0]['Path']
@@ -517,17 +521,19 @@ def PositionTracker():
             if Position == -1:
                 break
 
-            xbmc.log(f"EMBY.hooks.player: PositionTracker: Position: {Position} / IntroStartPositionTicks: {PlayingItem[1]} / IntroEndPositionTicks: {PlayingItem[2]} / CreditsPositionTicks: {PlayingItem[3]}", 0) # LOGDEBUG
+            xbmc.log(f"EMBY.hooks.player: PositionTracker: Position: {Position} / IntroStartPositionTicks: {PlayingItem[1]} / IntroEndPositionTicks: {PlayingItem[2]} / CreditsPositionTicks: {PlayingItem[3]} / SkipIntroJumpDone: {SkipIntroJumpDone}", 0) # LOGDEBUG
 
             if utils.enableSkipIntro:
-                if PlayingItem[1] and PlayingItem[1] < Position < PlayingItem[2]:
+                if PlayingItem[1] < Position < PlayingItem[2]:
                     if not SkipIntroJumpDone:
                         globals()["SkipIntroJumpDone"] = True
 
                         if utils.askSkipIntro:
                             if utils.skipintroembuarydesign:
+                                xbmc.log("EMBY.hooks.player: --->[ SkipIntroDialogEmbuary ]", 0) # LOGDEBUG
                                 SkipIntroDialogEmbuary.show()
                             else:
+                                xbmc.log("EMBY.hooks.player: --->[ SkipIntroDialog ]", 0) # LOGDEBUG
                                 SkipIntroDialog.show()
                         else:
                             jump_Intro()
@@ -569,17 +575,22 @@ def jump_Intro():
     PlayingItem[4].API.session_progress(PlayingItem[0])
 
 def jump_Credits():
-    xbmc.log(f"EMBY.hooks.player: Skip credits jump {PlayingItem[3]}", 1) # LOGINFO
-    playerops.Seek(PlayingItem[3])
-    globals()["PlayingItem"][0]['PositionTicks'] = PlayingItem[3]
-    globals()["SkipCreditsJumpDone"] = True
+    if PlayingItem[0].get('RunTimeTicks', 0):
+        xbmc.log(f"EMBY.hooks.player: Skip credits jump {PlayingItem[0]['RunTimeTicks']}", 1) # LOGINFO
+        playerops.Seek(PlayingItem[0]['RunTimeTicks'])
+        globals()["PlayingItem"][0]['PositionTicks'] = PlayingItem[0]['RunTimeTicks']
+        globals()["SkipCreditsJumpDone"] = True
+    else:
+        xbmc.log("EMBY.hooks.player: Skip credits, invalid RunTimeTicks", 1) # LOGINFO
 
 def close_SkipIntroDialog():
     if utils.skipintroembuarydesign:
         if SkipIntroDialogEmbuary.dialog_open:
+            xbmc.log("EMBY.hooks.player: ---<[ SkipIntroDialogEmbuary ]", 0) # LOGDEBUG
             SkipIntroDialogEmbuary.close()
     else:
         if SkipIntroDialog.dialog_open:
+            xbmc.log("EMBY.hooks.player: ---<[ SkipIntroDialog ]", 0) # LOGDEBUG
             SkipIntroDialog.close()
 
 def close_SkipCreditsDialog():

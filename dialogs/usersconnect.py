@@ -32,7 +32,7 @@ class UsersConnect(xbmcgui.WindowXMLDialog):
             BinaryData, _, FileExtension = self.API.get_Image_Binary(user['Id'], "Primary", 0, 0, True)
 
             if BinaryData:
-                Filename = utils.PathToFilenameReplaceSpecialCharecters(f"{self.ServerData['ServerName']}_{user['Name']}_{user['Id']}.{FileExtension}")
+                Filename = utils.valid_Filename(f"{self.ServerData['ServerName']}_{user['Name']}_{user['Id']}.{FileExtension}")
                 iconpath = f"{utils.FolderEmbyTemp}{Filename}"
                 utils.delFile(iconpath)
                 utils.writeFileBinary(iconpath, BinaryData)

@@ -17,7 +17,7 @@ class Season:
         xbmc.log(f"EMBY.core.season: Process item: {item['Name']}", 0) # DEBUG
         common.load_ExistingItem(item, self.EmbyServer, self.SQLs["emby"], "Season")
         IsFavorite = common.set_Favorite(item)
-        common.get_PresentationUniqueKey(item)
+        common.set_PresentationUniqueKey(item)
         common.set_ItemsDependencies(item, self.SQLs, self.SeriesObject, self.EmbyServer, "Series")
         common.set_KodiArtwork(item, self.EmbyServer.ServerData['ServerId'], False)
         item['IndexNumber'] = item.get('IndexNumber', 0)
@@ -67,6 +67,7 @@ class Season:
     # There's no episodes left, delete show and any possible remaining seasons
     def remove(self, Item):
         if self.SQLs["emby"].remove_item(Item['Id'], "Season", Item['LibraryId']):
+            self.set_favorite(False, Item['KodiItemId'], Item['KodiParentId'])
             SubcontentKodiIds = self.SQLs["video"].delete_season(Item['KodiItemId'])
 
             for KodiId, EmbyType in SubcontentKodiIds:

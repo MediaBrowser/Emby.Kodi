@@ -49,6 +49,10 @@ class Genre:
     def set_favorite(self, isFavorite, KodiItemId, ImageUrl):
         Name, hasMusicVideos, hasMovies, hasTVShows = self.SQLs["video"].get_Genre_Name(KodiItemId)
 
+        if not Name:
+            xbmc.log(f"EMBY.core.genre: set_favorite, item not found {KodiItemId}", 2) # LOGWARNING
+            return
+
         if hasMovies or not isFavorite:
             utils.FavoriteQueue.put(((ImageUrl, isFavorite, f"videodb://movies/genres/{KodiItemId}/", f"{Name} (Movies)", "window", 10025),))
 

@@ -16,7 +16,7 @@ class Movies:
         SQLsSpecialFeatures["video"] = None
         self.videos = videos.Videos(self.EmbyServer, SQLsSpecialFeatures)
 
-    def change(self, Item):
+    def change(self, Item, StartSync=False):
         if not common.verify_content(Item, "movie"):
             return False
 
@@ -55,30 +55,28 @@ class Movies:
         common.set_Writer_links(Item['KodiItemId'], self.SQLs, "movie", Item["WritersItems"])
         common.set_Director_links(Item['KodiItemId'], self.SQLs, "movie", Item["DirectorsItems"])
         self.SQLs["video"].set_Favorite_Tag(Item['UserData']['IsFavorite'], Item['KodiItemId'], "movie")
-        Item['Unique'] = self.SQLs["video"].add_uniqueids(Item['KodiItemId'], Item['ProviderIds'], "movie", 'imdb')
-        Item['RatingId'] = self.SQLs["video"].add_ratings(Item['KodiItemId'], "movie", "default", Item['CommunityRating'])
+        Item['KodiUniqueId'] = self.SQLs["video"].add_uniqueids(Item['KodiItemId'], Item['ProviderIds'], "movie", 'imdb')
+        Item['KodiRatingId'] = self.SQLs["video"].add_ratings(Item['KodiItemId'], "movie", "default", Item['CommunityRating'])
+        self.SQLs["video"].add_ratings(Item['KodiItemId'], "movie", "tomatometerallcritics", Item['KodiCriticRating'])
 
         if not Item['ProductionLocations']:
             Item['ProductionLocations'].append(None)
 
         if Item['UpdateItem']:
-            self.SQLs["video"].update_movie(Item['KodiItemId'], Item['KodiFileId'], Item['KodiName'], Item['Overview'], Item['ShortOverview'], Item['Tagline'], Item['RatingId'], Item['Writers'], Item['KodiArtwork']['poster'], Item['Unique'], Item['KodiSortName'], Item['KodiRunTimeTicks'], Item['OfficialRating'], Item['Genre'], Item['Directors'], Item['OriginalTitle'], Item['Studio'], Item['Trailer'], Item['KodiArtwork']['fanart'].get('fanart', None), Item['ProductionLocations'][0], Item['KodiPremiereDate'], Item['KodiPlayCount'], Item['KodiLastPlayedDate'], None, Item['KodiFilename'], Item['KodiStackedFilename'])
+            self.SQLs["video"].update_movie(Item['KodiItemId'], Item['KodiFileId'], Item['KodiName'], Item['Overview'], Item['ShortOverview'], Item['Tagline'], Item['KodiRatingId'], Item['Writers'], Item['KodiArtwork']['poster'], Item['KodiUniqueId'], Item['KodiSortName'], Item['KodiRunTimeTicks'], Item['OfficialRating'], Item['Genre'], Item['Directors'], Item['OriginalTitle'], Item['Studio'], Item['Trailer'], Item['KodiArtwork']['fanart'].get('fanart', None), Item['ProductionLocations'][0], Item['KodiPremiereDate'], Item['KodiPlayCount'], Item['KodiLastPlayedDate'], None, Item['KodiFilename'], Item['KodiStackedFilename'], Item['KodiDateCreated'])
             self.SQLs["emby"].update_reference_movie_musicvideo(Item['Id'], "Movie", Item['UserData']['IsFavorite'], Item['PresentationUniqueKey'], Item['LibraryId'])
 
             # Update Boxset
-            for BoxSet in self.EmbyServer.API.get_Items(Item['ParentId'], ["BoxSet"], True, True, {'GroupItemsIntoCollections': True}):
-                BoxSet['LibraryId'] = Item['LibraryId']
-                self.BoxSetObject.change(BoxSet)
+            if not StartSync:
+                for BoxSet in self.EmbyServer.API.get_Items(Item['ParentId'], ["BoxSet"], True, True, {'GroupItemsIntoCollections': True}):
+                    BoxSet['LibraryId'] = Item['LibraryId']
+                    self.BoxSetObject.change(BoxSet)
 
             xbmc.log(f"EMBY.core.movies: UPDATE [{Item['KodiPathId']} / {Item['KodiFileId']} / {Item['KodiItemId']}] {Item['Id']}: {Item['Name']}", 1) # LOGINFO
         else:
-            self.SQLs["video"].add_movie(Item['KodiItemId'], Item['KodiFileId'], Item['Name'], Item['Overview'], Item['ShortOverview'], Item['Tagline'], Item['RatingId'], Item['Writers'], Item['KodiArtwork']['poster'], Item['Unique'], Item['SortName'], Item['KodiRunTimeTicks'], Item['OfficialRating'], Item['Genre'], Item['Directors'], Item['OriginalTitle'], Item['Studio'], Item['Trailer'], Item['KodiArtwork']['fanart'].get('fanart', None), Item['ProductionLocations'][0], Item['KodiPath'], Item['KodiPathId'], Item['KodiPremiereDate'], Item['KodiFilename'], Item['KodiDateCreated'], Item['KodiPlayCount'], Item['KodiLastPlayedDate'], None, Item['KodiStackedFilename'])
+            self.SQLs["video"].add_movie(Item['KodiItemId'], Item['KodiFileId'], Item['Name'], Item['Overview'], Item['ShortOverview'], Item['Tagline'], Item['KodiRatingId'], Item['Writers'], Item['KodiArtwork']['poster'], Item['KodiUniqueId'], Item['SortName'], Item['KodiRunTimeTicks'], Item['OfficialRating'], Item['Genre'], Item['Directors'], Item['OriginalTitle'], Item['Studio'], Item['Trailer'], Item['KodiArtwork']['fanart'].get('fanart', None), Item['ProductionLocations'][0], Item['KodiPath'], Item['KodiPathId'], Item['KodiPremiereDate'], Item['KodiFilename'], Item['KodiDateCreated'], Item['KodiPlayCount'], Item['KodiLastPlayedDate'], None, Item['KodiStackedFilename'], Item['ChapterInfo'])
             self.SQLs["emby"].add_reference_movie_musicvideo(Item['Id'], Item['LibraryId'], "Movie", Item['KodiItemId'], Item['UserData']['IsFavorite'], Item['KodiFileId'], Item['PresentationUniqueKey'], Item['Path'], Item['KodiPathId'])
             xbmc.log(f"EMBY.core.movies: ADD [{Item['KodiPathId']} / {Item['KodiFileId']} / {Item['KodiItemId']}] {Item['Id']}: {Item['Name']}", 1) # LOGINFO
-
-        if Item['CriticRating']:
-            Item['CriticRating'] = float(Item['CriticRating'] / 10.0)
-            self.SQLs["video"].add_ratings(Item['KodiItemId'], "movie", "tomatometerallcritics", Item['CriticRating'])
 
         # Add Special features
         if 'SpecialFeatureCount' in Item:
@@ -87,7 +85,7 @@ class Movies:
 
                 for SF_Item in SpecialFeatures:
                     SF_Item.update({'ParentId': Item['Id'], "LibraryId": Item['LibraryId']})
-                    self.videos.change(SF_Item)
+                    self.videos.change(SF_Item, StartSync)
 
         self.SQLs["emby"].add_multiversion(Item, "Movie", self.EmbyServer.API, self.SQLs)
         utils.FavoriteQueue.put(((Item['KodiArtwork']['favourite'], Item['UserData']['IsFavorite'], f"{Item['KodiPath']}{Item['KodiFilename']}", Item['Name'], "media", 0),))

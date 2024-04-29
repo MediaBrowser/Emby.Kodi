@@ -1,10 +1,11 @@
 import sys
 import _socket
 
-Argv = ';'.join(sys.argv)
+Argv = ';'.join(["video"] + sys.argv[1:])
 DataSend, XbmcMonitor, sock = f"EVENT {Argv}".encode('utf-8'), None, _socket.socket(_socket.AF_INET, _socket.SOCK_STREAM)
 sock.setsockopt(_socket.SOL_SOCKET, _socket.SO_REUSEADDR, 1)
 sock.setsockopt(_socket.IPPROTO_TCP, _socket.TCP_NODELAY, 1)
+sock.settimeout(None)
 
 for _ in range(60):  # 60 seconds timeout
     try:

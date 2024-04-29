@@ -2,7 +2,7 @@
 <settings version="1">
     <section id="plugin.video.emby-next-gen">
         <category id="general" label="29999" help="">
-            <group id="1" label="30613">
+            <group id="1" label="33649">
                 <setting id="manageserver" label="30614" type="action" help="33307">
                     <data>NotifyAll(plugin.video.emby-next-gen,manageserver)</data>
                     <level>0</level>
@@ -97,6 +97,11 @@
                     <control type="toggle"/>
                 </setting>
                 <setting id="SyncFavorites" label="33564" type="boolean" help="33565">
+                    <level>2</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting label="33663" id="imdbrating" type="boolean" help="33664">
                     <level>2</level>
                     <default>true</default>
                     <control type="toggle"/>
@@ -525,7 +530,7 @@
                     </dependencies>
                 </setting>
             </group>
-            <group id="3" label="30409">
+            <group id="3" label="33650">
                 <setting label="30114" id="offerDelete" type="boolean" help="33304">
                     <level>2</level>
                     <default>false</default>
@@ -754,7 +759,37 @@
                         </dependency>
                     </dependencies>
                 </setting>
+                <setting label="33655" id="transcode_msmpeg4v2" type="boolean" help="">
+                    <level>2</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                    <dependencies>
+                        <dependency type="visible">
+                            <condition operator="is" setting="useDirectPaths">false</condition>
+                        </dependency>
+                    </dependencies>
+                </setting>
                 <setting label="33464" id="transcode_msmpeg4v3" type="boolean" help="">
+                    <level>2</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                    <dependencies>
+                        <dependency type="visible">
+                            <condition operator="is" setting="useDirectPaths">false</condition>
+                        </dependency>
+                    </dependencies>
+                </setting>
+                <setting label="33653" id="transcode_vc1" type="boolean" help="">
+                    <level>2</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                    <dependencies>
+                        <dependency type="visible">
+                            <condition operator="is" setting="useDirectPaths">false</condition>
+                        </dependency>
+                    </dependencies>
+                </setting>
+                <setting label="33654" id="transcode_prores" type="boolean" help="">
                     <level>2</level>
                     <default>false</default>
                     <control type="toggle"/>
@@ -836,6 +871,16 @@
                         </dependency>
                     </dependencies>
                 </setting>
+                <setting label="33659" id="transcode_pcm_s16le" type="boolean" help="">
+                    <level>2</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                    <dependencies>
+                        <dependency type="visible">
+                            <condition operator="is" setting="useDirectPaths">false</condition>
+                        </dependency>
+                    </dependencies>
+                </setting>
                 <setting label="33476" id="transcode_pcm_s24le" type="boolean" help="">
                     <level>2</level>
                     <default>false</default>
@@ -867,6 +912,56 @@
                     </dependencies>
                 </setting>
                 <setting label="33479" id="transcode_ac4" type="boolean" help="">
+                    <level>2</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                    <dependencies>
+                        <dependency type="visible">
+                            <condition operator="is" setting="useDirectPaths">false</condition>
+                        </dependency>
+                    </dependencies>
+                </setting>
+                <setting label="33656" id="transcode_aac_latm" type="boolean" help="">
+                    <level>2</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                    <dependencies>
+                        <dependency type="visible">
+                            <condition operator="is" setting="useDirectPaths">false</condition>
+                        </dependency>
+                    </dependencies>
+                </setting>
+                <setting label="33657" id="transcode_dtshd_hra" type="boolean" help="">
+                    <level>2</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                    <dependencies>
+                        <dependency type="visible">
+                            <condition operator="is" setting="useDirectPaths">false</condition>
+                        </dependency>
+                    </dependencies>
+                </setting>
+                <setting label="33658" id="transcode_dtshd_ma" type="boolean" help="">
+                    <level>2</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                    <dependencies>
+                        <dependency type="visible">
+                            <condition operator="is" setting="useDirectPaths">false</condition>
+                        </dependency>
+                    </dependencies>
+                </setting>
+                <setting label="33660" id="transcode_truehd" type="boolean" help="">
+                    <level>2</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                    <dependencies>
+                        <dependency type="visible">
+                            <condition operator="is" setting="useDirectPaths">false</condition>
+                        </dependency>
+                    </dependencies>
+                </setting>
+                <setting label="33661" id="transcode_opus" type="boolean" help="">
                     <level>2</level>
                     <default>false</default>
                     <control type="toggle"/>
@@ -1208,6 +1303,11 @@
                     <default>true</default>
                     <control type="toggle"/>
                 </setting>
+                <setting label="33668" id="enableContextGotoOptions" type="boolean" help="">
+                    <level>2</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                </setting>
             </group>
             <group id="5" label="33300">
                 <setting label="33246" id="menuOptions" type="boolean" help="33323">
@@ -1235,7 +1335,7 @@
                     </control>
                 </setting>
             </group>
-            <group id="7" label="33108">
+            <group id="7" label="33645">
                 <setting label="30249" id="connectMsg" type="boolean" help="">
                     <level>2</level>
                     <default>true</default>
@@ -1251,7 +1351,7 @@
                     <default>true</default>
                     <control type="toggle"/>
                 </setting>
-                <setting id="displayMessage" type="integer" label="30547" help="">
+                <setting id="displayMessage" type="integer" label="33646" help="33647">
                     <level>2</level>
                     <default>10</default>
                     <constraints>
@@ -1276,7 +1376,7 @@
                     <default>false</default>
                     <control type="toggle"/>
                 </setting>
-                <setting id="newContentTime" type="integer" label="33558" help="">
+                <setting id="newContentTime" type="integer" label="33646" help="33647">
                     <level>2</level>
                     <default>5</default>
                     <constraints>
@@ -1385,11 +1485,6 @@
                     <default>false</default>
                     <control type="toggle"/>
                 </setting>
-                <setting label="33454" id="usekodiworkaroundswidget" type="boolean" help="33540">
-                    <level>3</level>
-                    <default>false</default>
-                    <control type="toggle"/>
-                </setting>
                 <setting label="33562" id="curltimeouts" type="integer" help="33563">
                     <level>2</level>
                     <default>2</default>
@@ -1418,7 +1513,7 @@
                     <control type="button" format="action"/>
                 </setting>
             </group>
-            <group id="2" label="33104">
+            <group id="2" label="33651">
                 <setting id="backupPath" type="path" label="33093" help="">
                     <level>2</level>
                     <default/>
