@@ -19,7 +19,7 @@ def CacheAllEntries(urls, ProgressBar):
             ArtworkCacheIndex = 0
 
             if utils.getFreeSpace(utils.FolderUserdataThumbnails) < 2097152: # check if free space below 2GB
-                utils.Dialog.notification(heading=utils.addon_name, message=utils.Translate(33429), icon=utils.icon, time=5000, sound=True)
+                utils.Dialog.notification(heading=utils.addon_name, message=utils.Translate(33429), icon=utils.icon, time=utils.displayMessage, sound=True)
                 xbmc.log("EMBY.helper.pluginmenu: Artwork cache: running out of space", 2) # LOGWARNING
                 return
         else:

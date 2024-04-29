@@ -14,7 +14,7 @@ class MusicVideo:
         self.PersonObject = person.Person(EmbyServer, self.SQLs)
         self.BoxSetObject = boxsets.BoxSets(EmbyServer, self.SQLs)
 
-    def change(self, item):
+    def change(self, item, StartSync=False):
         if not common.verify_content(item, "musicvideo"):
             return False
 
@@ -54,20 +54,24 @@ class MusicVideo:
         common.set_Tag_links(item['KodiItemId'], self.SQLs, "musicvideo", item["TagItems"])
         common.set_Writer_links(item['KodiItemId'], self.SQLs, "musicvideo", item["WritersItems"])
         common.set_Director_links(item['KodiItemId'], self.SQLs, "musicvideo", item["DirectorsItems"])
+        common.set_Actor_links(item['KodiItemId'], self.SQLs, "musicvideo", item["CastItems"])
         common.set_Actor_MusicArtist_links(item['KodiItemId'], self.SQLs, "musicvideo", item["ArtistItems"], item['LibraryId'])
+        self.SQLs["video"].add_uniqueids(item['KodiItemId'], item['ProviderIds'], "musicvideo", 'imvdb')
+        self.SQLs["video"].add_ratings(item['KodiItemId'], "musicvideo", "default", item['CommunityRating'])
 
         if item['UpdateItem']:
-            self.SQLs["video"].update_musicvideos(item['KodiItemId'], item['KodiFileId'], item['KodiName'], item['KodiArtwork']['poster'], item['KodiRunTimeTicks'], item['Directors'], item['Studio'], item['Overview'], item['Album'], item['MusicArtist'], item['MusicGenre'], item['IndexNumber'], item['KodiPremiereDate'], item['KodiPlayCount'], item['KodiLastPlayedDate'], item['KodiFilename'], item['KodiStackedFilename'])
+            self.SQLs["video"].update_musicvideos(item['KodiItemId'], item['KodiFileId'], item['KodiName'], item['KodiArtwork']['poster'], item['KodiRunTimeTicks'], item['Directors'], item['Studio'], item['Overview'], item['Album'], item['MusicArtist'], item['MusicGenre'], item['IndexNumber'], item['KodiPremiereDate'], item['KodiPlayCount'], item['KodiLastPlayedDate'], item['KodiFilename'], item['KodiStackedFilename'], item['KodiDateCreated'])
             self.SQLs["emby"].update_reference_movie_musicvideo(item['Id'], "MusicVideo", item['UserData']['IsFavorite'], item['PresentationUniqueKey'], item['LibraryId'])
 
             # Update Boxset
-            for BoxSet in self.EmbyServer.API.get_Items(item['ParentId'], ["BoxSet"], True, True, {'GroupItemsIntoCollections': True}):
-                BoxSet['LibraryId'] = item['LibraryId']
-                self.BoxSetObject.change(BoxSet)
+            if not StartSync:
+                for BoxSet in self.EmbyServer.API.get_Items(item['ParentId'], ["BoxSet"], True, True, {'GroupItemsIntoCollections': True}):
+                    BoxSet['LibraryId'] = item['LibraryId']
+                    self.BoxSetObject.change(BoxSet)
 
             xbmc.log(f"EMBY.core.musicvideo: UPDATE [{item['KodiPathId']} / {item['KodiFileId']} / {item['KodiItemId']}] {item['Id']}: {item['Name']}", 1) # LOGINFO
         else:
-            self.SQLs["video"].add_musicvideos(item['KodiItemId'], item['KodiFileId'], item['Name'], item['KodiArtwork']['poster'], item['KodiRunTimeTicks'], item['Directors'], item['Studio'], item['Overview'], item['Album'], item['MusicArtist'], item['MusicGenre'], item['IndexNumber'], f"{item['KodiPath']}{item['KodiFilename']}", item['KodiPathId'], item['KodiPremiereDate'], item['KodiDateCreated'], item['KodiPlayCount'], item['KodiLastPlayedDate'], item['KodiFilename'], item['KodiStackedFilename'])
+            self.SQLs["video"].add_musicvideos(item['KodiItemId'], item['KodiFileId'], item['Name'], item['KodiArtwork']['poster'], item['KodiRunTimeTicks'], item['Directors'], item['Studio'], item['Overview'], item['Album'], item['MusicArtist'], item['MusicGenre'], item['IndexNumber'], f"{item['KodiPath']}{item['KodiFilename']}", item['KodiPathId'], item['KodiPremiereDate'], item['KodiDateCreated'], item['KodiPlayCount'], item['KodiLastPlayedDate'], item['KodiFilename'], item['KodiStackedFilename'], item['ChapterInfo'])
             self.SQLs["emby"].add_reference_movie_musicvideo(item['Id'], item['LibraryId'], "Musicvideo", item['KodiItemId'], item['UserData']['IsFavorite'], item['KodiFileId'], item['PresentationUniqueKey'], item['Path'], item['KodiPathId'])
             xbmc.log(f"EMBY.core.musicvideo: ADD [{item['KodiPathId']} / {item['KodiFileId']} / {item['KodiItemId']}] {item['Id']}: {item['Name']}", 1) # LOGINFO
 

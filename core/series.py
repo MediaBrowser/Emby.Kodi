@@ -13,7 +13,7 @@ class Series:
         self.PersonObject = person.Person(EmbyServer, self.SQLs)
         self.BoxSetObject = boxsets.BoxSets(EmbyServer, self.SQLs)
 
-    def change(self, item):
+    def change(self, item, StartSync=False):
         if 'Name' not in item or 'Path' not in item:
             xbmc.log(f"EMBY.core.series: Name or Path not found: {item}", 3) # LOGERROR
             return False
@@ -70,21 +70,22 @@ class Series:
         self.SQLs["video"].add_countries_and_links(item['ProductionLocations'], item['KodiItemId'], "tvshow")
         self.SQLs["video"].common_db.add_artwork(item['KodiArtwork'], item['KodiItemId'], "tvshow")
         self.SQLs["video"].set_Favorite_Tag(IsFavorite, item['KodiItemId'], "tvshow")
-        item['Unique'] = self.SQLs["video"].add_uniqueids(item['KodiItemId'], item['ProviderIds'], "tvshow", 'tvdb')
-        item['RatingId'] = self.SQLs["video"].add_ratings(item['KodiItemId'], "tvshow", "default", item['CommunityRating'])
+        item['KodiUniqueId'] = self.SQLs["video"].add_uniqueids(item['KodiItemId'], item['ProviderIds'], "tvshow", 'tvdb')
+        item['KodiRatingId'] = self.SQLs["video"].add_ratings(item['KodiItemId'], "tvshow", "default", item['CommunityRating'])
 
         if item['UpdateItem']:
-            self.SQLs["video"].update_tvshow(item['Name'], item['Overview'], item['Status'], item['RatingId'], item['KodiPremiereDate'], item['KodiArtwork']['poster'], item['Genre'], item['OriginalTitle'], item['KodiArtwork']['fanart'].get('fanart', None), item['Unique'], item['OfficialRating'], item['Studio'], item['SortName'], item['KodiRunTimeTicks'], item['KodiItemId'], item['Trailer'])
+            self.SQLs["video"].update_tvshow(item['Name'], item['Overview'], item['Status'], item['KodiRatingId'], item['KodiPremiereDate'], item['KodiArtwork']['poster'], item['Genre'], item['OriginalTitle'], item['KodiArtwork']['fanart'].get('fanart', None), item['KodiUniqueId'], item['OfficialRating'], item['Studio'], item['SortName'], item['KodiRunTimeTicks'], item['KodiItemId'], item['Trailer'])
             self.SQLs["emby"].update_reference_generic(IsFavorite, item['Id'], "Series", item['LibraryId'])
 
             # Update Boxset
-            for BoxSet in self.EmbyServer.API.get_Items(item['ParentId'], ["BoxSet"], True, True, {'GroupItemsIntoCollections': True}):
-                BoxSet['LibraryId'] = item['LibraryId']
-                self.BoxSetObject.change(BoxSet)
+            if not StartSync:
+                for BoxSet in self.EmbyServer.API.get_Items(item['ParentId'], ["BoxSet"], True, True, {'GroupItemsIntoCollections': True}):
+                    BoxSet['LibraryId'] = item['LibraryId']
+                    self.BoxSetObject.change(BoxSet)
 
             xbmc.log(f"EMBY.core.series: UPDATE [{item['KodiPathId']} / {item['KodiItemId']}] {item['Id']}: {item['Name']}", 1) # LOGINFO
         else:
-            self.SQLs["video"].add_tvshow(item['KodiItemId'], item['Name'], item['Overview'], item['Status'], item['RatingId'], item['KodiPremiereDate'], item['KodiArtwork']['poster'], item['Genre'], item['OriginalTitle'], item['KodiArtwork']['fanart'].get('fanart', None), item['Unique'], item['OfficialRating'], item['Studio'], item['SortName'], item['KodiRunTimeTicks'], item['Trailer'])
+            self.SQLs["video"].add_tvshow(item['KodiItemId'], item['Name'], item['Overview'], item['Status'], item['KodiRatingId'], item['KodiPremiereDate'], item['KodiArtwork']['poster'], item['Genre'], item['OriginalTitle'], item['KodiArtwork']['fanart'].get('fanart', None), item['KodiUniqueId'], item['OfficialRating'], item['Studio'], item['SortName'], item['KodiRunTimeTicks'], item['Trailer'])
             self.SQLs["emby"].add_reference_series(item['Id'], item['LibraryId'], item['KodiItemId'], IsFavorite, item['PresentationUniqueKey'], item['KodiPathId'])
             self.SQLs["video"].add_link_tvshow(item['KodiItemId'], item['KodiPathId'])
             xbmc.log(f"EMBY.core.series: ADD [{item['KodiPathId']} / {item['KodiItemId']}] {item['Id']}: {item['Name']}", 1) # LOGINFO

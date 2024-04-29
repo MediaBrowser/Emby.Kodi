@@ -17,6 +17,13 @@ class MusicDatabase:
         self.cursor.execute("CREATE INDEX IF NOT EXISTS idx_song_comment_strGenres on song (comment, strGenres)")
         self.cursor.execute("CREATE INDEX IF NOT EXISTS idx_artist_strDisambiguation on artist (strDisambiguation)")
 
+    def delete_Index(self):
+        self.cursor.execute("DROP INDEX IF EXISTS idx_album_strType")
+        self.cursor.execute("DROP INDEX IF EXISTS idx_album_dateadded")
+        self.cursor.execute("DROP INDEX IF EXISTS idx_song_dateadded")
+        self.cursor.execute("DROP INDEX IF EXISTS idx_song_comment_strGenres")
+        self.cursor.execute("DROP INDEX IF EXISTS idx_artist_strDisambiguation")
+
     # Make sure rescan and kodi db set
     def disable_rescan(self, Timestamp):
         self.cursor.execute("DELETE FROM versiontagscan")

@@ -2004,7 +2004,7 @@ msgid "MJPEG"
 msgstr ""
 
 msgctxt "#33464"
-msgid "MSMPEG4v3"
+msgid "MSMPEG4V3"
 msgstr ""
 
 msgctxt "#33465"
@@ -2461,23 +2461,23 @@ msgstr "Emby-server offline"
 
 msgctxt "#33576"
 msgid "Favorite Seasons"
-msgstr "Favoriete seizoenen"
+msgstr "Stagioni preferite"
 
 msgctxt "#33577"
 msgid "Paging"
-msgstr ""
+msgstr "Impostazione persone"
 
 msgctxt "#33578"
 msgid "Musicartist"
-msgstr ""
+msgstr "Artista musicale"
 
 msgctxt "#33579"
 msgid "Musicalbum"
-msgstr ""
+msgstr "Album musicale"
 
 msgctxt "#33580"
 msgid "Musicgenre"
-msgstr ""
+msgstr "Genere musicale"
 
 msgctxt "#33581"
 msgid "Audio"
@@ -2485,23 +2485,23 @@ msgstr ""
 
 msgctxt "#33582"
 msgid "Movie"
-msgstr ""
+msgstr "Film"
 
 msgctxt "#33583"
 msgid "Musicvideo"
-msgstr ""
+msgstr "Video musicale"
 
 msgctxt "#33584"
 msgid "Series"
-msgstr ""
+msgstr "Serie"
 
 msgctxt "#33585"
 msgid "Season"
-msgstr ""
+msgstr "Stagione"
 
 msgctxt "#33586"
 msgid "Episode"
-msgstr ""
+msgstr "Episodio"
 
 msgctxt "#33587"
 msgid "Video"
@@ -2509,47 +2509,47 @@ msgstr ""
 
 msgctxt "#33588"
 msgid "Photoalbum"
-msgstr ""
+msgstr "Album fotografico"
 
 msgctxt "#33589"
 msgid "Genre"
-msgstr ""
+msgstr "Genere"
 
 msgctxt "#33590"
 msgid "Photo"
-msgstr ""
+msgstr "Foto"
 
 msgctxt "#33591"
 msgid "Playlist"
-msgstr ""
+msgstr "Elenco brani"
 
 msgctxt "#33592"
 msgid "Channels"
-msgstr ""
+msgstr "Canali"
 
 msgctxt "#33593"
 msgid "LiveTV"
-msgstr ""
+msgstr "TV in diretta"
 
 msgctxt "#33594"
 msgid "Trailer"
-msgstr ""
+msgstr "Rimorchio"
 
 msgctxt "#33595"
 msgid "Folder"
-msgstr ""
+msgstr "Cartella"
 
 msgctxt "#33596"
 msgid "Boxset"
-msgstr ""
+msgstr "Cofanetto"
 
 msgctxt "#33597"
 msgid "Person"
-msgstr ""
+msgstr "Persona"
 
 msgctxt "#33598"
 msgid "Tag"
-msgstr ""
+msgstr "Etichetta"
 
 msgctxt "#33599"
 msgid "Studio"
@@ -2557,40 +2557,288 @@ msgstr ""
 
 msgctxt "#33600"
 msgid "Multicontent"
-msgstr ""
+msgstr "Multicontenuto"
 
 msgctxt "#30614"
 msgid "Manage servers"
-msgstr ""
+msgstr "Gestisci server"
 
 msgctxt "#33601"
 msgid "Remote playback"
-msgstr ""
+msgstr "Riproduzione remota"
 
 msgctxt "#33602"
 msgid "Download content"
-msgstr ""
+msgstr "Scarica contenuto"
 
 msgctxt "#33603"
 msgid "Context Menu"
-msgstr ""
+msgstr "Menu contestuale"
 
 msgctxt "#33604"
-msgid "Favourite add/rempve"
-msgstr ""
+msgid "Favourite add/remove"
+msgstr "Aggiungi/rimuovi preferiti"
 
 msgctxt "#33605"
 msgid "Specials playback"
-msgstr ""
+msgstr "Riproduzione speciale"
 
 msgctxt "#33606"
 msgid "Recording"
-msgstr ""
+msgstr "Registrazione"
 
 msgctxt "#33607"
 msgid "Refresh item"
-msgstr ""
+msgstr "Aggiorna elemento"
 
 msgctxt "#33143"
 msgid "Delete item"
+msgstr "Elimina elemento"
+
+msgctxt "#33608"
+msgid "Favorite videos"
+msgstr "Video preferiti"
+
+msgctxt "#33609"
+msgid "Favorite photos"
+msgstr "Foto preferite"
+
+msgctxt "#33610"
+msgid "Favorite musicvideos"
+msgstr "Video musicali preferiti"
+
+msgctxt "#33611"
+msgid "A-Z"
+msgstr ""
+
+msgctxt "#33612"
+msgid "Collections"
+msgstr "Collezioni"
+
+msgctxt "#33613"
+msgid "Recommendations"
+msgstr "Raccomandazioni"
+
+msgctxt "#33614"
+msgid "Favorite movies"
+msgstr "Film preferiti"
+
+msgctxt "#33615"
+msgid "Favorite boxsets"
+msgstr "Cofanetti preferiti"
+
+msgctxt "#33616"
+msgid "A-Z photoalbum"
+msgstr "Album fotografico dalla A alla Z"
+
+msgctxt "#33617"
+msgid "A-Z videos"
+msgstr "Video dalla A alla Z"
+
+msgctxt "#33618"
+msgid "Recently Released Unwatched Movies"
+msgstr "Film non visti usciti di recente"
+
+msgctxt "#33619"
+msgid "Recently Released Movies"
+msgstr "Film usciti di recente"
+
+msgctxt "#33620"
+msgid "A-Z musicvideos"
+msgstr "Video musicali dalla A alla Z"
+
+msgctxt "#33621"
+msgid "A-Z movies"
+msgstr "Film dalla A alla Z"
+
+msgctxt "#33622"
+msgid "A-Z series"
+msgstr "serie dalla A alla Z"
+
+msgctxt "#33623"
+msgid "Favorite songs"
+msgstr "Canzoni preferite"
+
+msgctxt "#33624"
+msgid "Favorite actors"
+msgstr "Attori preferiti"
+
+msgctxt "#33625"
+msgid "Favorite audio"
+msgstr "Audio preferito"
+
+msgctxt "#33626"
+msgid "Search"
+msgstr "Cerca"
+
+msgctxt "#33627"
+msgid "In progress (Mixed content)"
+msgstr "In corso (contenuti misti)"
+
+msgctxt "#33628"
+msgid "Continue watching (Mixed content)"
+msgstr "Continua a guardare (Contenuti misti)"
+
+msgctxt "#33629"
+msgid "Downloaded movies"
+msgstr "Film scaricati"
+
+msgctxt "#33630"
+msgid "Downloaded episodes"
+msgstr "Episodi scaricati"
+
+msgctxt "#33631"
+msgid "Downloaded musicvideos"
+msgstr "Video musicali scaricati"
+
+msgctxt "#33632"
+msgid "Movies"
+msgstr "Film"
+
+msgctxt "#33633"
+msgid "TVShows"
+msgstr "Programmi TV"
+
+msgctxt "#33634"
+msgid "Seasons"
+msgstr "Stagioni"
+
+msgctxt "#33638"
+msgid "Songs"
+msgstr "Canzoni"
+
+msgctxt "#33639"
+msgid "Actors"
+msgstr "Attori"
+
+msgctxt "#33640"
+msgid "Bookmarks"
+msgstr "Segnalibri"
+
+msgctxt "#33641"
+msgid "Download themes (YES) or link themes (NO)?"
+msgstr "Scaricare temi (SI) o collegare temi (NO)?"
+
+msgctxt "#33642"
+msgid "Select audio stream"
+msgstr "Seleziona flusso audio"
+
+msgctxt "#33643"
+msgid "Select Backup"
+msgstr "Seleziona Backup"
+
+msgctxt "#33644"
+msgid "Changing artwork requires an artwork cache reset. Proceed?"
+msgstr "La modifica della grafica richiede il ripristino della cache della grafica. "
+
+msgctxt "#33645"
+msgid "Notifications"
+msgstr "Notifiche"
+
+msgctxt "#33646"
+msgid "Message duration"
+msgstr "Durata del messaggio"
+
+msgctxt "#33647"
+msgid "Message duration in seconds"
+msgstr "Durata del messaggio in secondi"
+
+msgctxt "#33648"
+msgid "Server operations"
+msgstr "Operazioni del server"
+
+msgctxt "#33649"
+msgid "Connections"
+msgstr "Connessioni"
+
+msgctxt "#33650"
+msgid "Delete item"
+msgstr "Elimina elemento"
+
+msgctxt "#33651"
+msgid "Backup"
+msgstr "Riserva"
+
+msgctxt "#33652"
+msgid "EMBY: Remote play"
+msgstr ""
+
+msgctxt "#33653"
+msgid "VC1"
+msgstr ""
+
+msgctxt "#33654"
+msgid "PRORES"
+msgstr ""
+
+msgctxt "#33655"
+msgid "MSMPEG4V2"
+msgstr ""
+
+msgctxt "#33656"
+msgid "AAC LATM"
+msgstr ""
+
+msgctxt "#33657"
+msgid "DTSHD HRA"
+msgstr ""
+
+msgctxt "#33658"
+msgid "DTSHD MA"
+msgstr ""
+
+msgctxt "#33659"
+msgid "PCM S16LE"
+msgstr ""
+
+msgctxt "#33660"
+msgid "TRUEHD"
+msgstr ""
+
+msgctxt "#33661"
+msgid "OPUS"
+msgstr ""
+
+msgctxt "#33662"
+msgid "Downloaded series"
+msgstr ""
+
+msgctxt "#33663"
+msgid "Set imdb as default rating provider"
+msgstr ""
+
+msgctxt "#33664"
+msgid "Assume Emby's community rating reflects imdb ratings"
+msgstr ""
+
+msgctxt "#33665"
+msgid "Next Episodes (Mixed content)"
+msgstr ""
+
+msgctxt "#33666"
+msgid "Continue last played (Mixed content)"
+msgstr ""
+
+msgctxt "#33667"
+msgid "Continue last played"
+msgstr ""
+
+msgctxt "#33668"
+msgid "Go To Show"
+msgstr ""
+
+msgctxt "#33669"
+msgid "EMBY: Go To"
+msgstr ""
+
+msgctxt "#33670"
+msgid "Go To Show"
+msgstr ""
+
+msgctxt "#33671"
+msgid "Go To Season"
+msgstr ""
+
+msgctxt "#33672"
+msgid "Nodes reset finished"
 msgstr ""

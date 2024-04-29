@@ -1,4 +1,4 @@
-from urllib.parse import quote, urlparse
+from urllib.parse import quote
 import xbmc
 from helper import utils
 
@@ -10,7 +10,7 @@ ImageTagsMappings = {
     "Series": (('Primary', 'poster'), ("Art", 'clearart'), ("Banner", 'banner'), ("Disc", 'discart'), ("Logo", 'clearlogo'), ("Thumb", 'thumb'), ("Thumb", 'landscape'), ("Backdrop", 'fanart'), ('Primary', 'thumb'), ("Backdrop", 'landscape'), ("Primary", 'landscape')),
     "Season": (('Primary', 'poster'), ("Art", 'clearart'), ("Banner", 'banner'), ("Disc", 'discart'), ("Logo", 'clearlogo'), ("Thumb", 'thumb'), ('SeriesPrimary', 'poster'), ("ParentThumb", 'thumb'), ("Primary", 'thumb'), ("ParentLogo", 'clearlogo'), ("ParentBackdrop", 'fanart')),
     "Episode": (('Primary', 'thumb'), ("Art", 'clearart'), ("Banner", 'banner'), ("Disc", 'discart'), ("Logo", 'clearlogo'), ("Thumb", 'thumb'), ("Backdrop", 'fanart'), ("ParentLogo", 'clearlogo'), ("ParentBanner", 'banner'), ("ParentThumb", 'landscape'), ("ParentThumb", 'thumb'), ("ParentBackdrop", 'landscape'), ("ParentBackdrop", 'fanart'), ('Primary', 'landscape')),
-    "Movie": (('Primary', 'poster'), ("Art", 'clearart'), ("Banner", 'banner'), ("Disc", 'discart'), ("Logo", 'clearlogo'), ("Thumb", 'thumb'), ("Thumb", 'landscape'), ("Backdrop", 'fanart'), ('Primary', 'thumb'), ("Primary", 'landscape')),
+    "Movie": (('Primary', 'poster'), ("Art", 'clearart'), ("Banner", 'banner'), ("Disc", 'discart'), ("Logo", 'clearlogo'), ("Thumb", 'thumb'), ("Thumb", 'landscape'), ("Backdrop", 'thumb'), ("Backdrop", 'landscape'), ("Backdrop", 'fanart'), ('Primary', 'thumb'), ("Primary", 'landscape')),
     "BoxSet": (('Primary', 'poster'), ("Art", 'clearart'), ("Banner", 'banner'), ("Disc", 'discart'), ("Logo", 'clearlogo'), ("Thumb", 'thumb'), ("Thumb", 'landscape'), ("Backdrop", 'fanart'), ('Primary', 'thumb'), ("Primary", 'landscape')),
     "Video": (('Primary', 'poster'), ("Art", 'clearart'), ("Banner", 'banner'), ("Disc", 'discart'), ("Logo", 'clearlogo'), ("Thumb", 'thumb'), ("Backdrop", 'fanart'), ('Primary', 'thumb')),
     "MusicArtist": (('Primary', 'thumb'), ('Primary', 'poster'), ("Art", 'clearart'), ("Banner", 'banner'), ("Disc", 'discart'), ("Logo", 'clearlogo'), ("Thumb", 'thumb'), ("Backdrop", 'fanart'), ('Primary', 'thumb'), ("Thumb", 'landscape'), ("Primary", 'landscape')),
@@ -27,7 +27,7 @@ ImageTagsMappings = {
 
 def load_ExistingItem(Item, EmbyServer, emby_db, EmbyType):
     if Item['LibraryId'] not in EmbyServer.library.WhitelistUnique:
-        xbmc.log(f"EMBY.core.common: Libray not synced: {Item['LibraryId']}", 3) # LOGERROR
+        xbmc.log(f"EMBY.core.common: Library not synced: {Item['LibraryId']}", 3) # LOGERROR
         return False
 
     ExistingItem = emby_db.get_item_by_id(Item['Id'], EmbyType)
@@ -182,9 +182,6 @@ def get_path(Item, ServerId):
     elif Container == 'iso' or KodiPathLower.endswith(".iso"):
         ForceNativeMode = True
     elif KodiPathLower.startswith("http://") or KodiPathLower.startswith("dav://"):
-        UrlData = urlparse(Item['KodiPath'])
-        UrlPath = quote(UrlData[2])
-        Item['KodiPath'] = f"{UrlData[0]}://{UrlData[1]}{UrlPath}"
         ForceNativeMode = True
     elif KodiPathLower.startswith("plugin://"):
         return
@@ -352,7 +349,6 @@ def get_streams(Item):
                 Codec = Stream.get('CodecTag', "")
 
             if Codec:
-
                 Codec = Codec.lower().replace("-", "")
 
             if Codec == "dts":
@@ -367,12 +363,12 @@ def get_streams(Item):
                 Item['Streams'][IndexMediaSources]['Audio'].append({'SampleRate': Stream.get('SampleRate', None), 'BitRate': Stream.get('BitRate', None), 'codec': Codec, 'channels': Stream.get('Channels', None), 'language': Stream.get('Language', None), 'Index': Index, 'DisplayTitle': Stream.get('DisplayTitle', "unknown")})
             elif Stream['Type'] == "Video":
                 StreamData = {'language': Stream.get('Language', None),'hdrtype': None, 'codec': Codec, 'height': Stream.get('Height', None), 'width': Stream.get('Width', None), '3d': Stream.get('Video3DFormat', None), 'BitRate': Stream.get('BitRate', None), 'Index': Index, 'aspect': None}
-                CodecTag = Stream.get('CodecTag', "")
+                VideoRange = Stream.get('VideoRange', "").lower()
 
-                if CodecTag == "dvhe":
-                    StreamData['hdrtype'] = "dolbyvision"
-                elif CodecTag == "hvc1":
+                if VideoRange == "hdr 10":
                     StreamData['hdrtype'] = "hdr10"
+                elif VideoRange in ("hlg", "dolbyvision"):
+                    StreamData['hdrtype'] = VideoRange
 
                 if "AspectRatio" in Stream:
                     AspectRatio = Stream['AspectRatio'].split(':')
@@ -527,7 +523,12 @@ def set_common(Item, ServerId, DynamicNode):
     Item['IndexNumber'] = Item.get('IndexNumber', None)
     Item['CommunityRating'] = Item.get('CommunityRating', None)
     Item['ParentIndexNumber'] = Item.get('ParentIndexNumber', None)
-    Item['CriticRating'] = Item.get('CriticRating', None)
+
+    if "CriticRating" in Item:
+        Item['KodiCriticRating'] = float(Item['CriticRating'] / 10.0)
+    else:
+        Item['KodiCriticRating'] = None
+
     Item['ShortOverview'] = Item.get('ShortOverview', None)
     Item['Status'] = Item.get('Status', None)
     Item['KodiLastScraped'] = utils.currenttime_kodi_format()
@@ -538,7 +539,7 @@ def set_common(Item, ServerId, DynamicNode):
     Item['ProviderIds']['MusicBrainzArtist'] = Item['ProviderIds'].get('MusicBrainzArtist', None)
     Item['ProviderIds']['MusicBrainzAlbumArtist'] = Item['ProviderIds'].get('MusicBrainzAlbumArtist', None)
     Item['IndexNumber'] = Item.get('IndexNumber', None)
-    get_PresentationUniqueKey(Item)
+    set_PresentationUniqueKey(Item)
     set_mpaa(Item)
     set_playstate(Item)
     set_overview(Item)
@@ -802,6 +803,7 @@ def delete_ContentItemReferences(Item, SQLs, KodiType):
     SQLs["video"].delete_bookmark(Item['KodiFileId'])
     SQLs["video"].delete_streams(Item['KodiFileId'])
     SQLs["video"].delete_stacktimes(Item['KodiFileId'])
+    SQLs["video"].delete_ratings(Item['KodiItemId'], KodiType)
     SQLs["video"].common_db.delete_artwork(Item['KodiItemId'], KodiType)
 
 def set_VideoCommon(Item, SQLs, KodiType, API):
@@ -939,7 +941,7 @@ def set_Favorite(Item):
 
     return IsFavorite
 
-def get_PresentationUniqueKey(Item):
+def set_PresentationUniqueKey(Item):
     if 'PresentationUniqueKey' in Item and Item['PresentationUniqueKey']:
         Item['PresentationUniqueKey'] = Item['PresentationUniqueKey'].replace("-", "_").replace(" ", "")
     else:
@@ -1044,7 +1046,7 @@ def set_Actor_MusicArtist_links(KodiItemId, SQLs, KodiType, MetaDataItems, Libra
         MetaDataItemLibraryId = ArtistData[3].split(";")[0]
         MetaDataItemLibraryId = MetaDataItemLibraryId.split(",")
         Index = MetaDataItemLibraryId.index(LibraryId)
-        SQLs["video"].add_actor_link(MetaDataItemKodiId[Index], KodiItemId, KodiType, None, Order)
+        SQLs["video"].add_actor_link(MetaDataItemKodiId[Index], KodiItemId, KodiType, "Artist", Order)
 
 def set_MusicArtist_links(KodiItemId, SQLs, MetaDataItems, LibraryId, ArtistRole):
     for Order, MetaDataItem in enumerate(MetaDataItems):
@@ -1124,7 +1126,6 @@ def set_people(Item, SQLs, PersonObject, EmbyServer):
                     Item['DirectorsItems'] += ({"Name": People['Name'], "Id": People['Id'], "KodiType": "actor"},)
                     Directors += (People['Name'],)
                 elif People['Type'] == "Actor":
-
                     if 'Role' in People:
                         role = People['Role']
                     else:
