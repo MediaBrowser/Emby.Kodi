@@ -56,16 +56,16 @@ class WSClient:
 
         if self.sock:
             xbmc.log(f"Emby.hooks.websocket: Close connection {self.EmbyServer.ServerData['ServerId']} / {self.EmbyServer.ServerData['ServerName']}", 1) # LOGINFO
-            self.sock.settimeout(1)
-            self.sendCommands(struct.pack('!H', 1000), 0x8)
 
             try:
+                self.sock.settimeout(1)
+                self.sendCommands(struct.pack('!H', 1000), 0x8)
                 self.sock.shutdown(_socket.SHUT_RDWR)
+                self.sock.close()
+                self.sock = None
             except Exception as error:
                 xbmc.log(f"Emby.hooks.websocket: {error}", 3) # LOGERROR
 
-            self.sock.close()
-            self.sock = None
             self._recv_buffer = ()
             self._frame_header = None
             self._frame_length = None

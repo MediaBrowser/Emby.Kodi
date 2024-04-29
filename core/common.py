@@ -26,6 +26,10 @@ ImageTagsMappings = {
 }
 
 def load_ExistingItem(Item, EmbyServer, emby_db, EmbyType):
+    if Item['LibraryId'] not in EmbyServer.library.WhitelistUnique:
+        xbmc.log(f"EMBY.core.common: Libray not synced: {Item['LibraryId']}", 3) # LOGERROR
+        return False
+
     ExistingItem = emby_db.get_item_by_id(Item['Id'], EmbyType)
     ForceNew = False
 
@@ -167,6 +171,7 @@ def get_path(Item, ServerId):
     ForceNativeMode = False
     KodiPathLower = Item['KodiPath'].lower()
     Container = Item.get('Container', "")
+    Item['KodiFilteredFilename'] = utils.PathToFilenameReplaceSpecialCharecters(Item['KodiPath']).replace("-", "_").replace(" ", "_")
 
     if Container == 'dvd':
         Item['KodiPath'] += "/VIDEO_TS/"
@@ -247,10 +252,8 @@ def get_filename(Item, API):
         if int(Item['SpecialFeatureCount']):
             HasSpecials = "s"
 
-    FilteredFilename = utils.PathToFilenameReplaceSpecialCharecters(Item['Path']).replace("-", "_").replace(" ", "_")
-
     if Item['Type'] == "Audio":
-        Item['KodiFilename'] = f"a-{Item['Id']}-{FilteredFilename}"
+        Item['KodiFilename'] = f"a-{Item['Id']}-{Item['KodiFilteredFilename']}"
         return
 
     VideoBitrate, VideoCodec = get_Bitrate_Codec(Item, "Video")
@@ -262,7 +265,7 @@ def get_filename(Item, API):
     else:
         IsRemote = "0"
 
-    Item['KodiFilename'] = f"{MediaID}-{Item['Id']}-{Item['MediaSources'][0]['Id']}-{Item['KodiItemId']}-{Item['KodiFileId']}-{Item['Streams'][0]['HasExternalSubtitle']}-{len(Item['MediaSources'])}-{Item['IntroStartPositionTicks']}-{Item['IntroEndPositionTicks']}-{Item['CreditsPositionTicks']}-{IsRemote}-{VideoCodec}-{VideoBitrate}-{AudioCodec}-{AudioBitrate}-{HasSpecials}-{FilteredFilename}"
+    Item['KodiFilename'] = f"{MediaID}-{Item['Id']}-{Item['MediaSources'][0]['Id']}-{Item['KodiItemId']}-{Item['KodiFileId']}-{Item['Streams'][0]['HasExternalSubtitle']}-{len(Item['MediaSources'])}-{Item['IntroStartPositionTicks']}-{Item['IntroEndPositionTicks']}-{Item['CreditsPositionTicks']}-{IsRemote}-{VideoCodec}-{VideoBitrate}-{AudioCodec}-{AudioBitrate}-{HasSpecials}-{Item['KodiFilteredFilename']}"
     set_multipart(Item, API, MediaID)
 
 # Detect Multipart videos

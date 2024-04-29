@@ -1,3 +1,18 @@
+9.4.21
+=============
+fix multiversion episode delete issue
+fix strm file issue
+fix websocket close issue
+
+
+9.4.20
+=============
+fix 'FreeTypeFont' object has no attribute 'getsize' -> python pillow api change
+fix playertracker issue
+fix library removal issue for edge case
+fix player crash
+
+
 9.4.19
 =============
 fix Studio sync issue
