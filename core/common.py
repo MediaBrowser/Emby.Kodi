@@ -615,44 +615,44 @@ def set_Dates(Item):
     if Item['KodiProductionYear']:
         Item['KodiProductionYear'] = Item['KodiProductionYear'][:4]
 
-def set_chapters(item, ServerId):
+def set_chapters(Item, ServerId):
     Chapters = {}
-    item['ChapterInfo'] = []
-    item['IntroStartPositionTicks'] = 0
-    item['IntroEndPositionTicks'] = 0
-    item['CreditsPositionTicks'] = 0
+    Item['ChapterInfo'] = []
+    Item['IntroStartPositionTicks'] = 0
+    Item['IntroEndPositionTicks'] = 0
+    Item['CreditsPositionTicks'] = 0
 
-    if 'Chapters' in item:
+    if 'Chapters' in Item:
         MarkerLabel = ""
 
-        for index, Chapter in enumerate(item['Chapters']):
+        for index, Chapter in enumerate(Item['Chapters']):
             Chapter["StartPositionTicks"] = round(float(Chapter.get("StartPositionTicks", 0) / 10000000))
 
             if "MarkerType" in Chapter and (Chapter['MarkerType'] == "IntroStart" or Chapter['MarkerType'] == "IntroEnd" or Chapter['MarkerType'] == "CreditsStart"):
                 if Chapter['MarkerType'] == "IntroStart":
-                    item['IntroStartPositionTicks'] = Chapter["StartPositionTicks"]
+                    Item['IntroStartPositionTicks'] = Chapter["StartPositionTicks"]
                 elif Chapter['MarkerType'] == "IntroEnd":
-                    item['IntroEndPositionTicks'] = Chapter["StartPositionTicks"]
+                    Item['IntroEndPositionTicks'] = Chapter["StartPositionTicks"]
                 elif Chapter['MarkerType'] == "CreditsStart":
-                    item['CreditsPositionTicks'] = Chapter["StartPositionTicks"]
+                    Item['CreditsPositionTicks'] = Chapter["StartPositionTicks"]
 
                 MarkerLabel = quote(MarkerTypeMapping[Chapter['MarkerType']])
 
                 if "ImageTag" in Chapter:
-                    ChapterImage = f"http://127.0.0.1:57342/picture/{ServerId}/p-{item['Id']}-{index}-c-{Chapter['ImageTag']}-{MarkerLabel}|redirect-limit=1000"
+                    ChapterImage = f"http://127.0.0.1:57342/picture/{ServerId}/p-{Item['Id']}-{index}-c-{Chapter['ImageTag']}-{MarkerLabel}|redirect-limit=1000"
                 else: # inject blank image, otherwise not possible to use text overlay (webservice.py)
-                    ChapterImage = f"http://127.0.0.1:57342/picture/{ServerId}/p-{item['Id']}-{index}-c-noimage-{MarkerLabel}|redirect-limit=1000"
+                    ChapterImage = f"http://127.0.0.1:57342/picture/{ServerId}/p-{Item['Id']}-{index}-c-noimage-{MarkerLabel}|redirect-limit=1000"
             else:
                 if "Name" in Chapter:
                     Chapter['Name'] = Chapter['Name'].replace("-", " ")
 
                     if Chapter['Name'] == "Title Sequence" or Chapter['Name'] == "End Credits" or Chapter['Name'] == "Intro Start" or Chapter['Name'] == "Intro End":
-                        if Chapter['Name'] == "Intro Start" and not item['IntroStartPositionTicks']:
-                            item['IntroStartPositionTicks'] = Chapter["StartPositionTicks"]
-                        elif Chapter['Name'] == "Intro End" and not item['IntroEndPositionTicks']:
-                            item['IntroEndPositionTicks'] = Chapter["StartPositionTicks"]
-                        elif Chapter['Name'] == "End Credits" and not item['CreditsPositionTicks']:
-                            item['CreditsPositionTicks'] = Chapter["StartPositionTicks"]
+                        if Chapter['Name'] == "Intro Start" and not Item['IntroStartPositionTicks']:
+                            Item['IntroStartPositionTicks'] = Chapter["StartPositionTicks"]
+                        elif Chapter['Name'] == "Intro End" and not Item['IntroEndPositionTicks']:
+                            Item['IntroEndPositionTicks'] = Chapter["StartPositionTicks"]
+                        elif Chapter['Name'] == "End Credits" and not Item['CreditsPositionTicks']:
+                            Item['CreditsPositionTicks'] = Chapter["StartPositionTicks"]
 
                         MarkerLabel = quote(Chapter['Name'])
                     elif " 0" in Chapter['Name'] or Chapter["StartPositionTicks"] % 300 != 0: # embedded chapter
@@ -661,9 +661,9 @@ def set_chapters(item, ServerId):
                     Chapter["Name"] = "unknown"
 
                 if "ImageTag" in Chapter:
-                    ChapterImage = f"http://127.0.0.1:57342/picture/{ServerId}/p-{item['Id']}-{index}-c-{Chapter['ImageTag']}-{quote(Chapter['Name'])}|redirect-limit=1000"
+                    ChapterImage = f"http://127.0.0.1:57342/picture/{ServerId}/p-{Item['Id']}-{index}-c-{Chapter['ImageTag']}-{quote(Chapter['Name'])}|redirect-limit=1000"
                 else:
-                    ChapterImage = f"http://127.0.0.1:57342/picture/{ServerId}/p-{item['Id']}-{index}-c-noimage-{quote(Chapter['Name'])}|redirect-limit=1000"
+                    ChapterImage = f"http://127.0.0.1:57342/picture/{ServerId}/p-{Item['Id']}-{index}-c-noimage-{quote(Chapter['Name'])}|redirect-limit=1000"
 
             if not Chapter["StartPositionTicks"] in Chapters:
                 Chapters[Chapter["StartPositionTicks"]] = ChapterImage
@@ -675,121 +675,121 @@ def set_chapters(item, ServerId):
                     Chapters[Chapter["StartPositionTicks"]] = "-".join(Data)
 
     for StartPositionTicks, ChapterImage in list(Chapters.items()):
-        item['ChapterInfo'].append({"StartPositionTicks": StartPositionTicks, "Image": ChapterImage})
+        Item['ChapterInfo'].append({"StartPositionTicks": StartPositionTicks, "Image": ChapterImage})
 
 # Set Kodi artwork
-def set_KodiArtwork(item, ServerId, DynamicNode):
-    item['ParentLogoItemId'] = item.get('ParentLogoItemId', None)
-    item['ParentLogoImageTag'] = item.get('ParentLogoImageTag', None)
-    item['ParentThumbItemId'] = item.get('ParentThumbItemId', None)
-    item['ParentThumbImageTag'] = item.get('ParentThumbImageTag', None)
-    item['ParentBackdropItemId'] = item.get('ParentBackdropItemId', None)
-    item['ParentBackdropImageTags'] = item.get('ParentBackdropImageTags', [])
-    item['ImageTags'] = item.get('ImageTags', [])
-    item['BackdropImageTags'] = item.get('BackdropImageTags', [])
-    item['AlbumPrimaryImageTag'] = item.get('AlbumPrimaryImageTag', None)
-    item['SeriesPrimaryImageTag'] = item.get('SeriesPrimaryImageTag', None)
-    item['KodiArtwork'] = {'clearart': None, 'clearlogo': None, 'discart': None, 'landscape': None, 'thumb': None, 'banner': None, 'poster': None, 'fanart': {}, 'favourite': None}
+def set_KodiArtwork(Item, ServerId, DynamicNode):
+    Item['ParentLogoItemId'] = Item.get('ParentLogoItemId', None)
+    Item['ParentLogoImageTag'] = Item.get('ParentLogoImageTag', None)
+    Item['ParentThumbItemId'] = Item.get('ParentThumbItemId', None)
+    Item['ParentThumbImageTag'] = Item.get('ParentThumbImageTag', None)
+    Item['ParentBackdropItemId'] = Item.get('ParentBackdropItemId', None)
+    Item['ParentBackdropImageTags'] = Item.get('ParentBackdropImageTags', [])
+    Item['ImageTags'] = Item.get('ImageTags', [])
+    Item['BackdropImageTags'] = Item.get('BackdropImageTags', [])
+    Item['AlbumPrimaryImageTag'] = Item.get('AlbumPrimaryImageTag', None)
+    Item['SeriesPrimaryImageTag'] = Item.get('SeriesPrimaryImageTag', None)
+    Item['KodiArtwork'] = {'clearart': None, 'clearlogo': None, 'discart': None, 'landscape': None, 'thumb': None, 'banner': None, 'poster': None, 'fanart': {}, 'favourite': None}
 
-    if item['Type'] in ImageTagsMappings:
-        for ImageTagsMapping in ImageTagsMappings[item['Type']]:
+    if Item['Type'] in ImageTagsMappings:
+        for ImageTagsMapping in ImageTagsMappings[Item['Type']]:
             EmbyArtworkId = None
             EmbyArtworkTag = ""
 
-            if ImageTagsMapping[0] in item["ImageTags"]:
-                if item["ImageTags"][ImageTagsMapping[0]] and item["ImageTags"][ImageTagsMapping[0]] != "None":
-                    EmbyArtworkTag = item["ImageTags"][ImageTagsMapping[0]]
-                    EmbyArtworkId = item['Id']
-            elif f"{ImageTagsMapping[0]}ImageTag" in item:
+            if ImageTagsMapping[0] in Item["ImageTags"]:
+                if Item["ImageTags"][ImageTagsMapping[0]] and Item["ImageTags"][ImageTagsMapping[0]] != "None":
+                    EmbyArtworkTag = Item["ImageTags"][ImageTagsMapping[0]]
+                    EmbyArtworkId = Item['Id']
+            elif f"{ImageTagsMapping[0]}ImageTag" in Item:
                 ImageTagKey = f"{ImageTagsMapping[0]}ImageTag"
 
-                if item[ImageTagKey] and item[ImageTagKey] != "None":
-                    EmbyArtworkTag = item[ImageTagKey]
+                if Item[ImageTagKey] and Item[ImageTagKey] != "None":
+                    EmbyArtworkTag = Item[ImageTagKey]
 
-                    if f"{ImageTagsMapping[0]}ItemId" in item:
-                        EmbyArtworkId = item[f"{ImageTagsMapping[0]}ItemId"]
-                    elif f"{ImageTagsMapping[0]}ImageItemId" in item:
-                        EmbyArtworkId = item[f"{ImageTagsMapping[0]}ImageItemId"]
+                    if f"{ImageTagsMapping[0]}ItemId" in Item:
+                        EmbyArtworkId = Item[f"{ImageTagsMapping[0]}ItemId"]
+                    elif f"{ImageTagsMapping[0]}ImageItemId" in Item:
+                        EmbyArtworkId = Item[f"{ImageTagsMapping[0]}ImageItemId"]
                     else:
                         if ImageTagsMapping[0] == "SeriesPrimary":
-                            if "SeriesId" in item:
-                                EmbyArtworkId = item["SeriesId"]
+                            if "SeriesId" in Item:
+                                EmbyArtworkId = Item["SeriesId"]
                         elif ImageTagsMapping[0] == "AlbumPrimary":
-                            if "AlbumId" in item:
-                                EmbyArtworkId = item["AlbumId"]
+                            if "AlbumId" in Item:
+                                EmbyArtworkId = Item["AlbumId"]
             elif ImageTagsMapping[0] == "ParentBanner":
-                if "SeriesId" in item:
-                    EmbyArtworkId = item["SeriesId"]
+                if "SeriesId" in Item:
+                    EmbyArtworkId = Item["SeriesId"]
                     EmbyArtworkTag = ""
-            elif ImageTagsMapping[0] == "AlbumArtists" and "AlbumArtists" in item and item["AlbumArtists"] and item["AlbumArtists"] != "None":
-                EmbyArtworkId = item["AlbumArtists"][0]['Id']
+            elif ImageTagsMapping[0] == "AlbumArtists" and "AlbumArtists" in Item and Item["AlbumArtists"] and Item["AlbumArtists"] != "None":
+                EmbyArtworkId = Item["AlbumArtists"][0]['Id']
                 EmbyArtworkTag = ""
-            elif ImageTagsMapping[0] == "ArtistItems" and "ArtistItems" in item and item["ArtistItems"] and item["ArtistItems"] != "None":
-                EmbyArtworkId = item["ArtistItems"][0]['Id']
+            elif ImageTagsMapping[0] == "ArtistItems" and "ArtistItems" in Item and Item["ArtistItems"] and Item["ArtistItems"] != "None":
+                EmbyArtworkId = Item["ArtistItems"][0]['Id']
                 EmbyArtworkTag = ""
-            elif f"{ImageTagsMapping[0]}ImageTags" in item:
+            elif f"{ImageTagsMapping[0]}ImageTags" in Item:
                 BackDropsKey = f"{ImageTagsMapping[0]}ImageTags"
 
                 if BackDropsKey == "ParentBackdropImageTags":
-                    EmbyBackDropsId = item["ParentBackdropItemId"]
+                    EmbyBackDropsId = Item["ParentBackdropItemId"]
                 else:
-                    EmbyBackDropsId = item.get("Id", None)
+                    EmbyBackDropsId = Item.get("Id", None)
 
                 if EmbyBackDropsId:
-                    if item[BackDropsKey] and item[BackDropsKey] != "None":
+                    if Item[BackDropsKey] and Item[BackDropsKey] != "None":
                         if ImageTagsMapping[1] == "fanart":
-                            if not "fanart" in item['KodiArtwork']["fanart"]:
-                                item['KodiArtwork']["fanart"]["fanart"] = f"http://127.0.0.1:57342/picture/{ServerId}/p-{EmbyBackDropsId}-0-B-{item[BackDropsKey][0]}|redirect-limit=1000"
+                            if not "fanart" in Item['KodiArtwork']["fanart"]:
+                                Item['KodiArtwork']["fanart"]["fanart"] = f"http://127.0.0.1:57342/picture/{ServerId}/p-{EmbyBackDropsId}-0-B-{Item[BackDropsKey][0]}|redirect-limit=1000"
 
-                            for index, EmbyArtworkTag in enumerate(item[BackDropsKey][1:], 1):
-                                if not f"fanart{index}" in item['KodiArtwork']["fanart"]:
-                                    item['KodiArtwork']["fanart"][f"fanart{index}"] = f"http://127.0.0.1:57342/picture/{ServerId}/p-{EmbyBackDropsId}-{index}-B-{EmbyArtworkTag}|redirect-limit=1000"
+                            for index, EmbyArtworkTag in enumerate(Item[BackDropsKey][1:], 1):
+                                if not f"fanart{index}" in Item['KodiArtwork']["fanart"]:
+                                    Item['KodiArtwork']["fanart"][f"fanart{index}"] = f"http://127.0.0.1:57342/picture/{ServerId}/p-{EmbyBackDropsId}-{index}-B-{EmbyArtworkTag}|redirect-limit=1000"
                         else:
-                            if not item['KodiArtwork'][ImageTagsMapping[1]]:
-                                item['KodiArtwork'][ImageTagsMapping[1]] = f"http://127.0.0.1:57342/picture/{ServerId}/p-{EmbyBackDropsId}-0-{EmbyArtworkIdShort[ImageTagsMapping[0]]}-{item[BackDropsKey][0]}|redirect-limit=1000"
+                            if not Item['KodiArtwork'][ImageTagsMapping[1]]:
+                                Item['KodiArtwork'][ImageTagsMapping[1]] = f"http://127.0.0.1:57342/picture/{ServerId}/p-{EmbyBackDropsId}-0-{EmbyArtworkIdShort[ImageTagsMapping[0]]}-{Item[BackDropsKey][0]}|redirect-limit=1000"
 
             if EmbyArtworkId:
                 if ImageTagsMapping[1] == "fanart":
-                    if not "fanart" in item['KodiArtwork']["fanart"]:
-                        item['KodiArtwork']["fanart"]["fanart"] = f"http://127.0.0.1:57342/picture/{ServerId}/p-{EmbyArtworkId}-0-{EmbyArtworkIdShort[ImageTagsMapping[0]]}-{EmbyArtworkTag}|redirect-limit=1000"
+                    if not "fanart" in Item['KodiArtwork']["fanart"]:
+                        Item['KodiArtwork']["fanart"]["fanart"] = f"http://127.0.0.1:57342/picture/{ServerId}/p-{EmbyArtworkId}-0-{EmbyArtworkIdShort[ImageTagsMapping[0]]}-{EmbyArtworkTag}|redirect-limit=1000"
                 else:
-                    if not item['KodiArtwork'][ImageTagsMapping[1]]:
-                        item['KodiArtwork'][ImageTagsMapping[1]] = f"http://127.0.0.1:57342/picture/{ServerId}/p-{EmbyArtworkId}-0-{EmbyArtworkIdShort[ImageTagsMapping[0]]}-{EmbyArtworkTag}|redirect-limit=1000"
+                    if not Item['KodiArtwork'][ImageTagsMapping[1]]:
+                        Item['KodiArtwork'][ImageTagsMapping[1]] = f"http://127.0.0.1:57342/picture/{ServerId}/p-{EmbyArtworkId}-0-{EmbyArtworkIdShort[ImageTagsMapping[0]]}-{EmbyArtworkTag}|redirect-limit=1000"
 
     if utils.AssignEpisodePostersToTVShowPoster:
-        if item['Type'] == "Episode" and 'SeriesId' in item and "SeriesPrimaryImageTag" in item and item["SeriesPrimaryImageTag"] and item["SeriesPrimaryImageTag"] != "None":
-            item['KodiArtwork']['poster'] = f"http://127.0.0.1:57342/picture/{ServerId}/p-{item['SeriesId']}-0-p-{item['SeriesPrimaryImageTag']}|redirect-limit=1000"
+        if Item['Type'] == "Episode" and 'SeriesId' in Item and "SeriesPrimaryImageTag" in Item and Item["SeriesPrimaryImageTag"] and Item["SeriesPrimaryImageTag"] != "None":
+            Item['KodiArtwork']['poster'] = f"http://127.0.0.1:57342/picture/{ServerId}/p-{Item['SeriesId']}-0-p-{Item['SeriesPrimaryImageTag']}|redirect-limit=1000"
 
     if DynamicNode:
-        if item['Type'] == "Episode":
-            if 'SeriesId' in item and "SeriesPrimaryImageTag" in item and item["SeriesPrimaryImageTag"] and item["SeriesPrimaryImageTag"] != "None":
-                item['KodiArtwork']['tvshow.poster'] = f"http://127.0.0.1:57342/picture/{ServerId}/p-{item['SeriesId']}-0-p-{item['SeriesPrimaryImageTag']}|redirect-limit=1000"
+        if Item['Type'] == "Episode":
+            if 'SeriesId' in Item and "SeriesPrimaryImageTag" in Item and Item["SeriesPrimaryImageTag"] and Item["SeriesPrimaryImageTag"] != "None":
+                Item['KodiArtwork']['tvshow.poster'] = f"http://127.0.0.1:57342/picture/{ServerId}/p-{Item['SeriesId']}-0-p-{Item['SeriesPrimaryImageTag']}|redirect-limit=1000"
 
-            if 'ParentThumbItemId' in item and "ParentThumbImageTag" in item and item["ParentThumbImageTag"] and item["ParentThumbImageTag"] != "None":
-                item['KodiArtwork']['tvshow.thumb'] = f"http://127.0.0.1:57342/picture/{ServerId}/p-{item['ParentThumbItemId']}-0-p-{item['ParentThumbImageTag']}|redirect-limit=1000"
+            if 'ParentThumbItemId' in Item and "ParentThumbImageTag" in Item and Item["ParentThumbImageTag"] and Item["ParentThumbImageTag"] != "None":
+                Item['KodiArtwork']['tvshow.thumb'] = f"http://127.0.0.1:57342/picture/{ServerId}/p-{Item['ParentThumbItemId']}-0-p-{Item['ParentThumbImageTag']}|redirect-limit=1000"
 
-            if 'ParentLogoItemId' in item and "ParentLogoImageTag" in item and item["ParentLogoImageTag"] and item["ParentLogoImageTag"] != "None":
-                item['KodiArtwork']['tvshow.clearlogo'] = f"http://127.0.0.1:57342/picture/{ServerId}/p-{item['ParentLogoItemId']}-0-p-{item['ParentLogoImageTag']}|redirect-limit=1000"
+            if 'ParentLogoItemId' in Item and "ParentLogoImageTag" in Item and Item["ParentLogoImageTag"] and Item["ParentLogoImageTag"] != "None":
+                Item['KodiArtwork']['tvshow.clearlogo'] = f"http://127.0.0.1:57342/picture/{ServerId}/p-{Item['ParentLogoItemId']}-0-p-{Item['ParentLogoImageTag']}|redirect-limit=1000"
 
-            if 'ParentBackdropItemId' in item and "ParentBackdropImageTags" in item and item["ParentBackdropImageTags"]:
-                item['KodiArtwork']['tvshow.fanart'] = f"http://127.0.0.1:57342/picture/{ServerId}/p-{item['ParentBackdropItemId']}-0-p-{item['ParentBackdropImageTags'][0]}|redirect-limit=1000"
+            if 'ParentBackdropItemId' in Item and "ParentBackdropImageTags" in Item and Item["ParentBackdropImageTags"]:
+                Item['KodiArtwork']['tvshow.fanart'] = f"http://127.0.0.1:57342/picture/{ServerId}/p-{Item['ParentBackdropItemId']}-0-p-{Item['ParentBackdropImageTags'][0]}|redirect-limit=1000"
 
-    if item['KodiArtwork']['poster']:
-        item['KodiArtwork']['favourite'] = item['KodiArtwork']['poster']
+    if Item['KodiArtwork']['poster']:
+        Item['KodiArtwork']['favourite'] = Item['KodiArtwork']['poster']
     else:
-        item['KodiArtwork']['favourite'] = item['KodiArtwork']['thumb']
+        Item['KodiArtwork']['favourite'] = Item['KodiArtwork']['thumb']
 
-def set_MusicVideoTracks(item):
+def set_MusicVideoTracks(Item):
     # Try to detect track number
-    item['IndexNumber'] = None
-    Temp = item['MediaSources'][0]['Name'][:4]  # e.g. 01 - Artist - Title
+    Item['IndexNumber'] = None
+    Temp = Item['MediaSources'][0]['Name'][:4]  # e.g. 01 - Artist - Title
     Temp = Temp.split("-")
 
     if len(Temp) > 1:
         Track = Temp[0].strip()
 
         if Track.isdigit():
-            item['IndexNumber'] = int(Track)  # remove leading zero e.g. 01
+            Item['IndexNumber'] = int(Track)  # remove leading zero e.g. 01
 
 def delete_ContentItemReferences(Item, SQLs, KodiType):
     KodiLibraryTagIds = SQLs["emby"].get_KodiLibraryTagIds()
@@ -799,6 +799,7 @@ def delete_ContentItemReferences(Item, SQLs, KodiType):
     SQLs["video"].delete_links_countries(Item['KodiItemId'], KodiType)
     SQLs["video"].delete_links_studios(Item['KodiItemId'], KodiType)
     SQLs["video"].delete_links_tags(Item['KodiItemId'], KodiType, KodiLibraryTagIds)
+    SQLs["video"].delete_links_genres(Item['KodiItemId'], KodiType)
     SQLs["video"].delete_uniqueids(Item['KodiItemId'], KodiType)
     SQLs["video"].delete_bookmark(Item['KodiFileId'])
     SQLs["video"].delete_streams(Item['KodiFileId'])
@@ -823,51 +824,51 @@ def delete_ContentItem(Item, SQLs, KodiType, EmbyType):
 
     return False
 
-def get_path_type_from_item(ServerId, item, isSpecial=False, isTrailer=False):
+def get_path_type_from_item(ServerId, Item, isSpecial=False, isTrailer=False):
     HasSpecials = ""
 
-    if 'SpecialFeatureCount' in item:
-        if int(item['SpecialFeatureCount']):
+    if 'SpecialFeatureCount' in Item:
+        if int(Item['SpecialFeatureCount']):
             HasSpecials = "s"
 
-    if item.get('NoLink'):
+    if Item.get('NoLink'):
         return "", None
 
-    if (item['Type'] == 'Photo' and 'Primary' in item['ImageTags']) or (item['Type'] == 'PhotoAlbum' and 'Primary' in item['ImageTags']):
-        if 'Path' in item:
-            return f"http://127.0.0.1:57342/picture/{ServerId}/p-{item['Id']}-0-p-{item['ImageTags']['Primary']}--{utils.PathToFilenameReplaceSpecialCharecters(item['Path'])}|redirect-limit=1000", "p"
+    if (Item['Type'] == 'Photo' and 'Primary' in Item['ImageTags']) or (Item['Type'] == 'PhotoAlbum' and 'Primary' in Item['ImageTags']):
+        if 'Path' in Item:
+            return f"http://127.0.0.1:57342/picture/{ServerId}/p-{Item['Id']}-0-p-{Item['ImageTags']['Primary']}--{utils.PathToFilenameReplaceSpecialCharecters(Item['Path'])}|redirect-limit=1000", "p"
 
-        return f"http://127.0.0.1:57342/picture/{ServerId}/p-{item['Id']}-0-p-{item['ImageTags']['Primary']}|redirect-limit=1000", "p"
+        return f"http://127.0.0.1:57342/picture/{ServerId}/p-{Item['Id']}-0-p-{Item['ImageTags']['Primary']}|redirect-limit=1000", "p"
 
-    if item['Type'] == "TvChannel":
-        return f"http://127.0.0.1:57342/dynamic/{ServerId}/t-{item['Id']}-livetv", "t"
+    if Item['Type'] == "TvChannel":
+        return f"http://127.0.0.1:57342/dynamic/{ServerId}/t-{Item['Id']}-livetv", "t"
 
-    if item['Type'] == "Audio":
+    if Item['Type'] == "Audio":
         if isSpecial:
-            return f"http://127.0.0.1:57342/dynamic/{ServerId}/A-{item['Id']}-{utils.PathToFilenameReplaceSpecialCharecters(item['Path'])}", "A"
+            return f"http://127.0.0.1:57342/dynamic/{ServerId}/A-{Item['Id']}-{utils.PathToFilenameReplaceSpecialCharecters(Item['Path'])}", "A"
 
-        return f"http://127.0.0.1:57342/dynamic/{ServerId}/a-{item['Id']}-{utils.PathToFilenameReplaceSpecialCharecters(item['Path'])}", "a"
+        return f"http://127.0.0.1:57342/dynamic/{ServerId}/a-{Item['Id']}-{utils.PathToFilenameReplaceSpecialCharecters(Item['Path'])}", "a"
 
-    if item['Type'] == "MusicVideo":
+    if Item['Type'] == "MusicVideo":
         Type = "M"
-    elif item['Type'] == "Movie":
+    elif Item['Type'] == "Movie":
         Type = "m"
-    elif item['Type'] == "Episode":
+    elif Item['Type'] == "Episode":
         Type = "e"
-    elif item['Type'] == "Video":
+    elif Item['Type'] == "Video":
         Type = "v"
-    elif item['Type'] == "Trailer":
+    elif Item['Type'] == "Trailer":
         Type = "T"
     else:
         return None, None
 
-    if 'Path' in item:
-        path = item['Path']
+    if 'Path' in Item:
+        path = Item['Path']
 
         # Strm
         if path.lower().endswith('.strm'):
-            if 'MediaSources' in item and len(item['MediaSources']) > 0:
-                path = item['MediaSources'][0].get('Path', "")
+            if 'MediaSources' in Item and len(Item['MediaSources']) > 0:
+                path = Item['MediaSources'][0].get('Path', "")
         elif path.lower().endswith(".iso"): # Iso
             if path.startswith('\\\\'):
                 path = path.replace('\\\\', "smb://", 1).replace('\\', "/")
@@ -878,27 +879,27 @@ def get_path_type_from_item(ServerId, item, isSpecial=False, isTrailer=False):
         if path.lower().startswith("plugin://"):
             return path, "v"
 
-        get_streams(item)
-        set_chapters(item, ServerId)
-        VideoBitrate, VideoCodec = get_Bitrate_Codec(item, "Video")
-        AudioBitrate, AudioCodec = get_Bitrate_Codec(item, "Audio")
+        get_streams(Item)
+        set_chapters(Item, ServerId)
+        VideoBitrate, VideoCodec = get_Bitrate_Codec(Item, "Video")
+        AudioBitrate, AudioCodec = get_Bitrate_Codec(Item, "Audio")
 
         if isTrailer: # used to skip remote content verification
-            path = f"http://127.0.0.1:57342/dynamic/{ServerId}/{Type}-{item['Id']}-{item['MediaSources'][0]['Id']}-0-0-{item['Streams'][0]['HasExternalSubtitle']}-{len(item['MediaSources'])}-{item['IntroStartPositionTicks']}-{item['IntroEndPositionTicks']}-{item['CreditsPositionTicks']}-0-{VideoCodec}-{VideoBitrate}-{AudioCodec}-{AudioBitrate}-{HasSpecials}-{utils.PathToFilenameReplaceSpecialCharecters(path)}"
+            path = f"http://127.0.0.1:57342/dynamic/{ServerId}/{Type}-{Item['Id']}-{Item['MediaSources'][0]['Id']}-0-0-{Item['Streams'][0]['HasExternalSubtitle']}-{len(Item['MediaSources'])}-{Item['IntroStartPositionTicks']}-{Item['IntroEndPositionTicks']}-{Item['CreditsPositionTicks']}-0-{VideoCodec}-{VideoBitrate}-{AudioCodec}-{AudioBitrate}-{HasSpecials}-{utils.PathToFilenameReplaceSpecialCharecters(path)}"
         else:
-            IsRemote = item['MediaSources'][0].get('IsRemote', "0")
+            IsRemote = Item['MediaSources'][0].get('IsRemote', "0")
 
             if IsRemote and IsRemote != "0":
                 IsRemote = "1"
             else:
                 IsRemote = "0"
 
-            path = f"{utils.AddonModePath}dynamic/{ServerId}/{Type}-{item['Id']}-{item['MediaSources'][0]['Id']}-0-0-{item['Streams'][0]['HasExternalSubtitle']}-{len(item['MediaSources'])}-{item['IntroStartPositionTicks']}-{item['IntroEndPositionTicks']}-{item['CreditsPositionTicks']}-{IsRemote}-{VideoCodec}-{VideoBitrate}-{AudioCodec}-{AudioBitrate}-{HasSpecials}-{utils.PathToFilenameReplaceSpecialCharecters(path)}"
+            path = f"{utils.AddonModePath}dynamic/{ServerId}/{Type}-{Item['Id']}-{Item['MediaSources'][0]['Id']}-0-0-{Item['Streams'][0]['HasExternalSubtitle']}-{len(Item['MediaSources'])}-{Item['IntroStartPositionTicks']}-{Item['IntroEndPositionTicks']}-{Item['CreditsPositionTicks']}-{IsRemote}-{VideoCodec}-{VideoBitrate}-{AudioCodec}-{AudioBitrate}-{HasSpecials}-{utils.PathToFilenameReplaceSpecialCharecters(path)}"
 
         return path, Type
 
     # Channel
-    return f"http://127.0.0.1:57342/dynamic/{ServerId}/c-{item['Id']}-{item['MediaSources'][0]['Id']}-stream.ts", "c"
+    return f"http://127.0.0.1:57342/dynamic/{ServerId}/c-{Item['Id']}-{Item['MediaSources'][0]['Id']}-stream.ts", "c"
 
 def verify_content(Item, MediaType):
     if 'Path' not in Item:
@@ -974,13 +975,10 @@ def set_ItemsDependencies(Item, SQLs, WorkerObject, EmbyServer, EmbyType):
         if Item['PresentationUniqueKey'] and EmbyType != "MusicAlbum":
             PresentationData = Item['PresentationUniqueKey'].split("_")
 
-            if Item['Type'] == "Episode" and len(PresentationData) >= 4: # multiepisode:
-                SearchPresentationUniqueKey = "_".join(PresentationData[:2])
-            else:
+            if Item['Type'] == "Episode" and len(PresentationData) >= 2: # multiepisode:
                 SearchPresentationUniqueKey = "_".join(PresentationData[:-1])
-
-            Item[SubItemId] = SQLs["emby"].get_EmbyId_by_EmbyPresentationKey(SearchPresentationUniqueKey, EmbyType)
-            xbmc.log(f"EMBY.core.common: Detect by PresentationUniqueKey: {Item[SubItemId]} / {Item['PresentationUniqueKey']} / {SearchPresentationUniqueKey}", 1) # LOGINFO
+                Item[SubItemId] = SQLs["emby"].get_EmbyId_by_EmbyPresentationKey(SearchPresentationUniqueKey, EmbyType)
+                xbmc.log(f"EMBY.core.common: Detect by PresentationUniqueKey: {Item[SubItemId]} / {Item['PresentationUniqueKey']} / {SearchPresentationUniqueKey}", 1) # LOGINFO
 
         if not Item[SubItemId]:
             Item[SubItemId] = MappingIds[EmbyType]
@@ -1169,15 +1167,28 @@ def update_multiversion(EmbyDB, Item, EmbyType):
                 EmbyDB.add_RemoveItem(StackedId[0], None)
                 EmbyDB.add_UpdateItem(StackedId[0], EmbyType, "unknown")
 
+def update_boxsets(StartSync, ParentId, LibraryId, SQLs, EmbyServer):
+    if not StartSync:
+        for BoxSet in EmbyServer.API.get_Items(ParentId, ["BoxSet"], True, True, {'GroupItemsIntoCollections': True}):
+            SQLs["emby"].add_UpdateItem(BoxSet['Id'], "BoxSet", LibraryId)
+
 def set_Favorites_Artwork(Item, ServerId):
     if 'ImageTags' in Item and Item['ImageTags']:
         if "Primary" in Item['ImageTags']:
-            return f"http://127.0.0.1:57342/picture/{ServerId}/p-{Item['Id']}-0-p-{Item['ImageTags']['Primary']}|redirect-limit=1000"
+            return f"http://127.0.0.1:57342/picture/{ServerId}/p-{Item['Id'].replace('999999993', '')}-0-p-{Item['ImageTags']['Primary']}|redirect-limit=1000" # 999999993 replacement: Collections assigned to tags -> utils.BoxSetsToTags
 
         if "Thumb" in Item['ImageTags']:
-            return f"http://127.0.0.1:57342/picture/{ServerId}/p-{Item['Id']}-0-p-{Item['ImageTags']['Thumb']}|redirect-limit=1000"
+            return f"http://127.0.0.1:57342/picture/{ServerId}/p-{Item['Id'].replace('999999993', '')}-0-p-{Item['ImageTags']['Thumb']}|redirect-limit=1000"
 
     return None
+
+def set_Favorites_Artwork_Overlay(Label, Content, EmbyItemId, EmbyServerId, ImageUrl):
+    OverlayText = quote(f"{Label}\n({Content})")
+
+    if ImageUrl:
+        return ImageUrl.replace("|redirect-limit=1000", f"-{OverlayText}|redirect-limit=1000")
+
+    return f"http://127.0.0.1:57342/picture/{EmbyServerId}/p-{EmbyItemId}-0-p-noimage-{OverlayText}|redirect-limit=1000"
 
 def update_downloaded_info(Item, SQLs):
     if SQLs["emby"].get_DownloadItem_exists_by_id(Item['Id']):

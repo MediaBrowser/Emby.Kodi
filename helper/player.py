@@ -12,16 +12,20 @@ from dialogs import skipintrocredits
 SkipItem = ()
 TrailerStatus = "READY"
 PlaylistRemoveItem = -1
-result = utils.SendJson('{"jsonrpc": "2.0", "id": 1, "method": "Application.GetProperties", "params": {"properties": ["volume", "muted"]}}').get('result', {})
-Volume = result.get('volume', 0)
-Muted = result.get('muted', False)
+Volume = 100
+Muted = False
+PlayerVolume = utils.SendJson('{"jsonrpc": "2.0", "id": 1, "method": "Application.GetProperties", "params": {"properties": ["volume", "muted"]}}', False).get('result', {})
+
+if PlayerVolume:
+    Volume = PlayerVolume.get('volume', 100)
+    Muted = PlayerVolume.get('muted', False)
+
 NowPlayingQueue = [[], [], []]
 PlaylistKodiItems = [[], [], []]
-PlayingItem = [{}, 0, 0, 0, None] # EmbySessionData (QueuedPlayingItem), IntroStartPositionTicks, IntroEndPositionTicks, CreditsPositionTicks, EmbyServer
+PlayingItem = [{}, 0, 0, 0, None, ""] # EmbySessionData (QueuedPlayingItem), IntroStartPositionTicks, IntroEndPositionTicks, CreditsPositionTicks, EmbyServer, KodiMediaType
 QueuedPlayingItem = []
 MultiselectionDone = False
 playlistIndex = -1
-KodiMediaType = ""
 PlayBackEnded = True
 SkipIntroJumpDone = False
 SkipCreditsJumpDone = False
@@ -117,10 +121,9 @@ def PlayerCommands():
                 xbmc.log("EMBY.hooks.player: --< [ onAVStarted ] focus videoplayer", 1) # LOGINFO
                 continue
 
-            globals()["MediaType"] = ""
             EmbyId = None
             KodiId = None
-            KodiType = None
+            KodiType = ""
 
             # Unsynced content: Update player info for dynamic/downloaded content (played via widget or themes or themes downloaded)
             if not 'id' in EventData['item']:
@@ -199,17 +202,15 @@ def PlayerCommands():
                                 continue
 
                             if isTheme:
-                                globals()["QueuedPlayingItem"] = [{'CanSeek': True, 'QueueableMediaTypes': "Video,Audio", 'IsPaused': False, 'ItemId': int(EmbyId), 'MediaSourceId': None, 'PlaySessionId': str(uuid.uuid4()).replace("-", ""), 'PositionTicks': 0, 'RunTimeTicks': 0, 'VolumeLevel': Volume, 'IsMuted': Muted}, None, None, None, utils.EmbyServers[ServerId]]
+                                globals()["QueuedPlayingItem"] = [{'CanSeek': True, 'QueueableMediaTypes': "Video,Audio", 'IsPaused': False, 'ItemId': int(EmbyId), 'MediaSourceId': None, 'PlaySessionId': str(uuid.uuid4()).replace("-", ""), 'PositionTicks': 0, 'RunTimeTicks': 0, 'VolumeLevel': Volume, 'IsMuted': Muted}, None, None, None, utils.EmbyServers[ServerId], KodiType]
             else:
                 KodiId = EventData['item']['id']
                 KodiType = EventData['item']['type']
 
-            globals()["KodiMediaType"] = KodiType
-
             if KodiType and KodiType in utils.KodiTypeMapping:
                 pluginmenu.reset_querycache(utils.KodiTypeMapping[KodiType])
 
-            # native content
+            # native (bluray) content, get actual path
             if FullPath.startswith("bluray://"):
                 FullPath = unquote_plus(FullPath)
                 FullPath = unquote_plus(FullPath)
@@ -222,104 +223,117 @@ def PlayerCommands():
                     EmbyId = embydb.get_mediasource_EmbyID_by_path(FullPath)
                     dbio.DBCloseRO(server_id, "onAVStarted")
 
-            if not FullPath.startswith("http") and not FullPath.startswith("/emby_addon_mode/") and FullPath.find("/EMBY-themes/") == -1:
-                MediasourceID = ""
+                    if EmbyId:
+                        break
 
-                if not KodiId:
-                    xbmc.log("EMBY.hooks.player: Kodi Id not found", 1) # LOGINFO
-                    continue
+            # check if native content and not a downloaded Emby theme
+            if not FullPath.startswith("http://127.0.0.1:57342") and not FullPath.startswith("/emby_addon_mode/") and FullPath.find("/EMBY-themes/") == -1:
+                EmbyServerURLFound = False
 
-                for server_id, EmbyServer in list(utils.EmbyServers.items()):
-                    embydb = dbio.DBOpenRO(server_id, "onAVStarted")
-                    EmbyId, EmbyType, IntroStartPosTicks, IntroEndPosTicks = embydb.get_EmbyId_EmbyType_IntroStartPosTicks_IntroEndPosTicks_by_KodiId_KodiType(KodiId, KodiType)
+                for EmbyServer in list(utils.EmbyServers.values()):
+                    if FullPath.startswith(EmbyServer.ServerData['ServerUrl']):
+                        EmbyServerURLFound = True
+                        break
 
-                    if not EmbyId:
-                        dbio.DBCloseRO(server_id, "onAVStarted")
-                        xbmc.log("EMBY.hooks.player: --< [ onAVStarted ] no item", 1) # LOGINFO
+                if not EmbyServerURLFound:
+                    MediasourceID = ""
+
+                    if not KodiId:
+                        xbmc.log("EMBY.hooks.player: Kodi Id not found", 1) # LOGINFO
                         continue
 
-                    # Cinnemamode
-                    if ((utils.enableCinemaMovies and EmbyType == "Movie") or (utils.enableCinemaEpisodes and EmbyType == "Episode")) and not playerops.RemoteMode:
-                        if TrailerStatus == "READY":
-                            playerops.Pause()
-                            EmbyServer.http.Intros = []
-                            PlayTrailer = True
+                    for server_id, EmbyServer in list(utils.EmbyServers.items()):
+                        embydb = dbio.DBOpenRO(server_id, "onAVStarted")
+                        EmbyId, EmbyType, IntroStartPosTicks, IntroEndPosTicks = embydb.get_EmbyId_EmbyType_IntroStartPosTicks_IntroEndPosTicks_by_KodiId_KodiType(KodiId, KodiType)
 
-                            if utils.askCinema:
-                                PlayTrailer = utils.Dialog.yesno(heading=utils.addon_name, message=utils.Translate(33016), autoclose=int(utils.autoclose) * 1000)
+                        if not EmbyId:
+                            dbio.DBCloseRO(server_id, "onAVStarted")
+                            xbmc.log("EMBY.hooks.player: --< [ onAVStarted ] no item", 1) # LOGINFO
+                            continue
 
-                            if PlayTrailer:
-                                EmbyServer.http.load_Trailers(EmbyId)
+                        # Cinnemamode
+                        if ((utils.enableCinemaMovies and EmbyType == "Movie") or (utils.enableCinemaEpisodes and EmbyType == "Episode")) and not playerops.RemoteMode:
+                            if TrailerStatus == "READY":
+                                playerops.Pause()
+                                EmbyServer.http.Intros = []
+                                PlayTrailer = True
 
-                            if EmbyServer.http.Intros:
-                                globals()["playlistIndex"] = PlaylistPosition
-                                play_Trailer(EmbyServer)
-                                dbio.DBCloseRO(server_id, "onAVStarted")
-                                xbmc.log("EMBY.hooks.player: --< [ onAVStarted ] native cinnemamode", 1) # LOGINFO
-                                break
+                                if utils.askCinema:
+                                    PlayTrailer = utils.Dialog.yesno(heading=utils.addon_name, message=utils.Translate(33016), autoclose=int(utils.autoclose) * 1000)
 
-                            playerops.Unpause()
-                        elif TrailerStatus == "CONTENT":
-                            globals()["TrailerStatus"] = "READY"
+                                if PlayTrailer:
+                                    EmbyServer.http.load_Trailers(EmbyId)
 
-                    # Multiversion
-                    MediaSources = embydb.get_mediasource(EmbyId)
-                    dbio.DBCloseRO(server_id, "onAVStarted")
+                                if EmbyServer.http.Intros:
+                                    globals()["playlistIndex"] = PlaylistPosition
+                                    play_Trailer(EmbyServer)
+                                    dbio.DBCloseRO(server_id, "onAVStarted")
+                                    xbmc.log("EMBY.hooks.player: --< [ onAVStarted ] native cinnemamode", 1) # LOGINFO
+                                    break
 
-                    if MediaSources and not playerops.RemoteMode: # video
-                        MediasourceID = MediaSources[0][2]
-
-                        if len(MediaSources) > 1:
-                            playerops.Pause()
-                            Selection = []
-
-                            for MediaSource in MediaSources:
-                                Selection.append(f"{MediaSource[4]} - {utils.SizeToText(float(MediaSource[5]))} - {MediaSource[3]}")
-
-                            MediaIndex = utils.Dialog.select(utils.Translate(33453), Selection)
-
-                            if MediaIndex == -1:
-                                Cancel()
-                                xbmc.log("EMBY.hooks.player: --< [ onAVStarted ] cancel", 1) # LOGINFO
-                                continue
-
-                            if MediaIndex == 0:
                                 playerops.Unpause()
-                            else:
-                                globals()["MultiselectionDone"] = True
-                                Path = MediaSources[MediaIndex][3]
+                            elif TrailerStatus == "CONTENT":
+                                globals()["TrailerStatus"] = "READY"
 
-                                if Path.startswith('\\\\'):
-                                    Path = Path.replace('\\\\', "smb://", 1).replace('\\\\', "\\").replace('\\', "/")
+                        # Multiversion
+                        MediaSources = embydb.get_mediasource(EmbyId)
+                        dbio.DBCloseRO(server_id, "onAVStarted")
 
-                                ListItem = load_KodiItem("onAVStarted", KodiId, KodiMediaType, Path)
+                        if MediaSources and not playerops.RemoteMode: # video
+                            MediasourceID = MediaSources[0][2]
 
-                                if not ListItem:
-                                    xbmc.log("EMBY.hooks.player: --< [ onAVStarted ] no listitem", 1) # LOGINFO
+                            if len(MediaSources) > 1:
+                                playerops.Pause()
+                                Selection = []
+
+                                for MediaSource in MediaSources:
+                                    Selection.append(f"{MediaSource[4]} - {utils.SizeToText(float(MediaSource[5]))} - {MediaSource[3]}")
+
+                                MediaIndex = utils.Dialog.select(utils.Translate(33453), Selection)
+
+                                if MediaIndex == -1:
+                                    Cancel()
+                                    xbmc.log("EMBY.hooks.player: --< [ onAVStarted ] cancel", 1) # LOGINFO
                                     continue
 
-                                globals()["playlistIndex"] = PlaylistPosition
-                                utils.Playlists[1].add(Path, ListItem, playlistIndex + 1)
-                                MediasourceID = MediaSources[MediaIndex][2]
-                                playerops.Next()
-                                playerops.RemovePlaylistItem(1, playlistIndex)
+                                if MediaIndex == 0:
+                                    playerops.Unpause()
+                                else:
+                                    globals()["MultiselectionDone"] = True
+                                    Path = MediaSources[MediaIndex][3]
 
-                            break
+                                    if Path.startswith('\\\\'):
+                                        Path = Path.replace('\\\\', "smb://", 1).replace('\\\\', "\\").replace('\\', "/")
+
+                                    ListItem = load_KodiItem("onAVStarted", KodiId, KodiType, Path)
+
+                                    if not ListItem:
+                                        xbmc.log("EMBY.hooks.player: --< [ onAVStarted ] no listitem", 1) # LOGINFO
+                                        continue
+
+                                    globals()["playlistIndex"] = PlaylistPosition
+                                    utils.Playlists[1].add(Path, ListItem, playlistIndex + 1)
+                                    MediasourceID = MediaSources[MediaIndex][2]
+                                    playerops.Next()
+                                    playerops.RemovePlaylistItem(1, playlistIndex)
+
+                                break
+                        else:
+                            MediasourceID = ""
+
+                    if EmbyServer.http.Intros:
+                        continue
+
+                    if EmbyId:
+                        globals()["QueuedPlayingItem"] = [{'CanSeek': True, 'QueueableMediaTypes': "Video,Audio", 'IsPaused': False, 'ItemId': int(EmbyId), 'MediaSourceId': MediasourceID, 'PlaySessionId': str(uuid.uuid4()).replace("-", ""), 'PositionTicks': 0, 'RunTimeTicks': 0, 'VolumeLevel': Volume, 'IsMuted': Muted}, IntroStartPosTicks, IntroEndPosTicks, None, EmbyServer, KodiType]
                     else:
-                        MediasourceID = ""
-
-                if EmbyServer.http.Intros:
-                    continue
-
-                if EmbyId:
-                    globals()["QueuedPlayingItem"] = [{'CanSeek': True, 'QueueableMediaTypes': "Video,Audio", 'IsPaused': False, 'ItemId': int(EmbyId), 'MediaSourceId': MediasourceID, 'PlaySessionId': str(uuid.uuid4()).replace("-", ""), 'PositionTicks': 0, 'RunTimeTicks': 0, 'VolumeLevel': Volume, 'IsMuted': Muted}, IntroStartPosTicks, IntroEndPosTicks, None, EmbyServer]
-                else:
-                    continue
+                        continue
 
             if not QueuedPlayingItem:
                 continue
 
             # Load playback data
+            globals()["QueuedPlayingItem"][5] = KodiType
             load_queuePlayingItem()
             globals().update({"PlayBackEnded": False, "PlayingItem": QueuedPlayingItem, "QueuedPlayingItem": []})
 
@@ -329,7 +343,7 @@ def PlayerCommands():
                     utils.SendJson('{"jsonrpc": "2.0", "id": 1, "method": "GUI.ActivateWindow", "params": {"window": "fullscreenvideo"}}')  # focus videoplayer
 
                 if not playerops.RemoteMode:
-                    utils.ItemSkipUpdate += [f"KODI{PlayingItem[0]['ItemId']}", PlayingItem[0]['ItemId']] # triple add -> for Emby (2 times incoming msg -> userdata changed) and once for Kodi database incoming msg -> VideoLibrary_OnUpdate; "KODI" prefix makes sure, VideoLibrary_OnUpdate is skipped even if more userdata requests from Emby server were received
+                    utils.ItemSkipUpdate += [f"KODI{PlayingItem[0]['ItemId']}", str(PlayingItem[0]['ItemId'])] # triple add -> for Emby (2 times incoming msg -> userdata changed) and once for Kodi database incoming msg -> VideoLibrary_OnUpdate; "KODI" prefix makes sure, VideoLibrary_OnUpdate is skipped even if more userdata requests from Emby server were received
 
                 xbmc.log(f"EMBY.hooks.player: PlayingItem: {PlayingItem}", 1) # LOGINFO
                 globals()["PlayingItem"][0].update({'RunTimeTicks': RunTimeTicks, 'PositionTicks': PositionTicks, "NowPlayingQueue": NowPlayingQueue[playerops.PlayerId], "PlaylistLength": len(NowPlayingQueue[playerops.PlayerId]), "PlaylistIndex": PlaylistPosition})
@@ -434,7 +448,7 @@ def PlayerCommands():
     xbmc.log("EMBY.hooks.player: THREAD: ---<[ player commands ]", 0) # LOGDEBUG
 
 def stop_playback(delete, PlayTrailer):
-    xbmc.log(f"EMBY.hooks.player: [ played info ] {PlayingItem} / {KodiMediaType}", 0) # LOGDEBUG
+    xbmc.log(f"EMBY.hooks.player: [ played info ] {PlayingItem}", 0) # LOGDEBUG
     PlayingItemLocal = PlayingItem.copy()
 
     if MultiselectionDone:
@@ -482,9 +496,9 @@ def stop_playback(delete, PlayTrailer):
                 if PlayPosition > Runtime * 0.90:  # 90% Progress
                     DeleteMsg = False
 
-                    if KodiMediaType == 'episode' and utils.deleteTV:
+                    if PlayingItemLocal[5] == 'episode' and utils.deleteTV:
                         DeleteMsg = True
-                    elif KodiMediaType == 'movie' and utils.deleteMovies:
+                    elif PlayingItemLocal[5] == 'movie' and utils.deleteMovies:
                         DeleteMsg = True
 
                     if DeleteMsg:
@@ -498,7 +512,7 @@ def stop_playback(delete, PlayTrailer):
 
 def play_Trailer(EmbyServer):
     MediasourceID = EmbyServer.http.Intros[0]['MediaSources'][0]['Id']
-    globals()["QueuedPlayingItem"] = [{'CanSeek': True, 'QueueableMediaTypes': "Video,Audio", 'IsPaused': False, 'ItemId': int(EmbyServer.http.Intros[0]['Id']), 'MediaSourceId': MediasourceID, 'PlaySessionId': str(uuid.uuid4()).replace("-", ""), 'PositionTicks': 0, 'RunTimeTicks': 0, 'VolumeLevel': Volume, 'IsMuted': Muted}, None, None, None, EmbyServer]
+    globals()["QueuedPlayingItem"] = [{'CanSeek': True, 'QueueableMediaTypes': "Video,Audio", 'IsPaused': False, 'ItemId': int(EmbyServer.http.Intros[0]['Id']), 'MediaSourceId': MediasourceID, 'PlaySessionId': str(uuid.uuid4()).replace("-", ""), 'PositionTicks': 0, 'RunTimeTicks': 0, 'VolumeLevel': Volume, 'IsMuted': Muted}, None, None, None, EmbyServer, ""]
     Path = EmbyServer.http.Intros[0]['Path']
     li = listitem.set_ListItem(EmbyServer.http.Intros[0], EmbyServer.ServerData['ServerId'])
     del EmbyServer.http.Intros[0]
@@ -601,7 +615,7 @@ def load_queuePlayingItem():
     xbmc.log("EMBY.hooks.player: [ Queue playing item ]", 1) # LOGINFO
 
     if not playerops.RemoteMode:
-        utils.ItemSkipUpdate += [int(QueuedPlayingItem[0]['ItemId'])] # triple add -> for Emby (2 times incoming msg -> userdata changed) and once for Kodi database incoming msg -> VideoLibrary_OnUpdate; "KODI" prefix makes sure, VideoLibrary_OnUpdate is skipped even if more userdata requests from Emby server were received
+        utils.ItemSkipUpdate.append(str(QueuedPlayingItem[0]['ItemId'])) # triple add -> for Emby (2 times incoming msg -> userdata changed) and once for Kodi database incoming msg -> VideoLibrary_OnUpdate; "KODI" prefix makes sure, VideoLibrary_OnUpdate is skipped even if more userdata requests from Emby server were received
 
     if QueuedPlayingItem[1]:
         globals()["QueuedPlayingItem"][1] = QueuedPlayingItem[1] * 10000000
@@ -627,10 +641,15 @@ def load_queuePlayingItem():
 # Build NowPlayingQueue
 def build_NowPlayingQueue():
     for PlaylistIndex in range(2):
-        globals()['NowPlayingQueue'][PlaylistIndex] = []
+        if PlaylistKodiItems[PlaylistIndex]:
+            NowPlayingQueueLocal = [{}] * len(PlaylistKodiItems[PlaylistIndex]) # allocate memory
 
-        for Index, ItemId in enumerate(PlaylistKodiItems[PlaylistIndex]):
-            globals()['NowPlayingQueue'][PlaylistIndex].append({"Id": int(ItemId), "PlaylistItemId": str(Index)})
+            for Index, ItemId in enumerate(PlaylistKodiItems[PlaylistIndex]):
+                NowPlayingQueueLocal[Index] = {"Id": int(ItemId), "PlaylistItemId": str(Index)}
+
+            globals()['NowPlayingQueue'][PlaylistIndex] = NowPlayingQueueLocal
+        else:
+            globals()['NowPlayingQueue'][PlaylistIndex] = []
 
 def Cancel():
     playerops.Stop()

@@ -194,33 +194,40 @@ StudioPaging = 20000
 AllPaging = 5000
 FolderPaging = 100000
 PersonPaging = 100000
+MaxURILength = 1500
 
 def refresh_widgets(isVideo):
     xbmc.log("EMBY.helper.utils: Refresh widgets initialized", 1) # LOGINFO
 
     if isVideo and not WidgetRefresh['video']:
-        xbmc.log("EMBY.helper.utils: Refresh widgets video started", 1) # LOGINFO
         globals()["WidgetRefresh"]['video'] = True
-        SendJson('{"jsonrpc":"2.0","method":"VideoLibrary.Scan","params":{"showdialogs":false,"directory":"EMBY_widget_refresh_trigger"},"id":1}')
+        xbmc.log("EMBY.helper.utils: Refresh widgets video started", 1) # LOGINFO
+
+        if not SendJson('{"jsonrpc":"2.0","method":"VideoLibrary.Scan","params":{"showdialogs":false,"directory":"EMBY_widget_refresh_trigger"},"id":1}', True):
+            globals()["WidgetRefresh"]['video'] = False
 
     if not isVideo and not WidgetRefresh['music']:
-        xbmc.log("EMBY.helper.utils: Refresh widgets music started", 1) # LOGINFO
         globals()["WidgetRefresh"]['music'] = True
-        SendJson('{"jsonrpc":"2.0","method":"AudioLibrary.Scan","params":{"showdialogs":false,"directory":"EMBY_widget_refresh_trigger"},"id":1}')
+        xbmc.log("EMBY.helper.utils: Refresh widgets music started", 1) # LOGINFO
+
+        if not SendJson('{"jsonrpc":"2.0","method":"AudioLibrary.Scan","params":{"showdialogs":false,"directory":"EMBY_widget_refresh_trigger"},"id":1}', True):
+            globals()["WidgetRefresh"]['music'] = False
 
 def SendJson(JsonString, ForceBreak=False):
     LogSend = False
     Ret = {}
 
-    for Index in range(70): # retry -> timout 25 seconds
+    for Index in range(55): # retry -> timeout 10 seconds
         Ret = xbmc.executeJSONRPC(JsonString)
 
         if not Ret: # Valid but not correct Kodi return value -> Kodi bug
+            xbmc.log(f"Emby.helper.utils: Json no response: {JsonString}", 2) # LOGWARNING
             return True
 
         Ret = json.loads(Ret)
 
         if not Ret.get("error", False):
+            xbmc.log(f"Emby.helper.utils: Json response: {JsonString} / {Ret}", 0) # LOGDEBUG
             return Ret
 
         if ForceBreak:
@@ -256,15 +263,20 @@ def image_overlay(ImageTag, ServerId, EmbyID, ImageType, ImageIndex, OverlayText
     if not ImageOverlay:
         return BinaryData, ContentType
 
-    img = Image.open(io.BytesIO(BinaryData))
+    try:
+        img = Image.open(io.BytesIO(BinaryData))
+        draw = ImageDraw.Draw(img, "RGBA")
+        font = ImageFont.truetype(FontPath, 1)
+    except Exception as Error:
+        xbmc.log(f"EMBY.helper.utils: Pillow issue: {Error}", 3) # LOGERROR
+        return BinaryData, ContentType
+
     ImageWidth, ImageHeight = img.size
-    draw = ImageDraw.Draw(img, "RGBA")
     BorderSize = int(ImageHeight * 0.01)  # 1% of image height is box border size
     BoxTop = int(ImageHeight * 0.75)  # Box top position is 75% of image height
     BoxHeight = int(ImageHeight * 0.15)  # 15% of image height is box height
     BoxWidth = int(ImageWidth - 2 * BorderSize)
     fontsize = 5
-    font = ImageFont.truetype(FontPath, 1)
     _, _, FontWidth, FontHeight = font.getbbox("Title Seauence")
 
     while FontHeight < BoxHeight - BorderSize * 2 and FontWidth < BoxWidth - BorderSize * 2:
@@ -272,6 +284,14 @@ def image_overlay(ImageTag, ServerId, EmbyID, ImageType, ImageIndex, OverlayText
         font = ImageFont.truetype(FontPath, fontsize)
         _, _, FontWidth, FontHeight = font.getbbox("Title Seauence")
 
+    OverlayText = OverlayText.split("\n")
+    OverlayTextNewLines = len(OverlayText)
+
+    if OverlayTextNewLines > 1:
+        fontsize = round(fontsize / OverlayTextNewLines)
+        font = ImageFont.truetype(FontPath, fontsize)
+
+    OverlayText = "\n".join(OverlayText)
     draw.rectangle((-100, BoxTop - BorderSize, BoxWidth + 200, BoxTop + BoxHeight + BorderSize * 2), fill=(0, 0, 0, 127), outline="white",  width=BorderSize)
     draw.text(xy=(ImageWidth / 2, BoxTop + BorderSize * 2 + FontHeight / 2), text=OverlayText, fill="#FFFFFF", font=font, anchor="mm", align="center")
     imgByteArr = io.BytesIO()
@@ -689,6 +709,7 @@ def InitSettings():
     load_settings_int('AllPaging')
     load_settings_int('FolderPaging')
     load_settings_int('PersonPaging')
+    load_settings_int('MaxURILength')
     load_settings_bool('ArtworkLimitations')
     load_settings_bool('sslverify')
     load_settings_bool('syncduringplayback')

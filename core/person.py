@@ -26,22 +26,22 @@ class Person:
             xbmc.log(f"EMBY.core.person: ADD [{Item['KodiItemId']}] {Item['Name']}: {Item['Id']}", 1) # LOGINFO
 
         self.SQLs["video"].common_db.add_artwork(Item['KodiArtwork'], Item['KodiItemId'], "actor")
-        self.set_favorite(Item['KodiItemId'], isFavorite)
+        self.set_favorite(Item['KodiItemId'], isFavorite, Item['Id'])
         return not Item['UpdateItem']
 
     def remove(self, Item):
         if self.SQLs["emby"].remove_item(Item['Id'], "Person", Item['LibraryId']):
-            self.set_favorite(Item['KodiItemId'], False)
+            self.set_favorite(Item['KodiItemId'], False, Item['Id'])
             self.SQLs["video"].delete_people_by_Id(Item['KodiItemId'])
             xbmc.log(f"EMBY.core.person: DELETE [{Item['KodiItemId']}] {Item['Id']}", 1) # LOGINFO
 
     def userdata(self, Item):
         self.SQLs["emby"].update_favourite(Item['IsFavorite'], Item['Id'], "Person")
-        self.set_favorite(Item['KodiItemId'], Item['IsFavorite'])
+        self.set_favorite(Item['KodiItemId'], Item['IsFavorite'], Item['Id'])
         pluginmenu.reset_querycache("Person")
         xbmc.log(f"EMBY.core.person: USERDATA [{Item['KodiItemId']}] {Item['Id']}", 1) # LOGINFO
 
-    def set_favorite(self, KodiItemId, isFavorite):
+    def set_favorite(self, KodiItemId, isFavorite, EmbyItemId):
         Name, ImageUrl, hasMusicVideos, hasMovies, hasTVShows = self.SQLs["video"].get_People(KodiItemId)
 
         if not Name:
@@ -49,10 +49,10 @@ class Person:
             return
 
         if hasMovies or not isFavorite:
-            utils.FavoriteQueue.put(((ImageUrl, isFavorite, f"videodb://movies/actors/{KodiItemId}/", f"{Name} (Movies)", "window", 10025),))
+            utils.FavoriteQueue.put(((common.set_Favorites_Artwork_Overlay("Actor", "Movies", EmbyItemId, self.EmbyServer.ServerData['ServerId'], ImageUrl), isFavorite, f"videodb://movies/actors/{KodiItemId}/", Name, "window", 10025),))
 
         if hasTVShows or not isFavorite:
-            utils.FavoriteQueue.put(((ImageUrl, isFavorite, f"videodb://tvshows/actors/{KodiItemId}/", f"{Name} (TVShows)", "window", 10025),))
+            utils.FavoriteQueue.put(((common.set_Favorites_Artwork_Overlay("Actor", "TV Shows", EmbyItemId, self.EmbyServer.ServerData['ServerId'], ImageUrl), isFavorite, f"videodb://tvshows/actors/{KodiItemId}/", Name, "window", 10025),))
 
         if hasMusicVideos or not isFavorite:
-            utils.FavoriteQueue.put(((ImageUrl, isFavorite, f"videodb://musicvideos/actors/{KodiItemId}/", f"{Name} (Musicvideos)", "window", 10025),))
+            utils.FavoriteQueue.put(((common.set_Favorites_Artwork_Overlay("Actor", "Musicvideos", EmbyItemId, self.EmbyServer.ServerData['ServerId'], ImageUrl), isFavorite, f"videodb://musicvideos/actors/{KodiItemId}/", Name, "window", 10025),))

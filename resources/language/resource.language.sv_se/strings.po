@@ -2761,7 +2761,7 @@ msgstr "Säkerhetskopiering"
 
 msgctxt "#33652"
 msgid "EMBY: Remote play"
-msgstr ""
+msgstr "EMBY: Fjärrspelning"
 
 msgctxt "#33653"
 msgid "VC1"
@@ -2801,44 +2801,52 @@ msgstr ""
 
 msgctxt "#33662"
 msgid "Downloaded series"
-msgstr ""
+msgstr "Nedladdad serie"
 
 msgctxt "#33663"
 msgid "Set imdb as default rating provider"
-msgstr ""
+msgstr "Ställ in imdb som standardklassificeringsleverantör"
 
 msgctxt "#33664"
 msgid "Assume Emby's community rating reflects imdb ratings"
-msgstr ""
+msgstr "Anta att Embys community-betyg återspeglar imdb-betyg"
 
 msgctxt "#33665"
 msgid "Next Episodes (Mixed content)"
-msgstr ""
+msgstr "Nästa avsnitt (blandat innehåll)"
 
 msgctxt "#33666"
 msgid "Continue last played (Mixed content)"
-msgstr ""
+msgstr "Fortsätt senast spelad (blandat innehåll)"
 
 msgctxt "#33667"
 msgid "Continue last played"
-msgstr ""
+msgstr "Fortsätt senast spelade"
 
 msgctxt "#33668"
 msgid "Go To Show"
-msgstr ""
+msgstr "Gå till Visa"
 
 msgctxt "#33669"
 msgid "EMBY: Go To"
-msgstr ""
+msgstr "EMBY: Gå till"
 
 msgctxt "#33670"
 msgid "Go To Show"
-msgstr ""
+msgstr "Gå till Visa"
 
 msgctxt "#33671"
 msgid "Go To Season"
-msgstr ""
+msgstr "Gå till säsong"
 
 msgctxt "#33672"
 msgid "Nodes reset finished"
-msgstr ""
+msgstr "Nodåterställning avslutad"
+
+msgctxt "#33673"
+msgid "URI length limit"
+msgstr "URI längdgräns"
+
+msgctxt "#33674"
+msgid "Higher limits are faster in some cases, but could trigger http 414 issues"
+msgstr "Högre gränser är snabbare i vissa fall, men kan utlösa http 414-problem"

@@ -2760,7 +2760,7 @@ msgstr "Copia de seguridad"
 
 msgctxt "#33652"
 msgid "EMBY: Remote play"
-msgstr ""
+msgstr "EMBY: Juego remoto"
 
 msgctxt "#33653"
 msgid "VC1"
@@ -2800,44 +2800,52 @@ msgstr ""
 
 msgctxt "#33662"
 msgid "Downloaded series"
-msgstr ""
+msgstr "Serie descargada"
 
 msgctxt "#33663"
 msgid "Set imdb as default rating provider"
-msgstr ""
+msgstr "Establecer imdb como proveedor de calificación predeterminado"
 
 msgctxt "#33664"
 msgid "Assume Emby's community rating reflects imdb ratings"
-msgstr ""
+msgstr "Supongamos que la calificación de la comunidad de Emby refleja las calificaciones de imdb"
 
 msgctxt "#33665"
 msgid "Next Episodes (Mixed content)"
-msgstr ""
+msgstr "Próximos episodios (contenido mixto)"
 
 msgctxt "#33666"
 msgid "Continue last played (Mixed content)"
-msgstr ""
+msgstr "Continuar la última reproducción (contenido mixto)"
 
 msgctxt "#33667"
 msgid "Continue last played"
-msgstr ""
+msgstr "Continuar última jugada"
 
 msgctxt "#33668"
 msgid "Go To Show"
-msgstr ""
+msgstr "Ir a mostrar"
 
 msgctxt "#33669"
 msgid "EMBY: Go To"
-msgstr ""
+msgstr "EMBY: Ir a"
 
 msgctxt "#33670"
 msgid "Go To Show"
-msgstr ""
+msgstr "Ir a mostrar"
 
 msgctxt "#33671"
 msgid "Go To Season"
-msgstr ""
+msgstr "Ir a la temporada"
 
 msgctxt "#33672"
 msgid "Nodes reset finished"
-msgstr ""
+msgstr "Reinicio de nodos finalizado"
+
+msgctxt "#33673"
+msgid "URI length limit"
+msgstr "límite de longitud de URI"
+
+msgctxt "#33674"
+msgid "Higher limits are faster in some cases, but could trigger http 414 issues"
+msgstr "Los límites más altos son más rápidos en algunos casos, pero podrían provocar problemas con http 414"

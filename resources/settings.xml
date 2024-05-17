@@ -168,6 +168,18 @@
                 </setting>
             </group>
             <group id="2" label="33577">
+                <setting id="MaxURILength" type="integer" label="33673" help="33674">
+                    <level>3</level>
+                    <default>1500</default>
+                    <constraints>
+                        <minimum>1000</minimum>
+                        <step>100</step>
+                        <maximum>15000</maximum>
+                    </constraints>
+                    <control type="slider" format="integer">
+                        <popup>false</popup>
+                    </control>
+                </setting>
                 <setting id="MusicartistPaging" type="integer" label="33578" help="33175">
                     <level>3</level>
                     <default>10000</default>

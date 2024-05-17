@@ -14,7 +14,7 @@ class Genre:
         ImageUrl = common.set_Favorites_Artwork(Item, self.EmbyServer.ServerData['ServerId'])
 
         if Item['KodiItemId']: # existing item
-            if int(Item['Id']) > 999999900: # Skip injected items updates
+            if Item['Name'] == "--NO INFO--": # Skip injected items updates
                 self.SQLs["emby"].update_EmbyLibraryMapping(Item['Id'], Item['LibraryId'])
                 return False
 
@@ -26,12 +26,12 @@ class Genre:
             self.SQLs["emby"].add_reference_genre(Item['Id'], Item['LibraryId'], Item['KodiItemId'], isFavorite, ImageUrl)
             xbmc.log(f"EMBY.core.gerne: ADD [{Item['KodiItemId']}] {Item['Name']}: {Item['Id']}", 1) # LOGINFO
 
-        self.set_favorite(isFavorite, Item['KodiItemId'], ImageUrl)
+        self.set_favorite(isFavorite, Item['KodiItemId'], ImageUrl, Item['Id'])
         return not Item['UpdateItem']
 
     def remove(self, Item):
         if self.SQLs["emby"].remove_item(Item['Id'], "Genre", Item['LibraryId']):
-            self.set_favorite(False, Item['KodiItemId'], "")
+            self.set_favorite(False, Item['KodiItemId'], "", Item['Id'])
             self.SQLs["video"].delete_genre_by_Id(Item['KodiItemId'])
             xbmc.log(f"EMBY.core.genre: DELETE [{Item['KodiItemId']}] {Item['Id']}", 1) # LOGINFO
 
@@ -41,23 +41,20 @@ class Genre:
         if Item['IsFavorite']:
             ImageUrl = self.SQLs["emby"].get_item_by_id(Item['Id'], "Genre")[3]
 
-        self.set_favorite(Item['IsFavorite'], Item['KodiItemId'], ImageUrl)
+        self.set_favorite(Item['IsFavorite'], Item['KodiItemId'], ImageUrl, Item['Id'])
         self.SQLs["emby"].update_favourite(Item['IsFavorite'], Item['Id'], "Genre")
         pluginmenu.reset_querycache("Genre")
         xbmc.log(f"EMBY.core.genre: USERDATA [{Item['KodiItemId']}] {Item['Id']}", 1) # LOGINFO
 
-    def set_favorite(self, isFavorite, KodiItemId, ImageUrl):
-        Name, hasMusicVideos, hasMovies, hasTVShows = self.SQLs["video"].get_Genre_Name(KodiItemId)
+    def set_favorite(self, isFavorite, KodiItemId, ImageUrl, EmbyItemId):
+        Name, _, hasMovies, hasTVShows = self.SQLs["video"].get_Genre_Name_hasMusicVideos_hasMovies_hasTVShows(KodiItemId)
 
         if not Name:
             xbmc.log(f"EMBY.core.genre: set_favorite, item not found {KodiItemId}", 2) # LOGWARNING
             return
 
         if hasMovies or not isFavorite:
-            utils.FavoriteQueue.put(((ImageUrl, isFavorite, f"videodb://movies/genres/{KodiItemId}/", f"{Name} (Movies)", "window", 10025),))
+            utils.FavoriteQueue.put(((common.set_Favorites_Artwork_Overlay("Genre", "Movies", EmbyItemId, self.EmbyServer.ServerData['ServerId'], ImageUrl), isFavorite, f"videodb://movies/genres/{KodiItemId}/", Name, "window", 10025),))
 
         if hasTVShows or not isFavorite:
-            utils.FavoriteQueue.put(((ImageUrl, isFavorite, f"videodb://tvshows/genres/{KodiItemId}/", f"{Name} (TVShows)", "window", 10025),))
-
-        if hasMusicVideos or not isFavorite:
-            utils.FavoriteQueue.put(((ImageUrl, isFavorite, f"videodb://musicvideos/genres/{KodiItemId}/", f"{Name} (Musicvideos)", "window", 10025),))
+            utils.FavoriteQueue.put(((common.set_Favorites_Artwork_Overlay("Genre", "TV Shows", EmbyItemId, self.EmbyServer.ServerData['ServerId'], ImageUrl), isFavorite, f"videodb://tvshows/genres/{KodiItemId}/", Name, "window", 10025),))
