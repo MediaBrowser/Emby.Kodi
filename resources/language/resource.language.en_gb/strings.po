@@ -2842,3 +2842,11 @@ msgstr ""
 msgctxt "#33672"
 msgid "Nodes reset finished"
 msgstr ""
+
+msgctxt "#33673"
+msgid "URI length limit"
+msgstr ""
+
+msgctxt "#33674"
+msgid "Higher limits are faster in some cases, but could trigger http 414 issues"
+msgstr ""

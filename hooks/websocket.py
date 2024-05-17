@@ -11,7 +11,7 @@ from _thread import start_new_thread
 import _socket
 import xbmc
 import xbmcgui
-from helper import utils, playerops, pluginmenu, queue
+from helper import utils, playerops, queue
 from database import dbio
 
 
@@ -199,6 +199,10 @@ class WSClient:
 
             if not status:
                 status_info = line.split(" ", 2)
+
+                if len(status_info) < 2:
+                    return False
+
                 status = int(status_info[1])
             else:
                 kv = line.split(":", 1)
@@ -528,7 +532,9 @@ class WSClient:
                 if utils.busyMsg and "RefreshProgress" in self.ProgressBar and self.ProgressBar["RefreshProgress"][1] == "Loaded":
                     self.ProgressBar["RefreshProgress"][0].update(int(float(IncomingData['Data']['Progress'])), utils.Translate(33199), utils.Translate(33414))
             elif IncomingData['MessageType'] == 'UserDataChanged':
-                xbmc.log(f"Emby.hooks.websocket: [ UserDataChanged ] {IncomingData['Data']['UserDataList']}", 0) # LOGDEBUG
+                xbmc.log(f"Emby.hooks.websocket: [ UserDataChanged ] {IncomingData['Data']['UserDataList']}", 1) # LOGINFO
+                UpdateData = ()
+                RemoveSkippedItems = ()
 
                 if IncomingData['Data']['UserId'] != self.EmbyServer.ServerData['UserId']:
                     xbmc.log(f"Emby.hooks.websocket: UserDataChanged skip by wrong UserId: {IncomingData['Data']['UserId']}", 1) # LOGINFO
@@ -538,37 +544,37 @@ class WSClient:
                     xbmc.log("Emby.hooks.websocket: UserDataChanged skip by RemoteMode", 1) # LOGINFO
                     continue
 
-                UpdateData = ()
-                DynamicNodesRefresh = False
                 embydb = dbio.DBOpenRO(self.EmbyServer.ServerData['ServerId'], "UserDataChanged")
+                ItemSkipUpdateUniqueIds = set()
+                ItemSkipUpdateEmbyPresentationKeys = ()
+
+                # Create unique array
+                for ItemSkipId in utils.ItemSkipUpdate:
+                    if not ItemSkipId.startswith("KODI"):
+                        ItemSkipUpdateUniqueIds.add(ItemSkipId)
+
+                for ItemSkipUpdateUniqueId in ItemSkipUpdateUniqueIds:
+                    Data = embydb.get_embypresentationkey_by_id_embytype(ItemSkipUpdateUniqueId, ("Episode",)).split("_")[0]
+
+                    if Data:
+                        ItemSkipUpdateEmbyPresentationKeys += (Data,)
 
                 for ItemData in IncomingData['Data']['UserDataList']:
-                    ItemData['ItemId'] = int(ItemData['ItemId'])
+                    EpisodeEmbyPresentationKey = embydb.get_embypresentationkey_by_id_embytype(ItemData['ItemId'], ("Season", "Series")).split("_")[0]
 
-                    if ItemData['ItemId'] not in utils.ItemSkipUpdate:  # Check EmbyID
-                        ExistingItem = embydb.get_item_by_id(ItemData['ItemId'], None)
-
-                        if ExistingItem:
+                    if ItemData['ItemId'] not in utils.ItemSkipUpdate:  # Filter skipped items
+                        if EpisodeEmbyPresentationKey not in ItemSkipUpdateEmbyPresentationKeys:
                             UpdateData += (ItemData,)
                         else:
-                            xbmc.log(f"Emby.hooks.websocket: [ UserDataChanged item not found {ItemData['ItemId']} ]", 1) # LOGINFO
-                            DynamicNodesRefresh = True
+                            xbmc.log(f"Emby.hooks.websocket: UserDataChanged skip by ItemSkipUpdate ancestors / Id: {ItemData['ItemId']} / ItemSkipUpdate: {utils.ItemSkipUpdate}", 0) # DEBUGINFO
                     else:
                         xbmc.log(f"Emby.hooks.websocket: UserDataChanged skip by ItemSkipUpdate / Id: {ItemData['ItemId']} / ItemSkipUpdate: {utils.ItemSkipUpdate}", 0) # DEBUGINFO
-                        utils.ItemSkipUpdate.remove(ItemData['ItemId'])
+                        RemoveSkippedItems += (ItemData['ItemId'],)
 
                 dbio.DBCloseRO(self.EmbyServer.ServerData['ServerId'], "UserDataChanged")
 
-                if DynamicNodesRefresh:
-                    pluginmenu.reset_querycache(None)
-                    MenuPath =  xbmc.getInfoLabel('Container.FolderPath')
-
-                    if MenuPath.startswith("plugin://plugin.video.emby-next-gen/") and "mode=browse" in MenuPath.lower():
-                        xbmc.log("Emby.hooks.websocket: [ UserDataChanged refresh dynamic nodes ]", 1) # LOGINFO
-                        xbmc.executebuiltin('Container.Refresh')
-                    else:
-                        utils.refresh_widgets(True)
-                        utils.refresh_widgets(False)
+                for RemoveSkippedItem in RemoveSkippedItems:
+                    utils.ItemSkipUpdate.remove(RemoveSkippedItem)
 
                 if UpdateData:
                     self.EmbyServer.library.userdata(UpdateData)

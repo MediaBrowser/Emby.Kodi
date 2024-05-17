@@ -185,7 +185,7 @@ class API:
                     for Item in ItemData:
                         yield Item[1]
 
-    def get_Items_Ids(self, Ids, MediaTypes, Dynamic, Basic, ProcessProgressId, LibraryId):
+    def get_Items_Ids(self, Ids, MediaTypes, Dynamic, Basic, ProcessProgressId, LibraryId, UserData=True):
         ItemsQueue = queue.Queue()
         Fields = []
 
@@ -207,11 +207,14 @@ class API:
             Fields = None
 
         if len(MediaTypes) == 1:
-            Params = {'Fields': Fields, 'EnableTotalRecordCount': False, 'LocationTypes': "FileSystem,Remote,Offline", 'IncludeItemTypes': MediaTypes[0]}
+            Params = {'Fields': Fields, 'EnableTotalRecordCount': False, 'LocationTypes': "FileSystem,Remote,Offline", 'IncludeItemTypes': MediaTypes[0], 'SortBy': "None"}
         else:
-            Params = {'Fields': Fields, 'EnableTotalRecordCount': False, 'LocationTypes': "FileSystem,Remote,Offline"}
+            Params = {'Fields': Fields, 'EnableTotalRecordCount': False, 'LocationTypes': "FileSystem,Remote,Offline", 'SortBy': "None"}
 
-        start_new_thread(self.async_get_Items_Ids, (f"Users/{self.EmbyServer.ServerData['UserId']}/Items", ItemsQueue, Params, Ids, Dynamic, ProcessProgressId, LibraryId))
+        if UserData:
+            start_new_thread(self.async_get_Items_Ids, (f"Users/{self.EmbyServer.ServerData['UserId']}/Items", ItemsQueue, Params, Ids, Dynamic, ProcessProgressId, LibraryId))
+        else:
+            start_new_thread(self.async_get_Items_Ids, ("Items", ItemsQueue, Params, Ids, Dynamic, ProcessProgressId, LibraryId))
 
         while True:
             Items = ItemsQueue.getall()
@@ -229,15 +232,16 @@ class API:
         IncomingData = ()
 
         while Ids:
-            MaxURILenght = 1500 # Uri lenght limitation
+            # Uri length limitation
             IdsIndex = 100
 
-            while len(",".join(Ids[:IdsIndex])) < MaxURILenght and IdsIndex < len(Ids):
+            while len(",".join(Ids[:IdsIndex])) < utils.MaxURILength and IdsIndex < len(Ids):
                 IdsIndex += 5
 
-            Params['Ids'] = ",".join(Ids[:IdsIndex])  # Chunks of 100+X -> due to URI lenght limitation, more than 100+X Ids not possible to request (HTTP error 414)
+            Params['Ids'] = ",".join(Ids[:IdsIndex])  # Chunks of 100 + IdsIndex -> due to URI length limitation, more than X Ids not possible to request (HTTP error 414)
             Ids = Ids[IdsIndex:]
 
+            # Query content
             if not Dynamic and LibraryId and LibraryId != "unknown": # Kodi start updates
                 Found = False
 
@@ -264,41 +268,17 @@ class API:
                     return
             elif not Dynamic: # realtime updates via websocket
                 for WhitelistLibraryId in self.EmbyServer.library.WhitelistUnique:
-                    BoxSetParentIds = ()
                     Params.update({'Recursive': True, 'ParentId': WhitelistLibraryId})
                     IncomingData = self.EmbyServer.http.request({'params': Params, 'type': "GET", 'handler': Request}, False, False)
 
                     if 'Items' in IncomingData:
                         for Item in IncomingData['Items']:
-                            if 'ParentId' in Item:
-                                BoxSetParentIds += (Item['ParentId'],)
-
                             Item['LibraryId'] = WhitelistLibraryId
                             ItemsQueue.put(Item)
                             Index += 1
 
                         if len(IncomingData['Items']) == len(Params['Ids'].split(",")): # All data received, no need to check additional libraries
                             break
-
-                    if BoxSetParentIds:
-                        BoxsetDoublesCheck = ()
-
-                        for BoxSetParentId in BoxSetParentIds:
-                            ParamsBoxSet = {'ParentId': BoxSetParentId, 'Fields': ",".join(EmbyFields['boxset']), 'EnableTotalRecordCount': False, 'LocationTypes': "FileSystem,Remote,Offline", 'IncludeItemTypes': "BoxSet", 'Recursive': True}
-                            IncomingData = self.EmbyServer.http.request({'params': ParamsBoxSet, 'type': "GET", 'handler': Request}, False, False)
-
-                            if 'Items' in IncomingData:
-                                for Item in IncomingData['Items']:
-                                    if Item['Type'] == "BoxSet":
-                                        Item['LibraryId'] = WhitelistLibraryId
-
-                                        if Item not in BoxsetDoublesCheck:
-                                            BoxsetDoublesCheck += (Item,)
-                                            ItemsQueue.put(Item)
-
-                        del BoxsetDoublesCheck
-
-                    del BoxSetParentIds
 
                     if utils.SystemShutdown:
                         ItemsQueue.put("QUIT")
@@ -370,6 +350,9 @@ class API:
             if Extra:
                 CustomLimit = bool("Limit" in Extra)
                 Params.update(Extra)
+
+            if 'SortBy' not in Params:
+                Params['SortBy'] = "None"
 
             start_new_thread(self.async_get_Items, (f"Users/{self.EmbyServer.ServerData['UserId']}/Items", ItemsQueue, CustomLimit, Params, ProcessProgressId))
 
@@ -465,9 +448,9 @@ class API:
             Fields = self.get_Fields(MediaType, Basic, Dynamic)
 
             if Specials: # Bugfix workaround
-                Data = self.EmbyServer.http.request({'params': {'Ids': Ids, 'Fields': Fields, 'IncludeItemTypes': 'Workaround', 'EnableTotalRecordCount': False, 'LocationTypes': "FileSystem,Remote,Offline"}, 'type': "GET", 'handler': f"Users/{self.EmbyServer.ServerData['UserId']}/Items"}, False, False)
+                Data = self.EmbyServer.http.request({'params': {'Ids': Ids, 'Fields': Fields, 'IncludeItemTypes': 'Workaround', 'EnableTotalRecordCount': False, 'LocationTypes': "FileSystem,Remote,Offline", 'SortBy': "None"}, 'type': "GET", 'handler': f"Users/{self.EmbyServer.ServerData['UserId']}/Items"}, False, False)
             else:
-                Data = self.EmbyServer.http.request({'params': {'Ids': Ids, 'Fields': Fields, 'EnableTotalRecordCount': False, 'LocationTypes': "FileSystem,Remote,Offline"}, 'type': "GET", 'handler': f"Users/{self.EmbyServer.ServerData['UserId']}/Items"}, False, False)
+                Data = self.EmbyServer.http.request({'params': {'Ids': Ids, 'Fields': Fields, 'EnableTotalRecordCount': False, 'LocationTypes': "FileSystem,Remote,Offline", 'SortBy': "None"}, 'type': "GET", 'handler': f"Users/{self.EmbyServer.ServerData['UserId']}/Items"}, False, False)
 
             if 'Items' in Data:
                 if Data['Items']:
@@ -591,7 +574,7 @@ class API:
                 FileExtension = "ukn"
         else:
             FileExtension = "ukn"
-            ContentType = "ukn"
+            ContentType = "image/unknown"
 
         return BinaryData, ContentType, FileExtension
 
@@ -686,14 +669,17 @@ class API:
         else:
             self.EmbyServer.http.request({'type': "DELETE", 'handler': f"Sessions/{session_id}/Users/{user_id}"}, False, False)
 
-    def session_playing(self, params):
-        self.EmbyServer.http.request({'params': params, 'type': "POST", 'handler': "Sessions/Playing"}, False, False)
+    def session_playing(self, PlayingItem):
+        PlayingItemLocal = session_filter_data(PlayingItem)
+        self.EmbyServer.http.request({'params': PlayingItemLocal, 'type': "POST", 'handler': "Sessions/Playing"}, False, False)
 
-    def session_progress(self, params):
-        self.EmbyServer.http.request({'params': params, 'type': "POST", 'handler': "Sessions/Playing/Progress"}, False, False)
+    def session_progress(self, PlayingItem):
+        PlayingItemLocal = session_filter_data(PlayingItem)
+        self.EmbyServer.http.request({'params': PlayingItemLocal, 'type': "POST", 'handler': "Sessions/Playing/Progress"}, False, False)
 
-    def session_stop(self, params):
-        self.EmbyServer.http.request({'params': params, 'type': "POST", 'handler': "Sessions/Playing/Stopped"}, False, False)
+    def session_stop(self, PlayingItem):
+        PlayingItemLocal = session_filter_data(PlayingItem)
+        self.EmbyServer.http.request({'params': PlayingItemLocal, 'type': "POST", 'handler': "Sessions/Playing/Stopped"}, False, False)
 
     def session_logout(self):
         self.EmbyServer.http.request({'type': "POST", 'handler': "Sessions/Logout"}, False, False)
@@ -816,3 +802,14 @@ def get_Limit(MediaType):
 
     xbmc.log(f"EMBY.emby.api: Invalid content: {MediaType}", 3) # LOGERROR
     return 5000
+
+def session_filter_data(PlayingItem):
+    PlayingItemLocal = PlayingItem.copy()
+
+    if 'MediaSourceId' in PlayingItemLocal and not PlayingItemLocal['MediaSourceId']:
+        del PlayingItemLocal['MediaSourceId']
+
+    if 'PlaylistPosition' in PlayingItemLocal and PlayingItemLocal['PlaylistPosition'] == -1:
+        del PlayingItemLocal['PlaylistPosition']
+
+    return PlayingItemLocal

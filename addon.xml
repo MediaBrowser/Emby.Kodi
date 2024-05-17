@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8' standalone="yes"?>
-<addon id="plugin.video.emby-next-gen" name="Emby for Kodi Next Gen" version="10.0.18" provider-name="quickmic">
+<addon id="plugin.video.emby-next-gen" name="Emby for Kodi Next Gen" version="10.0.23" provider-name="quickmic">
     <requires>
         <import addon="xbmc.python" version="3.0.1"/>
         <import addon="script.module.urllib3" version="1.0.0"/>
@@ -22,7 +22,7 @@
                 <visible>[String.IsEqual(Window(10000).Property(EmbySpecials),True) + String.Contains(ListItem.FileName,"-s-")]</visible>
             </item>
             <menu>
-			    <label>33669</label>
+                <label>33669</label>
                 <item library="events.py" args="gotoshow">
                     <label>33670</label>
                     <visible>[String.IsEqual(Window(10000).Property(EmbyGoto),True) + String.IsEqual(ListItem.DBTYPE,episode)]</visible>

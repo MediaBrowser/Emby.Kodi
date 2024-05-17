@@ -248,7 +248,7 @@ class MusicDatabase:
         Genres = sorted(Genres, reverse=False, key=str.lower)
         return Genres
 
-    def get_Genre_Name(self, GenreId):
+    def get_Genre_Name_hasSongs(self, GenreId):
         Songs = False
         self.cursor.execute("SELECT strGenre FROM genre WHERE idGenre = ?", (GenreId,))
         Data = self.cursor.fetchone()

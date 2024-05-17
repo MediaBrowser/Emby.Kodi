@@ -54,7 +54,7 @@ class VideoDatabase:
         Image = ""
 
         if ContentType == "set":
-            self.cursor.execute("SELECT strSet FROM sets WHERE idSet = ?", (KodiFileId,))
+            self.cursor.execute("SELECT strSet FROM sets WHERE idSet = ?", (KodiItemId,))
             DataSet = self.cursor.fetchone()
 
             if DataSet:
@@ -1007,7 +1007,7 @@ class VideoDatabase:
     def delete_links_genres(self, Media_id, media_type):
         self.cursor.execute("DELETE FROM genre_link WHERE media_id = ? AND media_type = ?", (Media_id, media_type))
 
-    def get_Genre_Name(self, GenreId):
+    def get_Genre_Name_hasMusicVideos_hasMovies_hasTVShows(self, GenreId):
         MusicVideos = False
         Movies = False
         TVShows = False

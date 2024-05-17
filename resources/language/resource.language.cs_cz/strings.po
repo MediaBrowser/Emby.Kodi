@@ -2762,7 +2762,7 @@ msgstr "Záloha"
 
 msgctxt "#33652"
 msgid "EMBY: Remote play"
-msgstr ""
+msgstr "EMBY: Přehrávání na dálku"
 
 msgctxt "#33653"
 msgid "VC1"
@@ -2802,44 +2802,52 @@ msgstr ""
 
 msgctxt "#33662"
 msgid "Downloaded series"
-msgstr ""
+msgstr "Stažená série"
 
 msgctxt "#33663"
 msgid "Set imdb as default rating provider"
-msgstr ""
+msgstr "Nastavte imdb jako výchozího poskytovatele hodnocení"
 
 msgctxt "#33664"
 msgid "Assume Emby's community rating reflects imdb ratings"
-msgstr ""
+msgstr "Předpokládejme, že hodnocení komunity Emby odráží hodnocení imdb"
 
 msgctxt "#33665"
 msgid "Next Episodes (Mixed content)"
-msgstr ""
+msgstr "Další epizody (smíšený obsah)"
 
 msgctxt "#33666"
 msgid "Continue last played (Mixed content)"
-msgstr ""
+msgstr "Pokračovat v posledním hraní (smíšený obsah)"
 
 msgctxt "#33667"
 msgid "Continue last played"
-msgstr ""
+msgstr "Pokračovat naposledy hrané"
 
 msgctxt "#33668"
 msgid "Go To Show"
-msgstr ""
+msgstr "Přejít na show"
 
 msgctxt "#33669"
 msgid "EMBY: Go To"
-msgstr ""
+msgstr "EMBY: Přejít na"
 
 msgctxt "#33670"
 msgid "Go To Show"
-msgstr ""
+msgstr "Přejít na show"
 
 msgctxt "#33671"
 msgid "Go To Season"
-msgstr ""
+msgstr "Přejít na sezónu"
 
 msgctxt "#33672"
 msgid "Nodes reset finished"
-msgstr ""
+msgstr "Resetování uzlů dokončeno"
+
+msgctxt "#33673"
+msgid "URI length limit"
+msgstr "Limit délky URI"
+
+msgctxt "#33674"
+msgid "Higher limits are faster in some cases, but could trigger http 414 issues"
+msgstr "Vyšší limity jsou v některých případech rychlejší, ale mohou způsobit problémy s http 414"

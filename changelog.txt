@@ -1,3 +1,58 @@
+10.0.23
+=============
+fix pillow library issue
+Improve multicontent sync, thanks to Luke for modifications (currently only in Emby server's beta version, will be backported to next stable)
+disable sortby (could give minor sync performance plus). This change breaks Emby server 4.7 support. It's no longer supported by plugin
+fix sync pause while watch-togeter and remote-mode
+fix progress updates -> never delay
+add translations
+
+
+
+10.0.22
+=============
+fix favorite sync issue
+fix Boxset realtime updates
+fix websocket issue
+rollback multiversion content changes from 10.0.21. The performance issue will be addressed in one of the next versions. -> different approach
+add option to adjust the max URI length
+fix delete after watched function
+fix pillow library issue
+
+
+
+10.0.21
+=============
+fix boxset updates for realtime sync when content was added
+unify code
+improve realtime boxset updates sync performance (de-double updates)
+fix favorites linked by sub-content
+fix image overlay for favorites, when added via Kodi's favorite option
+improve internal queue
+fix sync crash
+fix dynamic nodes refresh when content was deleted, added or modified
+supress unnecessary progress updates e.g. after episode playback, season was updated by incoming Emby server notification.
+fix content detection by PresentationUniqueKey
+improve init sync speed for multiversion content
+
+
+
+10.0.20
+=============
+disable http HEAD request forwarding to emby server (less server load for Emby)
+fix dynamic nodes refresh when content was deleted
+fix userdata updates for Tag, Studio, Playlist, Person
+fix favorites and use image overlays
+more reliable delete-after-watched option
+several minor player fixes
+
+
+10.0.19
+=============
+fix strm files including a plugin source
+fix head (mime type) queries from Kodi
+
+
 10.0.18
 =============
 fix boxsets to tags option

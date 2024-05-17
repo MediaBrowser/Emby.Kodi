@@ -53,7 +53,7 @@ class MusicArtist:
             LibraryIds = [[], []]
 
         # Update all existing Kodi musicartist
-        if int(Item['Id']) < 999999900: # Skip injected items updates
+        if Item['Name'] != "--NO INFO--": # update not injected items updates
             for Index, KodiItemIdsByDatabase in enumerate(KodiItemIds):
                 if KodiItemIdsByDatabase and KodiDBs[Index] in self.SQLs:
                     for KodiItemIdByDatabase in KodiItemIdsByDatabase:
@@ -66,7 +66,7 @@ class MusicArtist:
                             self.SQLs["music"].common_db.add_artwork(Item['KodiArtwork'], KodiItemIdByDatabase, "artist")
                             self.SQLs[KodiDBs[Index]].update_artist(KodiItemIdByDatabase, Item['Name'], Item['ProviderIds']['MusicBrainzArtist'], Item['MusicGenre'], Item['Overview'], Item['KodiArtwork']['thumb'], Item['KodiLastScraped'], Item['SortName'], Item['KodiDateCreated'])
 
-                        self.set_favorite(KodiItemIdByDatabase, isFavorite, KodiDBs[Index], Item['Name'], Item['KodiArtwork']['poster'])
+                        self.set_favorite(KodiItemIdByDatabase, isFavorite, KodiDBs[Index], Item['Id'])
                         xbmc.log(f"EMBY.core.musicartist: UPDATE ({KodiDBs[Index]}) {Item['Name']}: {Item['Id']}", 1) # LOGINFO
 
         # New library (insert new Kodi record)
@@ -81,7 +81,7 @@ class MusicArtist:
                     KodiItemIds[Index].append(str(self.SQLs[KodiDBs[Index]].add_artist(Item['Name'], Item['ProviderIds']['MusicBrainzArtist'], Item['MusicGenre'], Item['Overview'], Item['KodiArtwork']['thumb'], Item['KodiLastScraped'], Item['SortName'], Item['KodiDateCreated'], Item['LibraryId'])))
                     self.SQLs["music"].common_db.add_artwork(Item['KodiArtwork'], KodiItemIds[Index][-1], "artist")
 
-                self.set_favorite(KodiItemIds[Index][-1], isFavorite, KodiDBs[Index], Item['Name'], Item['KodiArtwork']['poster'])
+                self.set_favorite(KodiItemIds[Index][-1], isFavorite, KodiDBs[Index], Item['Id'])
                 NewItem = True
                 xbmc.log(f"EMBY.core.musicartist: ADD ({KodiDBs[Index]}) {Item['Name']}: {Item['Id']}", 1) # LOGINFO
 
@@ -95,7 +95,7 @@ class MusicArtist:
         if NewItem:
             self.SQLs["emby"].add_reference_musicartist(Item['Id'], Item['LibraryId'], KodiItemIds, isFavorite, LibraryIds)
         else:
-            if int(Item['Id']) > 999999900: # Skip injected items
+            if Item['Name'] == "--NO INFO--": # Skip injected items updates
                 return False
 
             self.SQLs["emby"].update_reference_generic(isFavorite, Item['Id'], "MusicArtist", Item['LibraryId'])
@@ -108,7 +108,7 @@ class MusicArtist:
         if not Item['LibraryId']:
             for Index in range(2):
                 for KodiItemId in KodiItemIds[Index].split(","):
-                    self.set_favorite(KodiItemId, False, KodiDBs[Index])
+                    self.set_favorite(KodiItemId, False, KodiDBs[Index], Item['Id'])
                     self.SQLs[KodiDBs[Index]].del_musicartist(KodiItemId)
 
             self.SQLs['emby'].remove_item(Item['Id'], "MusicArtist", None)
@@ -144,7 +144,7 @@ class MusicArtist:
             for KodiDBUpdate in KodiDBsUpdate:
                 Index = KodiDBs.index(KodiDBUpdate)
                 SubIndex = LibraryIds[Index].index(str(Item['LibraryId']))
-                self.set_favorite(KodiItemIds[Index][SubIndex], False, KodiDBs[Index])
+                self.set_favorite(KodiItemIds[Index][SubIndex], False, KodiDBs[Index], Item['Id'])
                 self.SQLs[KodiDBs[Index]].del_musicartist(KodiItemIds[Index][SubIndex])
                 del LibraryIds[Index][SubIndex]
                 del KodiItemIds[Index][SubIndex]
@@ -168,23 +168,23 @@ class MusicArtist:
 
         if KodiItemIds[0]:
             for KodiItemId in KodiItemIds[0].split(","): # musicvideo artists
-                self.set_favorite(KodiItemId, Item['IsFavorite'], "video")
+                self.set_favorite(KodiItemId, Item['IsFavorite'], "video", Item['Id'])
 
         if KodiItemIds[1]:
             for KodiItemId in KodiItemIds[1].split(","): # music artists
-                self.set_favorite(KodiItemId, Item['IsFavorite'], "music") # musicvideo artists
+                self.set_favorite(KodiItemId, Item['IsFavorite'], "music", Item['Id']) # musicvideo artists
 
         self.SQLs["emby"].update_favourite(Item['IsFavorite'], Item['Id'], "MusicArtist")
         pluginmenu.reset_querycache("MusicArtist")
 
-    def set_favorite(self, KodiItemId, isFavorite, KodiDB, Name="", ImageUrl=""):
+    def set_favorite(self, KodiItemId, isFavorite, KodiDB, EmbyItemId):
         if KodiDB == "music":
-            if not Name:
-                Name, ImageUrl, _ = self.SQLs["music"].get_Artist(KodiItemId)
+            Name, ImageUrl, hasMusicArtists = self.SQLs["music"].get_Artist(KodiItemId)
 
-            utils.FavoriteQueue.put(((ImageUrl, isFavorite, f"musicdb://artists/{KodiItemId}/", f"{Name} (Songs)", "window", 10502),))
+            if hasMusicArtists or not isFavorite:
+                utils.FavoriteQueue.put(((common.set_Favorites_Artwork_Overlay("Artist", "Songs", EmbyItemId, self.EmbyServer.ServerData['ServerId'], ImageUrl), isFavorite, f"musicdb://artists/{KodiItemId}/", Name, "window", 10502),))
         else:
-            if not Name:
-                Name, ImageUrl, _, _, _ = self.SQLs["video"].get_People(KodiItemId)
+            Name, ImageUrl, hasMusicVideos, _, _ = self.SQLs["video"].get_People(KodiItemId)
 
-            utils.FavoriteQueue.put(((ImageUrl, isFavorite, f"videodb://musicvideos/artists/{KodiItemId}/", f"{Name} (Musicvideos)", "window", 10025),))
+            if hasMusicVideos or not isFavorite:
+                utils.FavoriteQueue.put(((common.set_Favorites_Artwork_Overlay("Artist", "Musicvideos", EmbyItemId, self.EmbyServer.ServerData['ServerId'], ImageUrl), isFavorite, f"videodb://musicvideos/artists/{KodiItemId}/", Name, "window", 10025),))

@@ -108,8 +108,12 @@ def RemovePlaylistItem(PlaylistId, Index):
 
 def Next():
     if PlayerId != -1:
-        utils.SendJson(f'{{"jsonrpc":"2.0","method":"Player.GoTo","params":{{"playerid":{PlayerId},"to":"next"}},"id":1}}')
-        xbmc.log("EMBY.helper.playerops: [ Next ]", 1) # LOGINFO
+        PlaylistPosition = GetPlayerPosition(PlayerId)
+        PlaylistPosition += 1
+
+        if PlaylistPosition >= 0:
+            utils.SendJson(f'{{"jsonrpc":"2.0","method":"Player.GoTo","params":{{"playerid":{PlayerId},"to":{PlaylistPosition}}},"id":1}}', True)
+            xbmc.log("EMBY.helper.playerops: [ Next ]", 1) # LOGINFO
     else:
         xbmc.log(f"EMBY.helper.playerops: Next failed: PlayerId={PlayerId}", 3) # LOGERROR
 
@@ -117,8 +121,12 @@ def Next():
 
 def Previous():
     if PlayerId != -1:
-        utils.SendJson(f'{{"jsonrpc":"2.0","method":"Player.GoTo","params":{{"playerid":{PlayerId},"to":"previous"}},"id":1}}')
-        xbmc.log("EMBY.helper.playerops: [ Previous ]", 1) # LOGINFO
+        PlaylistPosition = GetPlayerPosition(PlayerId)
+        PlaylistPosition -= 1
+
+        if PlaylistPosition >= 0:
+            utils.SendJson(f'{{"jsonrpc":"2.0","method":"Player.GoTo","params":{{"playerid":{PlayerId},"to":{PlaylistPosition}}},"id":1}}', True)
+            xbmc.log("EMBY.helper.playerops: [ Previous ]", 1) # LOGINFO
     else:
         xbmc.log(f"EMBY.helper.playerops: Previous failed: PlayerId={PlayerId}", 3) # LOGERROR
 
