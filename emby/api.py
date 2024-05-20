@@ -332,7 +332,7 @@ class API:
             yield from Items
             del Items
 
-    def get_Items(self, ParentId, MediaTypes, Basic, Recursive, Extra, ProcessProgressId=""):
+    def get_Items(self, ParentId, MediaTypes, Basic, Recursive, Extra, ProcessProgressId="", UserData=True):
         CustomLimit = False
         ItemsQueue = queue.Queue()
 
@@ -354,7 +354,10 @@ class API:
             if 'SortBy' not in Params:
                 Params['SortBy'] = "None"
 
-            start_new_thread(self.async_get_Items, (f"Users/{self.EmbyServer.ServerData['UserId']}/Items", ItemsQueue, CustomLimit, Params, ProcessProgressId))
+            if UserData:
+                start_new_thread(self.async_get_Items, (f"Users/{self.EmbyServer.ServerData['UserId']}/Items", ItemsQueue, CustomLimit, Params, ProcessProgressId))
+            else:
+                start_new_thread(self.async_get_Items, ("Items", ItemsQueue, CustomLimit, Params, ProcessProgressId))
 
             while True:
                 Items = ItemsQueue.getall()
@@ -417,7 +420,8 @@ class API:
                     return
 
                 ItemsQueue.put(IncomingData)
-                ItemCounter += len(IncomingData)
+                ReceivedItems = len(IncomingData)
+                ItemCounter += ReceivedItems
             else:
                 if 'Items' not in IncomingData or not IncomingData['Items'] or utils.SystemShutdown:
                     ItemsQueue.put("QUIT")
@@ -426,7 +430,8 @@ class API:
                     return
 
                 ItemsQueue.put(IncomingData['Items'])
-                ItemCounter += len(IncomingData['Items'])
+                ReceivedItems = len(IncomingData['Items'])
+                ItemCounter += ReceivedItems
 
             del IncomingData  # release memory
 
@@ -437,6 +442,12 @@ class API:
 
             if not self.async_throttle_queries(Index, Limit, ProcessProgressId):
                 ItemsQueue.put("QUIT")
+                xbmc.log("EMBY.emby.api: THREAD: ---<[ load Items ] (throttle)", 0) # LOGDEBUG
+                break
+
+            if ReceivedItems < Limit:
+                ItemsQueue.put("QUIT")
+                xbmc.log(f"EMBY.emby.api: THREAD: ---<[ load Items ] Limit: {Limit} / ReceivedItems: {ReceivedItems}", 0) # LOGDEBUG
                 break
 
             Index += Limit

@@ -19,7 +19,7 @@ class BoxSets:
         # Query assigned content for collections
         ContentsAssignedToBoxset = []
 
-        for ContentAssignedToBoxset in self.EmbyServer.API.get_Items(Item['Id'], ["All"], True, True, {'GroupItemsIntoCollections': True}):
+        for ContentAssignedToBoxset in self.EmbyServer.API.get_Items(Item['Id'], ["All"], True, True, {'GroupItemsIntoCollections': True}, "", False):
             ContentsAssignedToBoxset.append(ContentAssignedToBoxset)
 
         # Add new collection tag

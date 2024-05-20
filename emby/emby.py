@@ -63,7 +63,11 @@ class EmbyServer:
         playerops.init_RemoteClient(self.ServerData['ServerId'])
         self.Views.update_views()
         self.Views.update_nodes()
-        self.toggle_websocket(True)
+
+        if utils.websocketenabled and not self.Websocket:
+            self.Websocket = websocket.WSClient(self)
+            self.Websocket.start()
+
         start_new_thread(self.library.KodiStartSync, (self.Firstrun,))  # start initial sync
         start_new_thread(self.Ping, ())
         self.Firstrun = False
@@ -80,7 +84,11 @@ class EmbyServer:
             xbmc.log(f"EMBY.emby.emby: ---[ STOP EMBYCLIENT: {self.ServerData['ServerId']} ]---", 1) # LOGINFO
             utils.SyncPause.update({f"server_starting_{self.ServerData['ServerId']}": True, f"server_busy_{self.ServerData['ServerId']}": False})
             playerops.delete_RemoteClient(self.ServerData['ServerId'], [self.EmbySession[0]['Id']], True, True)
-            self.toggle_websocket(False)
+
+            if self.Websocket:
+                self.Websocket.close()
+                self.Websocket = None
+
             self.EmbySession = []
             self.ServerData['Online'] = False
             self.ShutdownInProgress = False
@@ -499,16 +507,6 @@ class EmbyServer:
                     return
 
             self.API.ping()
-
-    def toggle_websocket(self, Enable):
-        if Enable:
-            if utils.websocketenabled and not self.Websocket:
-                self.Websocket = websocket.WSClient(self)
-                self.Websocket.start()
-        else:
-            if self.Websocket:
-                self.Websocket.close()
-                self.Websocket = None
 
 def normalize_address(address):
     # Attempt to correct bad input

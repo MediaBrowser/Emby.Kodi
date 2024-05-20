@@ -16,6 +16,7 @@ class VideoDatabase:
         self.cursor.execute("CREATE INDEX IF NOT EXISTS idx_bookmark_timeInSeconds on bookmark (timeInSeconds)")
         self.cursor.execute("CREATE INDEX IF NOT EXISTS idx_rating_rating on rating (rating)")
         self.cursor.execute("CREATE INDEX IF NOT EXISTS idx_episode_c12 on episode (c12)")
+        self.cursor.execute("CREATE INDEX IF NOT EXISTS idx_episode_idShow_idFile_c12 on episode (idShow, idFile, c12)")
 
     def delete_Index(self):
         self.cursor.execute("DROP INDEX IF EXISTS idx_files_strFilename")
@@ -26,6 +27,7 @@ class VideoDatabase:
         self.cursor.execute("DROP INDEX IF EXISTS idx_bookmark_timeInSeconds")
         self.cursor.execute("DROP INDEX IF EXISTS idx_rating_rating")
         self.cursor.execute("DROP INDEX IF EXISTS idx_episode_c12")
+        self.cursor.execute("DROP INDEX IF EXISTS idx_episode_idShow_idFile_c12")
 
     # playcount
     def get_playcount(self, KodiItemId, ContentType):

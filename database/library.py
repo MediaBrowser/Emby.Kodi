@@ -54,6 +54,7 @@ class Library:
                     if utils.sleep(1):
                         xbmc.log("EMBY.database.library: --<[ open_Worker delay: Worker_is_paused (shutdown) ]", 1) # LOGINFO
                         return False, {}
+
                 xbmc.log("EMBY.database.library: --<[ open_Worker delay: Worker_is_paused ]", 1) # LOGINFO
 
             if WorkerInProgress:
@@ -655,7 +656,7 @@ class Library:
             self.EmbyDBOpen = False
 
             # Interrupt sync process
-            if WorkerName != "worker_userdata":
+            if WorkerName not in ("worker_userdata", "worker_library"):
                 ProgressBar.close()
                 del ProgressBar
                 globals()["WorkerInProgress"] = False
