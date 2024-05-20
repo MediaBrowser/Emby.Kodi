@@ -1,3 +1,15 @@
+10.0.24
+=============
+fix server busy progress bar when server restarted or shutdown
+fix websocket issue
+fix init sync when server is busy (sync re-started)
+increase paging limit for MusicAlbum
+remove sorting parameter for unlimited synced nodes (performance)
+add Kodi database indexes (performance)
+improve sync performance
+
+
+
 10.0.23
 =============
 fix pillow library issue

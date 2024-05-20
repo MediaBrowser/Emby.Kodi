@@ -71,7 +71,7 @@ class WSClient:
             self._frame_length = None
             self._frame_mask = None
             self._cont_data = None
-            self.Tasks = {}
+            self.close_EmbyServerBusy()
 
     def Listen(self):
         xbmc.log("Emby.hooks.websocket: THREAD: --->[ websocket ]", 0) # LOGDEBUG
@@ -291,8 +291,8 @@ class WSClient:
             if self._frame_header is None:
                 self._frame_header = self._recv_strict(2)
 
-                if not self._frame_header:  # connection closed
-                    return None
+            if not self._frame_header:  # connection closed
+                return None
 
             b1 = self._frame_header[0]
             b2 = self._frame_header[1]
@@ -601,20 +601,19 @@ class WSClient:
                     self.EmbyServer.library.RunJobs()
             elif IncomingData['MessageType'] == 'ServerRestarting':
                 xbmc.log("Emby.hooks.websocket: [ ServerRestarting ]", 1) # LOGINFO
-                self.RefreshProgressRunning = False
-                self.Tasks = {}
+                self.close_EmbyServerBusy()
 
                 if utils.restartMsg:
                     utils.Dialog.notification(heading=utils.addon_name, message=utils.Translate(33006), icon=utils.icon, time=utils.newContentTime)
 
                 self.EmbyServer.ServerReconnect()
             elif IncomingData['MessageType'] == 'ServerShuttingDown':
-                self.RefreshProgressRunning = False
-                self.Tasks = {}
                 xbmc.log("Emby.hooks.websocket: [ ServerShuttingDown ]", 1) # LOGINFO
+                self.close_EmbyServerBusy()
                 utils.Dialog.notification(heading=utils.addon_name, message=utils.Translate(33236), time=utils.newContentTime)
                 self.EmbyServer.ServerReconnect()
             elif IncomingData['MessageType'] == 'RestartRequired':
+                xbmc.log("Emby.hooks.websocket: [ RestartRequired ]", 1) # LOGINFO
                 utils.Dialog.notification(heading=utils.addon_name, message=utils.Translate(33237), time=utils.newContentTime)
             elif IncomingData['MessageType'] == 'Play':
                 playerops.PlayEmby(IncomingData['Data']['ItemIds'], IncomingData['Data']['PlayCommand'], int(IncomingData['Data'].get('StartIndex', 0)), int(IncomingData['Data'].get('StartPositionTicks', -1)), self.EmbyServer, 0)
@@ -654,6 +653,17 @@ class WSClient:
 
             Compare = [False] * len(self.Tasks)
 
+        self.close_EmbyServerBusy()
+        self.EmbyServer.library.RunJobs()
+
+        if self.EPGRefresh:
+            self.EmbyServer.library.SyncLiveTVEPG()
+            self.EPGRefresh = False
+
+        xbmc.log("Emby.hooks.websocket: THREAD: ---<[ Emby server is busy, sync in progress ]", 1) # LOGINFO
+
+
+    def close_EmbyServerBusy(self):
         if utils.busyMsg:
             if "RefreshProgress" in self.ProgressBar:
                 while self.ProgressBar["RefreshProgress"][1] == "Init":
@@ -667,13 +677,6 @@ class WSClient:
         self.RefreshProgressInit = False
         self.EmbyServerSyncCheckRunning = False
         utils.SyncPause[f"server_busy_{self.EmbyServer.ServerData['ServerId']}"] = False
-        self.EmbyServer.library.RunJobs()
-
-        if self.EPGRefresh:
-            self.EmbyServer.library.SyncLiveTVEPG()
-            self.EPGRefresh = False
-
-        xbmc.log("Emby.hooks.websocket: THREAD: ---<[ Emby server is busy, sync in progress ]", 1) # LOGINFO
 
     def confirm_remote(self, SessionId, Timeout): # threaded
         xbmc.log("Emby.hooks.websocket: THREAD: --->[ Remote confirm ]", 0) # LOGDEBUG
