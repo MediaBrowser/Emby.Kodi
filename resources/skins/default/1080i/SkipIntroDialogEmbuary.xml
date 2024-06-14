@@ -20,7 +20,7 @@
             <width>14%</width>
             <height>5%</height>
             <visible>true</visible>
-			<label>$ADDON[plugin.video.emby-next-gen 33417]</label>
+			<label>$ADDON[plugin.service.emby-next-gen 33417]</label>
         </control>
     </controls>
 </window>

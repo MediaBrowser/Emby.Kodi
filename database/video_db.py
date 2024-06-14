@@ -1177,7 +1177,7 @@ class VideoDatabase:
     # artwork
     def get_artwork(self, KodiItemId, ContentType, PrefixKey):
         Artwork = {}
-        self.cursor.execute("SELECT * FROM art WHERE media_id = ? and media_type = ?", (KodiItemId, ContentType))
+        self.cursor.execute("SELECT * FROM art WHERE media_id = ? AND media_type = ?", (KodiItemId, ContentType))
         ArtworksData = self.cursor.fetchall()
 
         for ArtworkData in ArtworksData:

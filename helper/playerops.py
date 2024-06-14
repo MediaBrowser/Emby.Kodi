@@ -23,7 +23,7 @@ RemoteCommandActive = [0, 0, 0, 0, 0] # prevent loops when client has control [P
 def enable_remotemode(ServerId):
     globals()["RemoteControl"] = True
     globals()["RemoteMode"] = True
-    send_RemoteClients(ServerId, [], True, False)
+    send_RemoteClients(ServerId, [], True)
 
 def ClearPlaylist(PlaylistId):
     utils.SendJson(f'{{"jsonrpc": "2.0", "id": 1, "method": "Playlist.Clear", "params": {{"playlistid": {PlaylistId}}}}}')
@@ -414,7 +414,7 @@ def PlayEmby(ItemIds, PlayCommand, StartIndex, StartPositionTicks, EmbyServer, T
     #load additional items after playback started
     if PlayCommand not in ("PlayInit", "PlaySingle"):
         if DelayedQueryEmbyIds:
-            for Item in EmbyServer.API.get_Items_Ids(DelayedQueryEmbyIds, ["Episode", "Movie", "Trailer", "MusicVideo", "Audio", "Video", "Photo"], True, False, "", None):
+            for Item in EmbyServer.API.get_Items_Ids(DelayedQueryEmbyIds, ["Episode", "Movie", "Trailer", "MusicVideo", "Audio", "Video", "Photo"], True, False, "", None, {}):
                 ListItem = listitem.set_ListItem(Item, EmbyServer.ServerData['ServerId'])
                 Path, ShortType = common.get_path_type_from_item(EmbyServer.ServerData['ServerId'], Item)
 
@@ -442,7 +442,7 @@ def PlayEmby(ItemIds, PlayCommand, StartIndex, StartPositionTicks, EmbyServer, T
                 Pictures.append((PlaylistItem[5], PlaylistItem[4]))
 
     if PlayerIdPlaylistId == 2: # picture
-        utils.SendJson(f'{{"jsonrpc": "2.0", "id": 1, "method": "GUI.ActivateWindow", "params": {{"window": "pictures", "parameters": ["plugin://plugin.video.emby-next-gen/?mode=remotepictures&position={KodiPlaylistIndexStartitem}", "return"]}}}}')
+        utils.SendJson(f'{{"jsonrpc": "2.0", "id": 1, "method": "GUI.ActivateWindow", "params": {{"window": "pictures", "parameters": ["plugin://plugin.service.emby-next-gen/?mode=remotepictures&position={KodiPlaylistIndexStartitem}", "return"]}}}}')
 
     for Index, Picture in enumerate(Pictures):
         if Index != 0:
@@ -466,12 +466,12 @@ def add_RemoteClientExtendedSupportAck(ServerId, SessionId, DeviceName, UserName
     if SessionId not in RemoteClientData[ServerId]["ExtendedSupportAck"]:
         add_RemoteClient(ServerId, SessionId, DeviceName, UserName)
         globals()['RemoteClientData'][ServerId]["ExtendedSupportAck"].append(SessionId)
-        send_RemoteClients(ServerId, RemoteClientData[ServerId]["ExtendedSupportAck"], False, False)
+        send_RemoteClients(ServerId, RemoteClientData[ServerId]["ExtendedSupportAck"], False)
 
 def init_RemoteClient(ServerId):
     globals()['RemoteClientData'][ServerId] = {"SessionIds": [utils.EmbyServers[ServerId].EmbySession[0]['Id']], "Usernames": {utils.EmbyServers[ServerId].EmbySession[0]['Id']: utils.EmbyServers[ServerId].EmbySession[0]['UserName']}, "Devicenames": {utils.EmbyServers[ServerId].EmbySession[0]['Id']: utils.EmbyServers[ServerId].EmbySession[0]['DeviceName']}, "ExtendedSupport": [utils.EmbyServers[ServerId].EmbySession[0]['Id']], "ExtendedSupportAck": [utils.EmbyServers[ServerId].EmbySession[0]['Id']]}
 
-def delete_RemoteClient(ServerId, SessionIds, Force=False, LastWill=False):
+def delete_RemoteClient(ServerId, SessionIds, Force=False):
     if ServerId not in RemoteClientData:
         xbmc.log(f"EMBY.helper.playerops: ServerId {ServerId} not found in RemoteClientData", 2) # LOGWARNING
         return
@@ -492,7 +492,7 @@ def delete_RemoteClient(ServerId, SessionIds, Force=False, LastWill=False):
         if SessionId in RemoteCommandQueue:
             globals()['RemoteCommandQueue'][SessionId].put("QUIT")
 
-    send_RemoteClients(ServerId, ClientExtendedSupportAck, Force, LastWill)
+    send_RemoteClients(ServerId, ClientExtendedSupportAck, Force)
 
     # Disable remote mode when self device is the only one left
     if len(RemoteClientData[ServerId]["SessionIds"]) == 1 and RemoteClientData[ServerId]["SessionIds"][0] == utils.EmbyServers[ServerId].EmbySession[0]['Id']:
@@ -542,7 +542,7 @@ def disable_RemoteClients(ServerId):
     if RemoteMode:
         for SessionId in RemoteClientData[ServerId]["ExtendedSupportAck"]:
             if SessionId != utils.EmbyServers[ServerId].EmbySession[0]['Id']:
-                utils.EmbyServers[ServerId].API.send_text_msg(SessionId, "remotecommand", "clients|||||", True, False)
+                utils.EmbyServers[ServerId].API.send_text_msg(SessionId, "remotecommand", "clients|||||", True)
 
         init_RemoteClient(ServerId)
         globals().update({"RemoteMode": False, "WatchTogether": False, "RemoteControl": False, "RemoteCommandActive": [0, 0, 0, 0, 0]})
@@ -550,7 +550,7 @@ def disable_RemoteClients(ServerId):
         if not utils.EmbyServers[ServerId].library.KodiStartSyncRunning:
             start_new_thread(utils.EmbyServers[ServerId].library.KodiStartSync, (False,))
 
-def send_RemoteClients(ServerId, SendSessionIds, Force, LastWill):
+def send_RemoteClients(ServerId, SendSessionIds, Force):
     if not utils.remotecontrol_sync_clients:
         return
 
@@ -573,7 +573,7 @@ def send_RemoteClients(ServerId, SendSessionIds, Force, LastWill):
 
     for SessionId in SendSessionIds:
         if SessionId != utils.EmbyServers[ServerId].EmbySession[0]['Id']:
-            utils.EmbyServers[ServerId].API.send_text_msg(SessionId, "remotecommand", Data, Force, LastWill)
+            utils.EmbyServers[ServerId].API.send_text_msg(SessionId, "remotecommand", Data, Force)
 
 # Remote control clients
 def RemoteCommand(ServerId, selfSessionId, Command, EmbyId=-1):

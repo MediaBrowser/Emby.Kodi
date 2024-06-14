@@ -17,7 +17,6 @@ class MusicArtist:
         xbmc.log(f"EMBY.core.musicartist: Process item: {Item['Name']}", 0) # DEBUG
         common.set_MetaItems(Item, self.SQLs, self.MusicGenreObject, self.EmbyServer, "MusicGenre", 'GenreItems')
         common.set_common(Item, self.EmbyServer.ServerData['ServerId'], False)
-        common.set_KodiArtwork(Item, self.EmbyServer.ServerData['ServerId'], False)
         isFavorite = common.set_Favorite(Item)
         _, KodiDB = self.EmbyServer.library.WhitelistUnique[str(Item['LibraryId'])]
         NewItem = False

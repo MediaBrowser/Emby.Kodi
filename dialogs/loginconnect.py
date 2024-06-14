@@ -21,7 +21,7 @@ class LoginConnect(xbmcgui.WindowXMLDialog):
         self.remind_button = None
         self.error_toggle = None
         self.error_msg = None
-        self.EmbyServer = None
+        self.Login = "", ""
         xbmcgui.WindowXMLDialog.__init__(self, *args, **kwargs)
 
     def onInit(self):
@@ -50,7 +50,8 @@ class LoginConnect(xbmcgui.WindowXMLDialog):
                 # Display error
                 self._error(ERROR['Empty'], utils.Translate(30608))
                 xbmc.log("EMBY.dialogs.loginconnect: Username or password cannot be null", 3) # LOGERROR
-            elif self._login(user, password):
+            else:
+                self.Login = user, password
                 self.close()
         elif controlId == CANCEL:
             # Remind me later
@@ -74,16 +75,6 @@ class LoginConnect(xbmcgui.WindowXMLDialog):
             control.setType(xbmcgui.INPUT_TYPE_PASSWORD, "Please enter password")
 
         return control
-
-    def _login(self, username, password):
-        result = self.EmbyServer.login_to_connect(username, password)
-
-        if not result:
-            self._error(ERROR['Invalid'], utils.Translate(33009))
-            return False
-
-        utils.Dialog.notification(heading=utils.addon_name, message=f"{utils.Translate(33000)} {result['User']['Name']}", icon=result['User'].get('ImageUrl') or utils.icon, time=utils.displayMessage, sound=False)
-        return True
 
     def _error(self, state, message):
         self.error = state

@@ -119,9 +119,17 @@ def download():
             continue
 
         Path = utils.PathAddTrailing(f"{utils.DownloadPath}EMBY-offline-content")
-        utils.mkDir(Path)
+
+        if not utils.mkDir(Path):
+            utils.Dialog.notification(heading=utils.Translate(33558), message="Download path not found", icon=utils.icon, time=utils.displayMessage)
+            return
+
         Path = utils.PathAddTrailing(f"{Path}{KodiType}")
-        utils.mkDir(Path)
+
+        if not utils.mkDir(Path):
+            utils.Dialog.notification(heading=utils.Translate(33558), message="Download path not found", icon=utils.icon, time=utils.displayMessage)
+            return
+
         Path = utils.translatePath(Path).decode('utf-8')
         FilePath = f"{Path}{DownloadItem[4]}"
         embydb = dbio.DBOpenRO(ServerId, "download_item")
@@ -129,7 +137,7 @@ def download():
         dbio.DBCloseRO(ServerId, "download_item")
 
         if FileSize:
-            utils.EmbyServers[ServerId].API.download_file({"Id": EmbyId, "ParentPath": DownloadItem[1], "Path": Path, "FilePath": FilePath, "FileSize": FileSize, "Name": DownloadItem[5], "KodiType": KodiType, "KodiPathIdBeforeDownload": DownloadItem[2], "KodiFileId": DownloadItem[3], "KodiId": DownloadItem[0]})
+            utils.EmbyServers[ServerId].API.download_file(EmbyId, DownloadItem[1], Path, FilePath, FileSize, DownloadItem[5], KodiType, DownloadItem[2], DownloadItem[3], DownloadItem[0])
 
 def gotoshow():
     KodiId = xbmc.getInfoLabel('ListItem.DBID')

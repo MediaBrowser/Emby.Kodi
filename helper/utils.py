@@ -1,3 +1,4 @@
+import sys
 import os
 import shutil
 import json
@@ -17,7 +18,11 @@ import xbmc
 import xbmcaddon
 import xbmcgui
 
-Addon = xbmcaddon.Addon("plugin.video.emby-next-gen")
+try:
+    Addon = xbmcaddon.Addon("plugin.service.emby-next-gen")
+except Exception as error:
+    sys.exit(0)
+
 EmbyTypeMapping = {"Person": "actor", "Video": "movie", "Movie": "movie", "Series": "tvshow", "Season": "season", "Episode": "episode", "Audio": "song", "MusicAlbum": "album", "MusicArtist": "artist", "Genre": "genre", "MusicGenre": "genre", "Tag": "tag" , "Studio": "studio" , "BoxSet": "set", "Folder": None, "MusicVideo": "musicvideo", "Playlist": "Playlist"}
 KodiTypeMapping = {"actor": "Person", "tvshow": "Series", "season": "Season", "episode": "Episode", "song": "Audio", "album": "MusicAlbum", "artist": "MusicArtist", "genre": "Genre", "tag": "Tag", "studio": "Studio" , "set": "BoxSet", "musicvideo": "MusicVideo", "playlist": "Playlist", "movie": "Movie"}
 addon_version = Addon.getAddonInfo('version')
@@ -149,9 +154,9 @@ ArtworkLimitationLogo = 30
 ArtworkLimitationThumb = 40
 ArtworkLimitationBackdrop = 100
 ArtworkLimitationChapter = 20
-DownloadPath = "special://profile/addon_data/plugin.video.emby-next-gen/"
-FolderAddonUserdata = "special://profile/addon_data/plugin.video.emby-next-gen/"
-FolderEmbyTemp = "special://profile/addon_data/plugin.video.emby-next-gen/temp/"
+DownloadPath = "special://profile/addon_data/plugin.service.emby-next-gen/"
+FolderAddonUserdata = "special://profile/addon_data/plugin.service.emby-next-gen/"
+FolderEmbyTemp = "special://profile/addon_data/plugin.service.emby-next-gen/temp/"
 FolderUserdataThumbnails = "special://profile/Thumbnails/"
 PlaylistPath = "special://profile/playlists/mixed/"
 KodiFavFile = "special://profile/favourites.xml"
@@ -275,14 +280,19 @@ def image_overlay(ImageTag, ServerId, EmbyID, ImageType, ImageIndex, OverlayText
     BorderSize = int(ImageHeight * 0.01)  # 1% of image height is box border size
     BoxTop = int(ImageHeight * 0.75)  # Box top position is 75% of image height
     BoxHeight = int(ImageHeight * 0.15)  # 15% of image height is box height
-    BoxWidth = int(ImageWidth - 2 * BorderSize)
+    BoxWidth = int(ImageWidth)
     fontsize = 5
-    _, _, FontWidth, FontHeight = font.getbbox("Title Seauence")
+
+    try:
+        _, _, FontWidth, FontHeight = font.getbbox("Title Sequence")
+    except Exception as Error:
+        xbmc.log(f"EMBY.helper.utils: Pillow issue (getbox): {Error}", 3) # LOGERROR
+        return BinaryData, ContentType
 
     while FontHeight < BoxHeight - BorderSize * 2 and FontWidth < BoxWidth - BorderSize * 2:
         fontsize += 1
         font = ImageFont.truetype(FontPath, fontsize)
-        _, _, FontWidth, FontHeight = font.getbbox("Title Seauence")
+        _, _, FontWidth, FontHeight = font.getbbox("Title Sequence")
 
     OverlayText = OverlayText.split("\n")
     OverlayTextNewLines = len(OverlayText)
@@ -292,8 +302,8 @@ def image_overlay(ImageTag, ServerId, EmbyID, ImageType, ImageIndex, OverlayText
         font = ImageFont.truetype(FontPath, fontsize)
 
     OverlayText = "\n".join(OverlayText)
-    draw.rectangle((-100, BoxTop - BorderSize, BoxWidth + 200, BoxTop + BoxHeight + BorderSize * 2), fill=(0, 0, 0, 127), outline="white",  width=BorderSize)
-    draw.text(xy=(ImageWidth / 2, BoxTop + BorderSize * 2 + FontHeight / 2), text=OverlayText, fill="#FFFFFF", font=font, anchor="mm", align="center")
+    draw.rectangle((-100, BoxTop, BoxWidth + 200, BoxTop + BoxHeight), fill=(0, 0, 0, 127), outline="white",  width=BorderSize)
+    draw.text(xy=(ImageWidth / 2, BoxTop + (BoxHeight / 2)) , text=OverlayText, fill="#FFFFFF", font=font, anchor="mm", align="center")
     imgByteArr = io.BytesIO()
     img.save(imgByteArr, format=img.format)
     return imgByteArr.getvalue(), "image/jpeg"
@@ -360,7 +370,14 @@ def mkDir(Path):
     Path = translatePath(Path)
 
     if not os.path.isdir(Path):
-        os.mkdir(Path)
+        try:
+            os.mkdir(Path)
+            return True
+        except Exception as Error:
+            xbmc.log(f"EMBY.helper.utils: mkDir: {Error}", 3) # LOGERROR
+            return False
+
+    return True
 
 def delFile(Path):
     Path = translatePath(Path)
@@ -421,7 +438,7 @@ def writeFileString(Path, Data):
     try:
         with open(Path, "wb") as outfile:
             outfile.write(Data)
-    except Exception as Error: # permission denied
+    except Exception as Error:
         xbmc.log(f"EMBY.helper.utils: writeFileString ({Path}): {Error}", 2) # LOGWARNING
 
 def getFreeSpace(Path):
@@ -440,8 +457,11 @@ def getFreeSpace(Path):
 def writeFileBinary(Path, Data):
     Path = translatePath(Path)
 
-    with open(Path, "wb") as outfile:
-        outfile.write(Data)
+    try:
+        with open(Path, "wb") as outfile:
+            outfile.write(Data)
+    except Exception as Error:
+        xbmc.log(f"EMBY.helper.utils: writeFileBinary ({Path}): {Error}", 2) # LOGWARNING
 
 def checkFileExists(Path):
     Path = translatePath(Path)
@@ -502,6 +522,22 @@ def currenttime_kodi_format_and_unixtime():
 
 def get_unixtime_emby_format(): # Position(ticks) in Emby format 1 tick = 10000ms
     return datetime.timestamp(datetime.utcnow()) * 10000
+
+def get_url_info(ConnectionString):
+    Temp = ConnectionString.split(":")
+    Scheme = Temp[0]
+
+    if len(Temp) < 3:
+        if Scheme == "https":
+            Port = 443
+        else:
+            Port = 80
+    else:
+        Port = int(Temp[2].split("?", 1)[0].split("/", 1)[0])
+
+    Hostname = Temp[1][2:].split("?", 1)[0].split("/", 1)[0]
+    xbmc.log(f"Emby.helper.utils: get_url_info: {Scheme} / {Hostname} / {Port}", 0) # LOGDEBUG
+    return Scheme, Hostname, Port
 
 # Remove all emby playlists
 def delete_playlists():
@@ -824,24 +860,31 @@ def InitSettings():
     else:
         globals()["device_name"] = quote(device_name) # url encode
 
-    ToggleIcon = []
+    # Animated icons
+    NewIcon = ""
 
     if animateicon:
         if icon and icon != "special://home/addons/plugin.video.emby-next-gen/resources/icon-animated.gif":
-            ToggleIcon = ["resources/icon.png", "resources/icon-animated.gif"]
+            NewIcon = "animated"
 
         globals()["icon"] = "special://home/addons/plugin.video.emby-next-gen/resources/icon-animated.gif"
     else:
-        if icon and icon != "special://home/addons/plugin.video.emby-next-gen/resources/icon.png":
-            ToggleIcon = ["resources/icon-animated.gif", "resources/icon.png"]
+        if icon and icon != "special://home/addons/plugin.service.emby-next-gen/resources/icon.png":
+            NewIcon = "static"
 
-        globals()["icon"] = "special://home/addons/plugin.video.emby-next-gen/resources/icon.png"
+        globals()["icon"] = "special://home/addons/plugin.service.emby-next-gen/resources/icon.png"
 
-    if ToggleIcon:
-        xbmc.log("EMBY.helper.utils: Toggle icon", 1) # LOGINFO
-        AddonXml = readFileString("special://home/addons/plugin.video.emby-next-gen/addon.xml")
-        AddonXml = AddonXml.replace(ToggleIcon[0], ToggleIcon[1])
-        writeFileString("special://home/addons/plugin.video.emby-next-gen/addon.xml", AddonXml)
+    if NewIcon:
+        for PluginId in ("video", "image", "audio", "service"):
+            xbmc.log("EMBY.helper.utils: Toggle icon", 1) # LOGINFO
+            AddonXml = readFileString(f"special://home/addons/plugin.{PluginId}.emby-next-gen/addon.xml")
+
+            if NewIcon == "static":
+                AddonXml = AddonXml.replace("resources/icon-animated.gif", "resources/icon.png")
+            else:
+                AddonXml = AddonXml.replace("resources/icon.png", "resources/icon-animated.gif")
+
+            writeFileString(f"special://home/addons/plugin.{PluginId}.emby-next-gen/addon.xml", AddonXml)
 
     globals()["displayMessage"] *= 1000
     globals()["newContentTime"] *= 1000
@@ -963,8 +1006,8 @@ mkDir(FolderUserdataThumbnails)
 InitSettings()
 DatabaseFiles = {'texture': "", 'texture-version': 0, 'music': "", 'music-version': 0, 'video': "", 'video-version': 0, 'epg': "", 'epg-version': 0, 'tv': "", 'tv-version': 0}
 _, FolderDatabasefiles = listDir("special://profile/Database/")
-FontPath = translatePath("special://home/addons/plugin.video.emby-next-gen/resources/font/LiberationSans-Bold.ttf")
-noimagejpg = readFileBinary("special://home/addons/plugin.video.emby-next-gen/resources/noimage.jpg")
+FontPath = translatePath("special://home/addons/plugin.service.emby-next-gen/resources/font/LiberationSans-Bold.ttf")
+noimagejpg = readFileBinary("special://home/addons/plugin.service.emby-next-gen/resources/noimage.jpg")
 set_settings_bool('artworkcacheenable', True)
 
 for FolderDatabaseFilename in FolderDatabasefiles:

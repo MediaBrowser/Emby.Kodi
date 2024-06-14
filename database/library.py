@@ -205,6 +205,13 @@ class Library:
             ProgressBarIndex = 0
 
             for LibraryIdWhitelist, LibraryNameWhitelist, EmbyTypeWhitelist, _, _ in self.Whitelist:
+                if utils.SystemShutdown:
+                    xbmc.log("EMBY.database.library: THREAD: ---<[ retrieve changes ] shutdown 2", 0) # LOGDEBUG
+                    ProgressBar.close()
+                    del ProgressBar
+                    self.KodiStartSyncRunning = False
+                    return
+
                 xbmc.log(f"EMBY.database.library: [ retrieve changes ] {LibraryNameWhitelist} / {EmbyTypeWhitelist}", 1) # LOGINFO
                 LibraryName = ""
                 ProgressBarIndex += 1
@@ -220,12 +227,12 @@ class Library:
                 ItemIndex = 0
                 UpdateDataTemp = 10000 * [()] # pre allocate memory
 
-                for Item in self.EmbyServer.API.get_Items(LibraryIdWhitelist, [EmbyTypeWhitelist], True, True, {'MinDateLastSavedForUser': self.LastSyncTime}):
+                for Item in self.EmbyServer.API.get_Items(LibraryIdWhitelist, [EmbyTypeWhitelist], True, True, {'MinDateLastSavedForUser': self.LastSyncTime}, "", True):
                     if utils.SystemShutdown:
                         ProgressBar.close()
                         del ProgressBar
                         self.KodiStartSyncRunning = False
-                        xbmc.log("EMBY.database.library: THREAD: ---<[ retrieve changes ] shutdown 2", 0) # LOGDEBUG
+                        xbmc.log("EMBY.database.library: THREAD: ---<[ retrieve changes ] shutdown 3", 0) # LOGDEBUG
                         return
 
                     if ItemIndex >= 10000:
@@ -241,6 +248,11 @@ class Library:
 
             ProgressBar.close()
             del ProgressBar
+
+            if utils.SystemShutdown:
+                xbmc.log("EMBY.database.library: THREAD: ---<[ retrieve changes ] shutdown 4", 0) # LOGDEBUG
+                self.KodiStartSyncRunning = False
+                return
 
         # Run jobs
         if UpdateData:
@@ -421,7 +433,7 @@ class Library:
                 UpdateItemsIdsTemp = UpdateItemsIds.copy()
                 self.EmbyServer.API.ProcessProgress["worker_update"] = 0
 
-                for ItemIndex, Item in enumerate(self.EmbyServer.API.get_Items_Ids(UpdateItemsIds, ContentType, False, False, "worker_update", LibraryId), 1):
+                for ItemIndex, Item in enumerate(self.EmbyServer.API.get_Items_Ids(UpdateItemsIds, ContentType, False, False, "worker_update", LibraryId, {}), 1):
                     self.EmbyServer.API.ProcessProgress["worker_update"] = ItemIndex
 
                     if Item['Id'] in UpdateItemsIds:
@@ -590,7 +602,7 @@ class Library:
                 del TagObject
 
             # Sync Content
-            for ItemIndex, Item in enumerate(self.EmbyServer.API.get_Items(LibraryId, [EmbyType], False, True, {}, "worker_library"), 1):
+            for ItemIndex, Item in enumerate(self.EmbyServer.API.get_Items(LibraryId, [EmbyType], False, True, {}, "worker_library", True), 1):
                 Item["LibraryId"] = LibraryId
                 Continue, SQLs = self.ItemOps(SyncItemProgress, ItemIndex, Item, SQLs, WorkerName, KodiDBs, ProgressBar, True)
                 self.EmbyServer.API.ProcessProgress["worker_library"] = ItemIndex
@@ -615,7 +627,7 @@ class Library:
         pluginmenu.reset_querycache(None)
         self.close_Worker(WorkerName, True, True, ProgressBar)
 #        utils.sleep(2) # give Kodi time to catch up (otherwise could cause crashes)
-#        xbmc.executebuiltin('ReloadSkin()')
+#        xbmc.executebuiltin('ReloadSkin()') # Skin reload broken in Kodi 21
         xbmc.log("EMBY.database.library: --<[ worker library completed ]", 1) # LOGINFO
         self.RunJobs()
 
@@ -685,6 +697,7 @@ class Library:
             xbmc.log("EMBY.database.library: [ worker exit (shutdown 2) ]", 1) # LOGINFO
             return False, {}
 
+        del Item
         return True, SQLs
 
     def load_libraryObject(self, MediaType, SQLs):
@@ -1150,14 +1163,12 @@ class Library:
 
         for ViewId in views:
             if UseVideoThemes:
-                for item in self.EmbyServer.API.get_Items(ViewId, ["Movie", "Series"], True, True, {'HasThemeVideo': "True"}):
-                    query = normalize_string(item['Name'])
-                    items[item['Id']] = query
+                for item in self.EmbyServer.API.get_Items(ViewId, ["Movie", "Series"], True, True, {'HasThemeVideo': "True"}, "", False):
+                    items[item['Id']] = normalize_string(item['Name'])
 
             if UseAudioThemes:
-                for item in self.EmbyServer.API.get_Items(ViewId, ["Movie", "Series"], True, True, {'HasThemeSong': "True"}):
-                    query = normalize_string(item['Name'])
-                    items[item['Id']] = query
+                for item in self.EmbyServer.API.get_Items(ViewId, ["Movie", "Series"], True, True, {'HasThemeSong': "True"}, "", False):
+                    items[item['Id']] = normalize_string(item['Name'])
 
         Index = 1
         TotalItems = len(items) / 100
@@ -1212,7 +1223,7 @@ class Library:
                         utils.translatePath(FilePath).decode('utf-8')
 
                         if not utils.checkFileExists(FilePath):
-                            self.EmbyServer.API.download_file({"Id": ThemeItem['Id'], "FileSize": ThemeItem['Size'], "Name": Name, "FilePath": FilePath, "Path": NfoPath})
+                            utils.EmbyServer.API.download_file(ThemeItem['Id'], "", NfoPath, FilePath, ThemeItem['Size'], Name, "", "", "", "")
 
                     XMLData += f"    <file>{utils.encode_XML(FilePath)}</file>\n".encode("utf-8")
 
@@ -1300,7 +1311,7 @@ class Library:
 
         utils.writeFileString(PlaylistFile, PlaylistM3U)
         self.SyncLiveTVEPG(False)
-        SimpleIptvSettings = utils.readFileString("special://home/addons/plugin.video.emby-next-gen/resources/iptvsimple.xml")
+        SimpleIptvSettings = utils.readFileString("special://home/addons/plugin.service.emby-next-gen/resources/iptvsimple.xml")
         SimpleIptvSettings = SimpleIptvSettings.replace("SERVERID", self.EmbyServer.ServerData['ServerId'])
         utils.SendJson('{"jsonrpc":"2.0","id":1,"method":"Addons.SetAddonEnabled","params":{"addonid":"pvr.iptvsimple","enabled":false}}')
         utils.writeFileBinary(f"special://profile/addon_data/pvr.iptvsimple/instance-settings-{str(int(self.EmbyServer.ServerData['ServerId'], 16))[:4]}.xml", SimpleIptvSettings.encode("utf-8"))
@@ -1468,7 +1479,7 @@ def refresh_dynamic_nodes():
     pluginmenu.reset_querycache(None)
     MenuPath = xbmc.getInfoLabel('Container.FolderPath')
 
-    if MenuPath.startswith("plugin://plugin.video.emby-next-gen/") and "mode=browse" in MenuPath.lower():
+    if MenuPath.startswith("plugin://plugin.service.emby-next-gen/") and "mode=browse" in MenuPath.lower():
         xbmc.log("Emby.hooks.websocket: [ UserDataChanged refresh dynamic nodes ]", 1) # LOGINFO
         xbmc.executebuiltin('Container.Refresh')
     else:

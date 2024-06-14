@@ -161,7 +161,7 @@ def monitor_EventQueue(): # Threaded / queued
             elif Event[0] == "managelibsselection":
                 start_new_thread(pluginmenu.select_managelibs, ())
             elif Event[0] == "opensettings":
-                xbmc.executebuiltin('Addon.OpenSettings(plugin.video.emby-next-gen)')
+                xbmc.executebuiltin('Addon.OpenSettings(plugin.service.emby-next-gen)')
             elif Event[0] == "backup":
                 start_new_thread(Backup, ())
             elif Event[0] == "restore":
@@ -399,7 +399,7 @@ def VideoLibrary_OnUpdate():
             else:
                 if 'item' not in data:
                     if f"KODI{EmbyId}" not in utils.ItemSkipUpdate and EmbyId:  # Check EmbyID
-                        if not f"{{'item':{UpdateItem}}}" in UpdateItems:
+                        if f"{{'item':{UpdateItem}}}" not in UpdateItems:
                             xbmc.log(f"EMBY.hooks.monitor: [ VideoLibrary_OnUpdate reset progress {EmbyId} ]", 1) # LOGINFO
 
                             if int(EmbyId) in EmbyUpdateItems:
@@ -471,7 +471,7 @@ def BackupRestore():
 
     utils.delete_playlists()
     utils.delete_nodes()
-    RestoreFolderAddonData = f"{RestoreFolder}/addon_data/plugin.video.emby-next-gen/"
+    RestoreFolderAddonData = f"{RestoreFolder}/addon_data/plugin.service.emby-next-gen/"
     utils.copytree(RestoreFolderAddonData, utils.FolderAddonUserdata)
     RestoreFolderDatabase = f"{RestoreFolder}/Database/"
     utils.copytree(RestoreFolderDatabase, "special://profile/Database/")
@@ -498,7 +498,7 @@ def Backup():
 
         utils.delFolder(backup)
 
-    destination_data = f"{backup}addon_data/plugin.video.emby-next-gen/"
+    destination_data = f"{backup}addon_data/plugin.service.emby-next-gen/"
     destination_databases = f"{backup}Database/"
     utils.mkDir(backup)
     utils.mkDir(f"{backup}addon_data/")
@@ -626,7 +626,7 @@ def settingschanged():  # threaded by caller
                     for Filename in files:
                         utils.delFile(f"{playlistfolder}{Filename}")
 
-    # Chnage download path
+    # Change download path
     if DownloadPathPreviousValue != utils.DownloadPath:
         pluginmenu.downloadreset(DownloadPathPreviousValue)
 
@@ -662,11 +662,30 @@ def ServersConnect():
     xbmc.log("EMBY.hooks.monitor: THREAD: ---<[ ServersConnect ]", 0) # LOGDEBUG
 
 def setup():
+    # move settings (old plugin structure)
+    if utils.checkFolderExists("special://profile/addon_data/plugin.video.emby-next-gen/"):
+        if utils.checkFolderExists("special://profile/addon_data/plugin.service.emby-next-gen/"):
+            utils.delFolder("special://profile/addon_data/plugin.service.emby-next-gen/")
+
+        utils.copytree("special://profile/addon_data/plugin.video.emby-next-gen/", "special://profile/addon_data/plugin.service.emby-next-gen/")
+        utils.delFolder("special://profile/addon_data/plugin.video.emby-next-gen/")
+        utils.delete_nodes()
+
+        if not utils.checkFolderExists("special://profile/addon_data/plugin.video.emby-next-gen/"):
+            return False
+
     # copy default nodes
     utils.mkDir("special://profile/library/video/")
     utils.mkDir("special://profile/library/music/")
     utils.copytree("special://xbmc/system/library/video/", "special://profile/library/video/")
     utils.copytree("special://xbmc/system/library/music/", "special://profile/library/music/")
+
+    # copy animated icons
+    for PluginId in ("video", "image", "audio"):
+        Destination = f"special://home/addons/plugin.{PluginId}.emby-next-gen/resources/icon-animated.gif"
+
+        if not utils.checkFileExists(Destination):
+            utils.copyFile("special://home/addons/plugin.service.emby-next-gen/resources/icon-animated.gif", Destination)
 
     if utils.MinimumSetup == utils.MinimumVersion:
         return True
@@ -725,6 +744,7 @@ def StartUp():
         XbmcMonitor.waitForAbort(0)
 
         # Shutdown
+        utils.SystemShutdown = True
         utils.FavoriteQueue.put("QUIT")
         EventQueue.put("QUIT")
 
