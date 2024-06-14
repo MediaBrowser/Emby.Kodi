@@ -377,7 +377,7 @@ class MusicDatabase:
 
     # Favorite for content
     def get_favoriteData(self, KodiId, ContentType):
-        self.cursor.execute("SELECT idPath, strTitle, strFilename FROM song WHERE idSong = ?", (KodiId,))
+        self.cursor.execute("SELECT idPath, strTitle, strFilename, idAlbum FROM song WHERE idSong = ?", (KodiId,))
         ItemData = self.cursor.fetchone()
         Thumbnail = ""
 
@@ -386,7 +386,7 @@ class MusicDatabase:
             DataPath = self.cursor.fetchone()
 
             if DataPath:
-                self.cursor.execute("SELECT url FROM art WHERE media_id = ? AND media_type = ? AND type = ?", (KodiId, ContentType, "thumb"))
+                self.cursor.execute("SELECT url FROM art WHERE media_id = ? AND media_type = ? AND type = ?", (ItemData[3], "album", "thumb"))
                 ArtworkData = self.cursor.fetchone()
 
                 if ArtworkData:

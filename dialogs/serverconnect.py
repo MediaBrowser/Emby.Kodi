@@ -26,7 +26,9 @@ class ServerConnect(xbmcgui.WindowXMLDialog):
         self.message_box = None
         self.busy = None
         self.list_ = None
-        self.EmbyServer = None
+        self.ServerSelected = {}
+        self.Servers = []
+        self.ConnectionMode = ""
         self.emby_connect = None
         xbmcgui.WindowXMLDialog.__init__(self, *args, **kwargs)
 
@@ -36,7 +38,7 @@ class ServerConnect(xbmcgui.WindowXMLDialog):
         self.busy = self.getControl(BUSY)
         self.list_ = self.getControl(LIST)
 
-        for server in self.EmbyServer.Found_Servers:
+        for server in self.Servers:
             if 'Name' not in server:
                 continue
 
@@ -53,7 +55,7 @@ class ServerConnect(xbmcgui.WindowXMLDialog):
         if not self.emby_connect:  # Change connect user
             self.getControl(EMBY_CONNECT).setLabel(f"[B]{utils.Translate(30618)}[/B]")
 
-        if self.EmbyServer.Found_Servers:
+        if self.Servers:
             self.setFocus(self.list_)
 
     def onAction(self, action):
@@ -67,36 +69,24 @@ class ServerConnect(xbmcgui.WindowXMLDialog):
                 Server_Selected_Id = server.getProperty('id')
                 Server_Selected_Name = server.getProperty('Name')
 
-                for server in self.EmbyServer.Found_Servers:
+                for server in self.Servers:
                     if server['Id'] == Server_Selected_Id and server['Name'] == Server_Selected_Name:
-                        self.EmbyServer.ServerData.update({'ServerId': server['Id'], 'ServerName': server['Name']})
-
-                        # EmbyConnect
-                        if server.get('ExchangeToken', ""):
-                            self.EmbyServer.ServerData.update({'EmbyConnectLocalAddress': server.get('LocalAddress', ""), 'EmbyConnectRemoteAddress': server.get('RemoteAddress', ""), 'EmbyConnectExchangeToken': server.get('ExchangeToken', ""), 'LocalAddress': "", 'RemoteAddress': "", 'ManualAddress': ""})
-                        else: #regular
-                            self.EmbyServer.ServerData.update({'LocalAddress': server.get('LocalAddress', ""), 'RemoteAddress': server.get('RemoteAddress', ""), 'ManualAddress': server.get('ManualAddress', ""), 'EmbyConnectLocalAddress': "", 'EmbyConnectRemoteAddress': "", 'EmbyConnectExchangeToken': ""})
-
+                        self.ServerSelected = {'ServerId': server['Id'], 'ServerName': server['Name']}
+                        self.ServerSelected.update({'LocalAddress': server.get('LocalAddress', ""), 'RemoteAddress': server.get('RemoteAddress', ""), 'EmbyConnectExchangeToken': server.get('ExchangeToken', "")})
                         self.message.setLabel(f"{utils.Translate(30610)} {server['Name']}...")
                         self.message_box.setVisibleCondition('true')
                         self.busy.setVisibleCondition('true')
-                        result = self.EmbyServer.connect_to_server()
-
-                        if not result:  # Unavailable
-                            self.busy.setVisibleCondition('false')
-                            self.message.setLabel(utils.Translate(30609))
-                            break
-
                         self.message_box.setVisibleCondition('false')
+                        self.ConnectionMode = "ListSelection"
                         self.close()
                         break
 
     def onClick(self, controlId):
         if controlId == EMBY_CONNECT:
-            self.EmbyServer.ServerData['LastConnectionMode'] = "EmbyConnect"
+            self.ConnectionMode = "EmbyConnect"
         elif controlId == MANUAL_SERVER:
-            self.EmbyServer.ServerData['LastConnectionMode'] = "ManualAddress"
+            self.ConnectionMode = "ManualAddress"
         elif controlId == CANCEL:
-            self.EmbyServer.ServerData['LastConnectionMode'] = ""
+            self.ConnectionMode = ""
 
         self.close()

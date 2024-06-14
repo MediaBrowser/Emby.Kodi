@@ -11,7 +11,7 @@ class Playlist:
         common.load_ExistingItem(Item, self.EmbyServer, self.SQLs["emby"], "Playlist")
         IsFavorite = common.set_Favorite(Item)
         xbmc.log(f"EMBY.core.playlist: Process item: {Item['Name']}", 0) # DEBUG
-        PlaylistItems = self.EmbyServer.API.get_Items(Item['Id'], ["Episode", "Movie", "Trailer", "MusicVideo", "Audio", "Video", "Photo"], True, True, {},"")
+        PlaylistItems = self.EmbyServer.API.get_Items(Item['Id'], ["Episode", "Movie", "Trailer", "MusicVideo", "Audio", "Video", "Photo"], True, True, {}, "", True)
         KodiItemId = utils.valid_Filename(Item['Name'])
         PlaylistFilename = f"{utils.PlaylistPath}{KodiItemId}.m3u"
         isFavorite = common.set_Favorite(Item)

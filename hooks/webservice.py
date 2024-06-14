@@ -30,29 +30,32 @@ ArtworkCacheLock = allocate_lock()
 DelayedContentLock = allocate_lock()
 
 def start():
-    globals()['Socket'] = _socket.socket(_socket.AF_INET, _socket.SOCK_STREAM)
-    Socket.setsockopt(_socket.SOL_SOCKET, _socket.SO_REUSEADDR, 1)
-    Socket.setsockopt(_socket.IPPROTO_TCP, _socket.TCP_NODELAY, 1)
-    Socket.bind(('127.0.0.1', 57342))
-    Socket.settimeout(None)
-    xbmc.log("EMBY.hooks.webservice: Start", 1) # LOGINFO
-    globals()["Running"] = True
-    start_new_thread(Listen, ())
+    if not Running:
+        globals()["Running"] = True
+
+        try: # intercept multiple start by different threads (just precaution)
+            globals()['Socket'] = _socket.socket(_socket.AF_INET, _socket.SOCK_STREAM)
+            Socket.setsockopt(_socket.SOL_SOCKET, _socket.SO_REUSEADDR, 1)
+            Socket.setsockopt(_socket.IPPROTO_TCP, _socket.TCP_NODELAY, 1)
+            Socket.bind(('127.0.0.1', 57342))
+        except Exception as Error:
+            xbmc.log(f"EMBY.hooks.webservice: Socket start (error) {Error}", 1) # LOGINFO
+            return False
+
+        xbmc.log("EMBY.hooks.webservice: Start", 1) # LOGINFO
+        start_new_thread(Listen, ())
+        return True
+
+    return False
 
 def close():
     if Running:
         globals()["Running"] = False
 
         try:
-            try:
-                Socket.shutdown(_socket.SHUT_RDWR)
-            except Exception as Error:
-                xbmc.log(f"EMBY.hooks.webservice: Socket shutdown (error) {Error}", 1) # LOGINFO
-
             Socket.close()
-            xbmc.log("EMBY.hooks.webservice: Socket shutdown", 1) # LOGINFO
         except Exception as Error:
-            xbmc.log(f"EMBY.hooks.webservice: Socket close (error) {Error}", 3) # LOGERROR
+            xbmc.log(f"EMBY.hooks.webservice: Socket shutdown (error) {Error}", 1) # LOGINFO
 
         xbmc.log("EMBY.hooks.webservice: Shutdown weservice", 1) # LOGINFO
         xbmc.log(f"EMBY.hooks.webservice: DelayedContent queue size: {len(DelayedContent)}", 0) # LOGDEBUG
@@ -60,17 +63,17 @@ def close():
 def Listen():
     xbmc.log("EMBY.hooks.webservice: THREAD: --->[ webservice/57342 ]", 0) # LOGDEBUG
     Socket.listen()
+    Socket.settimeout(1)
 
     while not utils or not utils.SystemShutdown:
         try:
             fd, _ = Socket._accept()
-        except Exception as Error:
-            xbmc.log(f"EMBY.hooks.webservice: Socket shutdown (error) {Error}", 3) # LOGERROR
-            break
+        except:
+            continue
 
         start_new_thread(worker_Query, (fd,))
 
-    xbmc.log("EMBY.hooks.webservice: THREAD: ---<[ webservice/57342 ]", 0) # LOGDEBUG
+    xbmc.log("EMBY.hooks.webservice: THREAD: ---<[ webservice/57342 ]", 1) # LOGDEBUG
 
 def worker_Query(fd):  # thread by caller
     xbmc.log("EMBY.hooks.webservice: THREAD: --->[ worker_Query ]", 0) # LOGDEBUG
@@ -86,8 +89,8 @@ def worker_Query(fd):  # thread by caller
 
     IncomingData = data.split(' ')
 
-    if not IncomingData[0] == "EVENT" or ("mode" in IncomingData[1] and "query=NodesDynamic" not in IncomingData[1] and "query=NodesSynced" not in IncomingData[1]):
-        while not utils.EmbyServers or not list(utils.EmbyServers.values())[0].ServerData['Online']:
+    if IncomingData[0] != "EVENT" or ("mode" in IncomingData[1] and "query=NodesDynamic" not in IncomingData[1] and "query=NodesSynced" not in IncomingData[1]):
+        while not utils.EmbyServers or not list(utils.EmbyServers.values())[0].Online:
             Break = False
 
             if utils.sleep(1):
@@ -237,7 +240,7 @@ def worker_Query(fd):  # thread by caller
                     elif CacheId2 in pluginmenu.QueryCache["All"]:
                         pluginmenu.QueryCache["All"][CacheId2][0] = False
 
-                utils.SendJson(f'{{"jsonrpc": "2.0", "id": 1, "method": "GUI.ActivateWindow", "params": {{"window": "videos", "parameters": ["plugin://plugin.video.emby-next-gen/?id=0&mode=browse&query=Search&server={ServerId}&parentid=0&content=All&libraryid=0", "return"]}}}}')
+                utils.SendJson(f'{{"jsonrpc": "2.0", "id": 1, "method": "GUI.ActivateWindow", "params": {{"window": "videos", "parameters": ["plugin://plugin.service.emby-next-gen/?id=0&mode=browse&query=Search&server={ServerId}&parentid=0&content=All&libraryid=0", "return"]}}}}')
 
             xbmc.log("EMBY.hooks.webservice: THREAD: ---<[ worker_Query ] event search", 0) # LOGDEBUG
             return
@@ -245,7 +248,7 @@ def worker_Query(fd):  # thread by caller
         if mode == 'settings':  # Simple commands
             client.send(sendOK)
             client.close()
-            xbmc.executebuiltin('Addon.OpenSettings(plugin.video.emby-next-gen)')
+            xbmc.executebuiltin('Addon.OpenSettings(plugin.service.emby-next-gen)')
             xbmc.log("EMBY.hooks.webservice: THREAD: ---<[ worker_Query ] event settings", 0) # LOGDEBUG
             return
 
@@ -333,7 +336,7 @@ def worker_Query(fd):  # thread by caller
 
     PayloadLower = IncomingData[1].lower()
     isHEAD = IncomingData[0] == "HEAD"
-    PictureQuery = IncomingData[1].startswith('/picture/') or IncomingData[1].startswith('/delayed_content/picture')
+    PictureQuery = IncomingData[1].startswith('/picture/') or IncomingData[1].startswith('/delayed_content/picture') or IncomingData[1].startswith('/delayed_content/p-')
 
     if 'extrafanart' in PayloadLower or 'extrathumbs' in PayloadLower or 'extras/' in PayloadLower or PayloadLower.endswith('.edl') or PayloadLower.endswith('index.bdmv') or PayloadLower.endswith('index.bdm') or PayloadLower.endswith('.txt') or PayloadLower.endswith('.vprj') or PayloadLower.endswith('.xml') or PayloadLower.endswith('/') or PayloadLower.endswith('.nfo') or (not PictureQuery and (PayloadLower.endswith('.bmp') or PayloadLower.endswith('.jpg') or PayloadLower.endswith('.ico') or PayloadLower.endswith('.png') or PayloadLower.endswith('.ifo') or PayloadLower.endswith('.gif') or PayloadLower.endswith('.tbn') or PayloadLower.endswith('.tiff'))): # Unsupported queries used by Kodi
         client.send(sendNotFound)
@@ -393,8 +396,8 @@ def send_redirect(client, QueryData, Data, Filename):
     xbmc.executebuiltin('Dialog.Close(busydialog,true)') # workaround due to Kodi bug: https://github.com/xbmc/xbmc/issues/16756
 
     if "main.m3u8" in Data:
-        MainM3U8 = utils.EmbyServers[QueryData['ServerId']].http.request({'type': "GET", 'handler': Path.replace(f"{utils.EmbyServers[QueryData['ServerId']].ServerData['ServerUrl']}/emby/" , "")}, False, True)
-        MainM3U8Mod = MainM3U8.decode().replace("hls1/main/", f"{utils.EmbyServers[QueryData['ServerId']].ServerData['ServerUrl']}/emby/videos/{QueryData['EmbyID']}/hls1/main/").encode()
+        _, _, MainM3U8 = utils.EmbyServers[QueryData['ServerId']].http.request("GET", Path.replace(f"{utils.EmbyServers[QueryData['ServerId']].ServerData['ServerUrl']}/emby/" , ""), {}, {}, True, "", False)
+        MainM3U8Mod = MainM3U8.decode('utf-8').replace("hls1/main/", f"{utils.EmbyServers[QueryData['ServerId']].ServerData['ServerUrl']}/emby/videos/{QueryData['EmbyID']}/hls1/main/").encode()
         SendData = f"HTTP/1.1 200 OK\r\nServer: Emby-Next-Gen\r\nConnection: close\r\nContent-Length: {len(MainM3U8Mod)}\r\nContent-Type: text/plain\r\n\r\n".encode() + MainM3U8Mod
     else:
         SendData = f"HTTP/1.1 307 Temporary Redirect\r\nServer: Emby-Next-Gen\r\nConnection: close\r\nLocation: {Path}\r\nContent-length: 0\r\n\r\n".encode()
@@ -973,15 +976,17 @@ def send_delayed_content(client, ContentId):
     return True
 
 def set_QueuedPlayingItem(QueryData, PlaySessionId):
+    utils.PlayerBusy = True
+
     if not PlaySessionId:
         QueryData['PlaySessionId'] = str(uuid.uuid4()).replace("-", "")
     else:
         QueryData['PlaySessionId'] = PlaySessionId
 
     if 'LiveStreamId' in QueryData:
-        player.QueuedPlayingItem = [{'CanSeek': True, 'QueueableMediaTypes': "Video,Audio", 'IsPaused': False, 'ItemId': int(QueryData['EmbyID']), 'MediaSourceId': QueryData['MediasourceID'], 'PlaySessionId': QueryData['PlaySessionId'], 'PositionTicks': 0, 'RunTimeTicks': 0, 'VolumeLevel': player.Volume, 'IsMuted': player.Muted, "LiveStreamId": QueryData['LiveStreamId']}, QueryData['IntroStartPositionTicks'], QueryData['IntroEndPositionTicks'], QueryData['CreditsPositionTicks'], utils.EmbyServers[QueryData['ServerId']], ""]
+        player.QueuedPlayingItem = [{'QueueableMediaTypes': ["Audio", "Video", "Photo"], 'CanSeek': True, 'IsPaused': False, 'ItemId': int(QueryData['EmbyID']), 'MediaSourceId': QueryData['MediasourceID'], 'PlaySessionId': QueryData['PlaySessionId'], 'PositionTicks': 0, 'RunTimeTicks': 0, 'VolumeLevel': player.Volume, 'IsMuted': player.Muted, "LiveStreamId": QueryData['LiveStreamId']}, QueryData['IntroStartPositionTicks'], QueryData['IntroEndPositionTicks'], QueryData['CreditsPositionTicks'], utils.EmbyServers[QueryData['ServerId']], ""]
     else:
-        player.QueuedPlayingItem = [{'CanSeek': True, 'QueueableMediaTypes': "Video,Audio", 'IsPaused': False, 'ItemId': int(QueryData['EmbyID']), 'MediaSourceId': QueryData['MediasourceID'], 'PlaySessionId': QueryData['PlaySessionId'], 'PositionTicks': 0, 'RunTimeTicks': 0, 'VolumeLevel': player.Volume, 'IsMuted': player.Muted}, QueryData['IntroStartPositionTicks'], QueryData['IntroEndPositionTicks'], QueryData['CreditsPositionTicks'], utils.EmbyServers[QueryData['ServerId']], ""]
+        player.QueuedPlayingItem = [{'QueueableMediaTypes': ["Audio", "Video", "Photo"], 'CanSeek': True, 'IsPaused': False, 'ItemId': int(QueryData['EmbyID']), 'MediaSourceId': QueryData['MediasourceID'], 'PlaySessionId': QueryData['PlaySessionId'], 'PositionTicks': 0, 'RunTimeTicks': 0, 'VolumeLevel': player.Volume, 'IsMuted': player.Muted}, QueryData['IntroStartPositionTicks'], QueryData['IntroEndPositionTicks'], QueryData['CreditsPositionTicks'], utils.EmbyServers[QueryData['ServerId']], ""]
 
 def open_db(QueryData, Id):
     if Id not in QueryData['Database']:

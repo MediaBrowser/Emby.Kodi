@@ -25,6 +25,7 @@ ImageTagsMappings = {
     "Person": (('Primary', 'poster'), ("Art", 'clearart'), ("Banner", 'banner'), ("Thumb", 'thumb'), ("Thumb", 'landscape'), ("Backdrop", 'fanart'), ('Primary', 'thumb'), ("Primary", 'landscape'))
 }
 
+
 def load_ExistingItem(Item, EmbyServer, emby_db, EmbyType):
     if Item['LibraryId'] not in EmbyServer.library.WhitelistUnique:
         xbmc.log(f"EMBY.core.common: Library not synced: {Item['LibraryId']}", 3) # LOGERROR
@@ -593,7 +594,7 @@ def set_common(Item, ServerId, DynamicNode):
                 if 'PrimaryImageTag' in ArtistItem:
                     ArtistItem['imageurl'] = f"http://127.0.0.1:57342/picture/{ServerId}/p-{ArtistItem['Id']}-0-p-{ArtistItem['PrimaryImageTag']}|redirect-limit=1000"
                 else:
-                    ArtistItem['imageurl'] = f"http://127.0.0.1:57342/picture/{ServerId}/p-{ArtistItem['Id']}-0-p-0|redirect-limit=1000"
+                    ArtistItem['imageurl'] = ""
 
 def set_Dates(Item):
     if 'ProductionYear' in Item:
@@ -665,7 +666,7 @@ def set_chapters(Item, ServerId):
                 else:
                     ChapterImage = f"http://127.0.0.1:57342/picture/{ServerId}/p-{Item['Id']}-{index}-c-noimage-{quote(Chapter['Name'])}|redirect-limit=1000"
 
-            if not Chapter["StartPositionTicks"] in Chapters:
+            if Chapter["StartPositionTicks"] not in Chapters:
                 Chapters[Chapter["StartPositionTicks"]] = ChapterImage
             else:
                 # replace existing chapter label with marker label
@@ -690,6 +691,12 @@ def set_KodiArtwork(Item, ServerId, DynamicNode):
     Item['AlbumPrimaryImageTag'] = Item.get('AlbumPrimaryImageTag', None)
     Item['SeriesPrimaryImageTag'] = Item.get('SeriesPrimaryImageTag', None)
     Item['KodiArtwork'] = {'clearart': None, 'clearlogo': None, 'discart': None, 'landscape': None, 'thumb': None, 'banner': None, 'poster': None, 'fanart': {}, 'favourite': None}
+
+    if not DynamicNode and Item['Type'] == "Audio": # no artwork for synced song content (Kodi handels that based on Albumart etc.)
+        if Item["AlbumPrimaryImageTag"] and "AlbumId" in Item:
+            Item['KodiArtwork']['favourite'] = f"http://127.0.0.1:57342/picture/{ServerId}/p-{Item['AlbumId']}-0-p-{Item['AlbumPrimaryImageTag']}|redirect-limit=1000"
+
+        return
 
     if Item['Type'] in ImageTagsMappings:
         for ImageTagsMapping in ImageTagsMappings[Item['Type']]:
@@ -717,17 +724,20 @@ def set_KodiArtwork(Item, ServerId, DynamicNode):
                         elif ImageTagsMapping[0] == "AlbumPrimary":
                             if "AlbumId" in Item:
                                 EmbyArtworkId = Item["AlbumId"]
-            elif ImageTagsMapping[0] == "ParentBanner":
-                if "SeriesId" in Item:
-                    EmbyArtworkId = Item["SeriesId"]
+
+            if DynamicNode:
+                if ImageTagsMapping[0] == "ParentBanner":
+                    if "SeriesId" in Item:
+                        EmbyArtworkId = Item["SeriesId"]
+                        EmbyArtworkTag = ""
+                elif ImageTagsMapping[0] == "AlbumArtists" and "AlbumArtists" in Item and Item["AlbumArtists"] and Item["AlbumArtists"] != "None":
+                    EmbyArtworkId = Item["AlbumArtists"][0]['Id']
                     EmbyArtworkTag = ""
-            elif ImageTagsMapping[0] == "AlbumArtists" and "AlbumArtists" in Item and Item["AlbumArtists"] and Item["AlbumArtists"] != "None":
-                EmbyArtworkId = Item["AlbumArtists"][0]['Id']
-                EmbyArtworkTag = ""
-            elif ImageTagsMapping[0] == "ArtistItems" and "ArtistItems" in Item and Item["ArtistItems"] and Item["ArtistItems"] != "None":
-                EmbyArtworkId = Item["ArtistItems"][0]['Id']
-                EmbyArtworkTag = ""
-            elif f"{ImageTagsMapping[0]}ImageTags" in Item:
+                elif ImageTagsMapping[0] == "ArtistItems" and "ArtistItems" in Item and Item["ArtistItems"] and Item["ArtistItems"] != "None":
+                    EmbyArtworkId = Item["ArtistItems"][0]['Id']
+                    EmbyArtworkTag = ""
+
+            if f"{ImageTagsMapping[0]}ImageTags" in Item:
                 BackDropsKey = f"{ImageTagsMapping[0]}ImageTags"
 
                 if BackDropsKey == "ParentBackdropImageTags":
@@ -738,11 +748,11 @@ def set_KodiArtwork(Item, ServerId, DynamicNode):
                 if EmbyBackDropsId:
                     if Item[BackDropsKey] and Item[BackDropsKey] != "None":
                         if ImageTagsMapping[1] == "fanart":
-                            if not "fanart" in Item['KodiArtwork']["fanart"]:
+                            if "fanart" not in Item['KodiArtwork']["fanart"]:
                                 Item['KodiArtwork']["fanart"]["fanart"] = f"http://127.0.0.1:57342/picture/{ServerId}/p-{EmbyBackDropsId}-0-B-{Item[BackDropsKey][0]}|redirect-limit=1000"
 
                             for index, EmbyArtworkTag in enumerate(Item[BackDropsKey][1:], 1):
-                                if not f"fanart{index}" in Item['KodiArtwork']["fanart"]:
+                                if f"fanart{index}" not in Item['KodiArtwork']["fanart"]:
                                     Item['KodiArtwork']["fanart"][f"fanart{index}"] = f"http://127.0.0.1:57342/picture/{ServerId}/p-{EmbyBackDropsId}-{index}-B-{EmbyArtworkTag}|redirect-limit=1000"
                         else:
                             if not Item['KodiArtwork'][ImageTagsMapping[1]]:
@@ -750,7 +760,7 @@ def set_KodiArtwork(Item, ServerId, DynamicNode):
 
             if EmbyArtworkId:
                 if ImageTagsMapping[1] == "fanart":
-                    if not "fanart" in Item['KodiArtwork']["fanart"]:
+                    if "fanart" not in Item['KodiArtwork']["fanart"]:
                         Item['KodiArtwork']["fanart"]["fanart"] = f"http://127.0.0.1:57342/picture/{ServerId}/p-{EmbyArtworkId}-0-{EmbyArtworkIdShort[ImageTagsMapping[0]]}-{EmbyArtworkTag}|redirect-limit=1000"
                 else:
                     if not Item['KodiArtwork'][ImageTagsMapping[1]]:
@@ -1169,7 +1179,7 @@ def update_multiversion(EmbyDB, Item, EmbyType):
 
 def update_boxsets(StartSync, ParentId, LibraryId, SQLs, EmbyServer):
     if not StartSync:
-        for BoxSet in EmbyServer.API.get_Items(ParentId, ["BoxSet"], True, True, {'GroupItemsIntoCollections': True}):
+        for BoxSet in EmbyServer.API.get_Items(ParentId, ["BoxSet"], True, True, {'GroupItemsIntoCollections': True}, "", False):
             SQLs["emby"].add_UpdateItem(BoxSet['Id'], "BoxSet", LibraryId)
 
 def set_Favorites_Artwork(Item, ServerId):

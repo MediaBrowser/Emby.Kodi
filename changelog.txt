@@ -1,3 +1,55 @@
+10.0.30
+=============
+fix transcoding playback
+
+
+
+10.0.29
+=============
+intercept pillow library issue
+
+
+
+10.0.28
+=============
+minor changes in Player session ops
+fix websocket messages delay
+fix session logout
+
+
+
+10.0.27
+=============
+fix several minor http issues
+faster https socket connection
+support http redirects (including websocket connections)
+fix Emby session stop
+sync pause only for Emby scan tasks
+
+
+
+10.0.26
+=============
+rewrite http communication with Emby server (remove urllib3 dependency, http comminicaion is now on low level socket-basis)
+fix context menu
+rewrite emby login handshakes
+fix textoverlay position
+fix minor artwork issues
+remove song artwork from synced content (let Kodi handle it)
+fix menu options in content helper plugins
+fix library Id filters for dynamic nodes
+fix dynamic node Genre for Audiobooks and Podcasts
+
+
+
+10.0.25
+=============
+fix sort orders for dynamic nodes
+improve performance for dynamic nodes
+change plugin structure (fixes content detection issues for dynamic nodes)
+
+
+
 10.0.24
 =============
 fix server busy progress bar when server restarted or shutdown

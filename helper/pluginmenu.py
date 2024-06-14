@@ -23,19 +23,19 @@ def listing(Handle, ContentSupported):
 
     for ServerId, EmbyServer in list(utils.EmbyServers.items()):
         if ContentSupported != "image":
-            ItemsListings = add_ListItem(ItemsListings, f"{utils.Translate(33386)} ({EmbyServer.ServerData['ServerName']})", f"plugin://plugin.video.emby-next-gen/?mode=browse&query=NodesSynced&server={ServerId}&contentsupported={ContentSupported}", True, "DefaultHardDisk.png", utils.Translate(33383))
+            ItemsListings = add_ListItem(ItemsListings, f"{utils.Translate(33386)} ({EmbyServer.ServerData['ServerName']})", f"plugin://plugin.service.emby-next-gen/?mode=browse&query=NodesSynced&server={ServerId}&contentsupported={ContentSupported}", "DefaultHardDisk.png", utils.Translate(33383))
 
-        ItemsListings = add_ListItem(ItemsListings, f"{utils.Translate(33387)} ({EmbyServer.ServerData['ServerName']})", f"plugin://plugin.video.emby-next-gen/?mode=browse&query=NodesDynamic&server={ServerId}&contentsupported={ContentSupported}", True, "DefaultNetwork.png", utils.Translate(33384))
+        ItemsListings = add_ListItem(ItemsListings, f"{utils.Translate(33387)} ({EmbyServer.ServerData['ServerName']})", f"plugin://plugin.service.emby-next-gen/?mode=browse&query=NodesDynamic&server={ServerId}&contentsupported={ContentSupported}", "DefaultNetwork.png", utils.Translate(33384))
 
     # Common Items
     if utils.menuOptions:
-        ItemsListings = add_ListItem(ItemsListings, utils.Translate(33194), "plugin://plugin.video.emby-next-gen/?mode=managelibsselection", False, "DefaultAddSource.png", utils.Translate(33309))
-        ItemsListings = add_ListItem(ItemsListings, utils.Translate(33059), "plugin://plugin.video.emby-next-gen/?mode=texturecache", False, "DefaultAddonImages.png", utils.Translate(33310))
-        ItemsListings = add_ListItem(ItemsListings, utils.Translate(5), "plugin://plugin.video.emby-next-gen/?mode=settings", False, "DefaultAddon.png", utils.Translate(33398))
-        ItemsListings = add_ListItem(ItemsListings, utils.Translate(33058), "plugin://plugin.video.emby-next-gen/?mode=databasereset", False, "DefaultAddonsUpdates.png", utils.Translate(33313))
-        ItemsListings = add_ListItem(ItemsListings, utils.Translate(33340), "plugin://plugin.video.emby-next-gen/?mode=factoryreset", False, "DefaultAddonsUpdates.png", utils.Translate(33400))
-        ItemsListings = add_ListItem(ItemsListings, utils.Translate(33341), "plugin://plugin.video.emby-next-gen/?mode=nodesreset", False, "DefaultAddonsUpdates.png", utils.Translate(33401))
-        ItemsListings = add_ListItem(ItemsListings, utils.Translate(33409), "plugin://plugin.video.emby-next-gen/?mode=skinreload", False, "DefaultAddonSkin.png", "")
+        ItemsListings = add_ListItem(ItemsListings, utils.Translate(33194), "plugin://plugin.service.emby-next-gen/?mode=managelibsselection", "DefaultAddSource.png", utils.Translate(33309))
+        ItemsListings = add_ListItem(ItemsListings, utils.Translate(33059), "plugin://plugin.service.emby-next-gen/?mode=texturecache", "DefaultAddonImages.png", utils.Translate(33310))
+        ItemsListings = add_ListItem(ItemsListings, utils.Translate(5), "plugin://plugin.service.emby-next-gen/?mode=settings", "DefaultAddon.png", utils.Translate(33398))
+        ItemsListings = add_ListItem(ItemsListings, utils.Translate(33058), "plugin://plugin.service.emby-next-gen/?mode=databasereset", "DefaultAddonsUpdates.png", utils.Translate(33313))
+        ItemsListings = add_ListItem(ItemsListings, utils.Translate(33340), "plugin://plugin.service.emby-next-gen/?mode=factoryreset", "DefaultAddonsUpdates.png", utils.Translate(33400))
+        ItemsListings = add_ListItem(ItemsListings, utils.Translate(33341), "plugin://plugin.service.emby-next-gen/?mode=nodesreset", "DefaultAddonsUpdates.png", utils.Translate(33401))
+        ItemsListings = add_ListItem(ItemsListings, utils.Translate(33409), "plugin://plugin.service.emby-next-gen/?mode=skinreload", "DefaultAddonSkin.png", "")
 
     xbmcplugin.addDirectoryItems(Handle, ItemsListings, len(ItemsListings))
     xbmcplugin.addSortMethod(Handle, xbmcplugin.SORT_METHOD_UNSORTED)
@@ -80,13 +80,13 @@ def browse(Handle, Id, query, ParentId, Content, ServerId, LibraryId, ContentSup
     if query in ('NodesDynamic', 'NodesSynced'):
         for Node in utils.EmbyServers[ServerId].Views.Nodes[query]:
             if (ContentSupported == "audio" and Node['path'].startswith("library://music/")) or (ContentSupported == "video" and Node['path'].startswith("library://video/")):
-                ItemsListings = add_ListItem(ItemsListings, Node['title'], Node['path'], True, Node['icon'], "")
+                ItemsListings = add_ListItem(ItemsListings, Node['title'], Node['path'], Node['icon'], "")
 
         # Images (library://picture/ is not supported by Kodi)
         if query == 'NodesDynamic':
             for Node in utils.EmbyServers[ServerId].Views.Nodes[query]:
                 if ContentSupported == "image" and not Node['path'].startswith("library://"):
-                    ItemsListings = add_ListItem(ItemsListings, Node['title'], f"plugin://plugin.video.emby-next-gen/?id={Node['path']}&mode=browse&query=ImageDynamic&server={ServerId}&parentid={ParentId}&content={Content}&libraryid={LibraryId}", True, Node['icon'], "")
+                    ItemsListings = add_ListItem(ItemsListings, Node['title'], f"plugin://plugin.service.emby-next-gen/?id={Node['path']}&mode=browse&query=ImageDynamic&server={ServerId}&parentid={ParentId}&content={Content}&libraryid={LibraryId}", Node['icon'], "")
 
         xbmcplugin.addDirectoryItems(Handle, ItemsListings, len(ItemsListings))
         xbmcplugin.addSortMethod(Handle, xbmcplugin.SORT_METHOD_UNSORTED)
@@ -98,7 +98,7 @@ def browse(Handle, Id, query, ParentId, Content, ServerId, LibraryId, ContentSup
 
     if query == 'ImageDynamic':
         for Node in utils.EmbyServers[ServerId].Views.PictureNodes[Id]:
-            ItemsListings = add_ListItem(ItemsListings, Node[0], Node[2], True, Node[3], "")
+            ItemsListings = add_ListItem(ItemsListings, Node[0], Node[2], Node[3], "")
 
         xbmcplugin.addDirectoryItems(Handle, ItemsListings, len(ItemsListings))
         xbmcplugin.addSortMethod(Handle, xbmcplugin.SORT_METHOD_UNSORTED)
@@ -325,7 +325,7 @@ def browse(Handle, Id, query, ParentId, Content, ServerId, LibraryId, ContentSup
                     ItemsListingsCached = load_ListItem(ParentId, SortedItem, ServerId, ItemsListingsCached, Content, LibraryId)
 
                 globals()["QueryCache"][SortItemContent][f"{Id}{SortItemContent}{ParentId}{ServerId}{LibraryId}"] = [True, ItemsListingsCached, Unsorted, Id, SortItemContent, ServerId, ParentId, LibraryId]
-                ItemsListings = add_ListItem(ItemsListings, f"--{SortItemContent}--", f"plugin://plugin.video.emby-next-gen/?id={Id}&mode=browse&query={SortItemContent}&server={ServerId}&parentid={ParentId}&content={SortItemContent}&libraryid={LibraryId}", True, IconMapping[SortItemContent], SortItemContent)
+                ItemsListings = add_ListItem(ItemsListings, f"--{SortItemContent}--", f"plugin://plugin.service.emby-next-gen/?id={Id}&mode=browse&query={SortItemContent}&server={ServerId}&parentid={ParentId}&content={SortItemContent}&libraryid={LibraryId}", IconMapping[SortItemContent], SortItemContent)
 
             WindowIdCheck = False
         else: # unique content
@@ -408,7 +408,7 @@ def reload_Window(Content, ContentQuery, WindowId, Handle, Id, query, ServerId, 
             xbmc.log("EMBY.helper.pluginmenu: ReloadWindow timeout", 3) # LOGERROR
 
         xbmc.executebuiltin('Dialog.Close(busydialog,true)')
-        utils.SendJson(f'{{"jsonrpc": "2.0", "id": 1, "method": "GUI.ActivateWindow", "params": {{"window": "{ReloadWindowId}", "parameters": ["plugin://plugin.video.emby-next-gen/?id={Id}&mode=browse&query={query}&server={ServerId}&parentid={ParentId}&content={ContentQuery}&libraryid={LibraryId}", "return"]}}}}')
+        utils.SendJson(f'{{"jsonrpc": "2.0", "id": 1, "method": "GUI.ActivateWindow", "params": {{"window": "{ReloadWindowId}", "parameters": ["plugin://plugin.service.emby-next-gen/?id={Id}&mode=browse&query={query}&server={ServerId}&parentid={ParentId}&content={ContentQuery}&libraryid={LibraryId}", "return"]}}}}')
         return True
 
     return False
@@ -509,7 +509,7 @@ def load_ListItem(ParentId, Item, ServerId, ItemsListings, Content, LibraryId):
                         StaggeredQuery = "MusicVideo"
 
             params = {'id': Item['Id'], 'mode': "browse", 'query': StaggeredQuery, 'server': ServerId, 'parentid': ParentId, 'content': Content, 'libraryid': LibraryId}
-            ItemsListings += ((f"plugin://plugin.video.emby-next-gen/?{urlencode(params)}", ListItem, True),)
+            ItemsListings += ((f"plugin://plugin.service.emby-next-gen/?{urlencode(params)}", ListItem, True),)
         else:
             path, _ = common.get_path_type_from_item(ServerId, Item)
             ItemsListings += ((path, ListItem, False),)
@@ -517,12 +517,12 @@ def load_ListItem(ParentId, Item, ServerId, ItemsListings, Content, LibraryId):
     return ItemsListings
 
 #Menu structure nodes
-def add_ListItem(ItemsListings, label, path, isFolder, artwork, HelpText):
+def add_ListItem(ItemsListings, label, path, artwork, HelpText):
     ListItem = xbmcgui.ListItem(label, HelpText, path, True)
     ListItem.setContentLookup(False)
     ListItem.setProperties({'IsFolder': 'true', 'IsPlayable': 'false'})
-    ListItem.setArt({"thumb": artwork, "fanart": "special://home/addons/plugin.video.emby-next-gen/resources/fanart.jpg", "landscape": artwork or "special://home/addons/plugin.video.emby-next-gen/resources/fanart.jpg", "banner": "special://home/addons/plugin.video.emby-next-gen/resources/banner.png", "clearlogo": "special://home/addons/plugin.video.emby-next-gen/resources/clearlogo.png", "icon": artwork})
-    ItemsListings += ((path, ListItem, isFolder),)
+    ListItem.setArt({"thumb": artwork, "fanart": "special://home/addons/plugin.service.emby-next-gen/resources/fanart.jpg", "landscape": artwork or "special://home/addons/plugin.service.emby-next-gen/resources/fanart.jpg", "banner": "special://home/addons/plugin.service.emby-next-gen/resources/banner.png", "clearlogo": "special://home/addons/plugin.service.emby-next-gen/resources/clearlogo.png", "icon": artwork})
+    ItemsListings += ((path, ListItem, True),)
     return ItemsListings
 
 def get_EmbyServerList():
@@ -753,7 +753,7 @@ def cache_textures_generator(selection):
                 TempUrls = TotalRecords * [()]
                 ItemCounter = 0
 
-                for Item in EmbyServer.API.get_Items(None, ["PhotoAlbum"], True, True, {}):
+                for Item in EmbyServer.API.get_Items(None, ["PhotoAlbum"], True, True, {}, "", False):
                     path, _ = common.get_path_type_from_item(ServerId, Item)
                     TempUrls[ItemCounter] = (path,)
                     ItemCounter += 1
@@ -765,7 +765,7 @@ def cache_textures_generator(selection):
                 TempUrls = TotalRecords * [()]
                 ItemCounter = 0
 
-                for Item in EmbyServer.API.get_Items(None, ["Photo"], True, True, {}):
+                for Item in EmbyServer.API.get_Items(None, ["Photo"], True, True, {}, "", False):
                     path, _ = common.get_path_type_from_item(ServerId, Item)
                     TempUrls[ItemCounter] = (path,)
                     ItemCounter += 1

@@ -1,10 +1,10 @@
 <?xml version="1.0" ?>
 <settings version="1">
-    <section id="plugin.video.emby-next-gen">
+    <section id="plugin.service.emby-next-gen">
         <category id="general" label="29999" help="">
             <group id="1" label="33649">
                 <setting id="manageserver" label="30614" type="action" help="33307">
-                    <data>NotifyAll(plugin.video.emby-next-gen,manageserver)</data>
+                    <data>NotifyAll(plugin.service.emby-next-gen,manageserver)</data>
                     <level>0</level>
                     <control type="button" format="action"/>
                 </setting>
@@ -14,7 +14,7 @@
                     <control type="toggle"/>
                 </setting>
                 <setting id="factoryreset" label="33340" type="action" help="33400">
-                    <data>NotifyAll(plugin.video.emby-next-gen,factoryreset)</data>
+                    <data>NotifyAll(plugin.service.emby-next-gen,factoryreset)</data>
                     <level>0</level>
                     <control type="button" format="action"/>
                 </setting>
@@ -72,12 +72,12 @@
                     <control type="edit" format="string"/>
                 </setting>
                 <setting id="managelibsselection" label="33194" type="action" help="33309">
-                    <data>NotifyAll(plugin.video.emby-next-gen,managelibsselection)</data>
+                    <data>NotifyAll(plugin.service.emby-next-gen,managelibsselection)</data>
                     <level>0</level>
                     <control type="button" format="action"/>
                 </setting>
                 <setting id="texturecache" label="33059" type="action" help="33310">
-                    <data>NotifyAll(plugin.video.emby-next-gen,texturecache)</data>
+                    <data>NotifyAll(plugin.service.emby-next-gen,texturecache)</data>
                     <level>0</level>
                     <dependencies>
                         <dependency type="enable">
@@ -128,7 +128,7 @@
                 </setting>
                 <setting id="DownloadPath" type="path" label="33569" help="33574">
                     <level>2</level>
-                    <default>special://profile/addon_data/plugin.video.emby-next-gen/</default>
+                    <default>special://profile/addon_data/plugin.service.emby-next-gen/</default>
                     <constraints>
                         <writable>true</writable>
                         <allowempty>true</allowempty>
@@ -138,17 +138,17 @@
                     </control>
                 </setting>
                 <setting id="DownloadReset" label="33572" type="action" help="">
-                    <data>NotifyAll(plugin.video.emby-next-gen,downloadreset)</data>
+                    <data>NotifyAll(plugin.service.emby-next-gen,downloadreset)</data>
                     <level>2</level>
                     <control type="button" format="action"/>
                 </setting>
                 <setting id="nodesreset" label="33341" type="action" help="33401">
-                    <data>NotifyAll(plugin.video.emby-next-gen,nodesreset)</data>
+                    <data>NotifyAll(plugin.service.emby-next-gen,nodesreset)</data>
                     <level>3</level>
                     <control type="button" format="action"/>
                 </setting>
                 <setting id="databasereset" label="33058" type="action" help="33313">
-                    <data>NotifyAll(plugin.video.emby-next-gen,databasereset)</data>
+                    <data>NotifyAll(plugin.service.emby-next-gen,databasereset)</data>
                     <level>0</level>
                     <control type="button" format="action"/>
                 </setting>
@@ -1433,7 +1433,7 @@
                     <control type="toggle"/>
                 </setting>
                 <setting id="skinreload" label="33409" type="action">
-                    <data>NotifyAll(plugin.video.emby-next-gen,skinreload)</data>
+                    <data>NotifyAll(plugin.service.emby-next-gen,skinreload)</data>
                     <level>0</level>
                     <control type="button" format="action"/>
                 </setting>
@@ -1520,7 +1520,7 @@
                     <control type="toggle"/>
                 </setting>
                 <setting id="databasevacuummanual" label="33436" type="action" help="334078">
-                    <data>NotifyAll(plugin.video.emby-next-gen,databasevacuummanual)</data>
+                    <data>NotifyAll(plugin.service.emby-next-gen,databasevacuummanual)</data>
                     <level>3</level>
                     <control type="button" format="action"/>
                 </setting>
@@ -1538,7 +1538,7 @@
                     </control>
                 </setting>
                 <setting id="backup" label="33092" type="action" help="">
-                    <data>NotifyAll(plugin.video.emby-next-gen,backup)</data>
+                    <data>NotifyAll(plugin.service.emby-next-gen,backup)</data>
                     <level>2</level>
                     <control type="button" format="action"/>
                     <dependencies>
@@ -1548,7 +1548,7 @@
                     </dependencies>
                 </setting>
                 <setting id="restore" label="33255" type="action" help="">
-                    <data>NotifyAll(plugin.video.emby-next-gen,restore)</data>
+                    <data>NotifyAll(plugin.service.emby-next-gen,restore)</data>
                     <level>2</level>
                     <control type="button" format="action"/>
                     <dependencies>

@@ -20,7 +20,7 @@
             <width>98%</width>
             <height>7%</height>
             <visible>true</visible>
-            <label>$ADDON[plugin.video.emby-next-gen 33417]</label>
+            <label>$ADDON[plugin.service.emby-next-gen 33417]</label>
             <align>center</align>
             <texturenofocus colordiffuse="203077ff">white.png</texturenofocus>
             <texturefocus colordiffuse="203077ff">white.png</texturefocus>

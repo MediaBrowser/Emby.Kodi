@@ -1046,7 +1046,7 @@ class EmbyDatabase:
                                     SQLs['video'].delete_musicvideos(ItemReferenced['KodiItemId'], ItemReferenced['KodiFileId'])
 
                     # Add references
-                    if not "ParentId" in item:
+                    if "ParentId" not in item:
                         item['ParentId'] = None
 
                     if EmbyType == "Episode":
