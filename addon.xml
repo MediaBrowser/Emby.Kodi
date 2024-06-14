@@ -1,7 +1,8 @@
 <?xml version='1.0' encoding='UTF-8' standalone="yes"?>
-<addon id="plugin.image.emby-next-gen" name="Emby for Kodi Next Gen" version="10.0.1" provider-name="quickmic">
+<addon id="plugin.image.emby-next-gen" name="Emby for Kodi Next Gen" version="10.1.0" provider-name="quickmic">
     <requires>
         <import addon="xbmc.python" version="3.0.1"/>
+        <import addon="plugin.service.emby-next-gen" version="10.0.25" />
     </requires>
     <extension point="xbmc.python.pluginsource" library="events.py">
         <provides>image</provides>
