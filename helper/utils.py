@@ -536,8 +536,10 @@ def get_url_info(ConnectionString):
         Port = int(Temp[2].split("?", 1)[0].split("/", 1)[0])
 
     Hostname = Temp[1][2:].split("?", 1)[0].split("/", 1)[0]
-    xbmc.log(f"Emby.helper.utils: get_url_info: {Scheme} / {Hostname} / {Port}", 0) # LOGDEBUG
-    return Scheme, Hostname, Port
+    SubUrl = ConnectionString.replace(f"{Scheme}://", "").replace(f":{Port}", "").replace(Hostname, "").rsplit("/", 1)[0]
+    SubUrl = f"/{SubUrl}/".replace("//", "/")
+    xbmc.log(f"Emby.helper.utils: get_url_info: ConnectionString='{ConnectionString}' Scheme='{Scheme}' Hostname='{Hostname}' SubUrl='{SubUrl}' Port='{Port}'", 0) # LOGDEBUG
+    return Scheme, Hostname, Port, SubUrl
 
 # Remove all emby playlists
 def delete_playlists():

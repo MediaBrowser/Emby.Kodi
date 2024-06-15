@@ -1,3 +1,11 @@
+10.0.31
+=============
+fix connection issues with SubUrl connection strings (also fixes websocket issues behind proxies)
+fix wrong subtitle index
+fix http head requests
+
+
+
 10.0.30
 =============
 fix transcoding playback
