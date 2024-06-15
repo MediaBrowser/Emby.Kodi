@@ -45,14 +45,19 @@ class ServerManual(xbmcgui.WindowXMLDialog):
             # Sign in to emby connect
             self._disable_error()
             server = self.host_field.getText()
-            port = self.port_field.getText()
+            PortInput = self.port_field.getText()
 
             if not server:
                 # Display error
                 self._error(ERROR['Empty'], utils.Translate(30617))
                 xbmc.log("EMBY.dialogs.servermanual: Server cannot be null", 3) # LOGERROR
             else:
-                self.ManualAddress = f"{server}:{port}"
+                Scheme, Hostname, Port, SubUrl = utils.get_url_info(server)
+
+                if PortInput:
+                    Port = PortInput
+
+                self.ManualAddress = f"{Scheme}://{Hostname}:{Port}{SubUrl}"
                 self.close()
         # Remind me later
         elif controlId == CANCEL:

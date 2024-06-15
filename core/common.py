@@ -343,7 +343,7 @@ def get_streams(Item):
         Item['Streams'].append({'Subtitle': [], 'Audio': [], 'Video': [], 'Id': MediaSource['Id'], 'Index': IndexMediaSources, 'Path': MediaSource['Path'], 'Name': MediaSource['Name'], 'Size': MediaSource['Size']})
         HasExternalSubtitle = "0"
 
-        for Index, Stream in enumerate(MediaSource['MediaStreams']):
+        for Stream in MediaSource['MediaStreams']:
             Codec = Stream.get('Codec')
 
             if not Codec:
@@ -361,9 +361,9 @@ def get_streams(Item):
                     Codec = "dtshd_hra"
 
             if Stream['Type'] == "Audio" or Stream['Type'] == "Default":
-                Item['Streams'][IndexMediaSources]['Audio'].append({'SampleRate': Stream.get('SampleRate', None), 'BitRate': Stream.get('BitRate', None), 'codec': Codec, 'channels': Stream.get('Channels', None), 'language': Stream.get('Language', None), 'Index': Index, 'DisplayTitle': Stream.get('DisplayTitle', "unknown")})
+                Item['Streams'][IndexMediaSources]['Audio'].append({'SampleRate': Stream.get('SampleRate', None), 'BitRate': Stream.get('BitRate', None), 'codec': Codec, 'channels': Stream.get('Channels', None), 'language': Stream.get('Language', None), 'Index': Stream.get('Index', "0"), 'DisplayTitle': Stream.get('DisplayTitle', "unknown")})
             elif Stream['Type'] == "Video":
-                StreamData = {'language': Stream.get('Language', None),'hdrtype': None, 'codec': Codec, 'height': Stream.get('Height', None), 'width': Stream.get('Width', None), '3d': Stream.get('Video3DFormat', None), 'BitRate': Stream.get('BitRate', None), 'Index': Index, 'aspect': None}
+                StreamData = {'language': Stream.get('Language', None),'hdrtype': None, 'codec': Codec, 'height': Stream.get('Height', None), 'width': Stream.get('Width', None), '3d': Stream.get('Video3DFormat', None), 'BitRate': Stream.get('BitRate', None), 'Index': Stream.get('Index', "0"), 'aspect': None}
                 VideoRange = Stream.get('VideoRange', "").lower()
 
                 if VideoRange == "hdr 10":
@@ -395,7 +395,7 @@ def get_streams(Item):
                 if IsExternal:
                     HasExternalSubtitle = "1"
 
-                Item['Streams'][IndexMediaSources]['Subtitle'].append({'Index': Index, 'language': Stream.get('Language', "und"), 'DisplayTitle': Stream.get('DisplayTitle', "unknown"), 'codec': Codec, 'external': IsExternal})
+                Item['Streams'][IndexMediaSources]['Subtitle'].append({'Index': Stream.get('Index', "0"), 'language': Stream.get('Language', "und"), 'DisplayTitle': Stream.get('DisplayTitle', "unknown"), 'codec': Codec, 'external': IsExternal})
 
         Item['Streams'][IndexMediaSources]['HasExternalSubtitle'] = HasExternalSubtitle
 

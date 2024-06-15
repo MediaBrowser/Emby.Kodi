@@ -82,7 +82,7 @@ class HTTP:
 
         if NewHeader:
             try:
-                Scheme, self.Connection[ConnectionId]["Hostname"], self.Connection[ConnectionId]["Port"] = utils.get_url_info(ConnectionString)
+                Scheme, self.Connection[ConnectionId]["Hostname"], self.Connection[ConnectionId]["Port"], self.Connection[ConnectionId]["SubUrl"] = utils.get_url_info(ConnectionString)
             except Exception as error:
                 xbmc.log(f"EMBY.emby.http: Socket open {ConnectionId}: Wrong ConnectionString: {ConnectionString} / {error}", 2) # LOGWARNING
 
@@ -300,14 +300,14 @@ class HTTP:
             if ParamsString:
                 ParamsString = f"?{ParamsString[:-1]}"
 
-            StatusCodeSocket, _ = self.socket_io(f"{Method} /{Handler}{ParamsString} HTTP/1.1\r\n{HeaderString}Content-Length: 0\r\n\r\n".encode("utf-8"), ConnectionId, TimeoutSend)
+            StatusCodeSocket, _ = self.socket_io(f"{Method} {self.Connection[ConnectionId]['SubUrl']}{Handler}{ParamsString} HTTP/1.1\r\n{HeaderString}Content-Length: 0\r\n\r\n".encode("utf-8"), ConnectionId, TimeoutSend)
         else:
             if Params:
                 ParamsString = json.dumps(Params)
             else:
                 ParamsString = ""
 
-            StatusCodeSocket, _ = self.socket_io(f"{Method} /{Handler} HTTP/1.1\r\n{HeaderString}Content-Length: {len(ParamsString)}\r\n\r\n{ParamsString}".encode("utf-8"), ConnectionId, TimeoutSend)
+            StatusCodeSocket, _ = self.socket_io(f"{Method} {self.Connection[ConnectionId]['SubUrl']}{Handler} HTTP/1.1\r\n{HeaderString}Content-Length: {len(ParamsString)}\r\n\r\n{ParamsString}".encode("utf-8"), ConnectionId, TimeoutSend)
 
         if StatusCodeSocket:
             return StatusCodeSocket, {}, ""
@@ -335,8 +335,8 @@ class HTTP:
                 Temp = IncomingDataHeaderArrayData.split(": ")
                 IncomingDataHeader[Temp[0].lower()] = Temp[1]
 
-            # Redirects 3XX and websocket 1XX
-            if StatusCode in (301, 302, 307, 308, 101):
+            # Redirects 3XX, websocket 1XX or HEAD requests
+            if StatusCode in (301, 302, 307, 308, 101) or Method == "HEAD":
                 return StatusCode, IncomingDataHeader, ""
 
             try:
@@ -571,7 +571,7 @@ class HTTP:
                 if StatusCode in (301, 302, 307, 308):
                     self.socket_close(ConnectionId)
                     Location = Header.get("location", "")
-                    Scheme, Hostname, Port = utils.get_url_info(Location)
+                    Scheme, Hostname, Port, _ = utils.get_url_info(Location)
                     ConnectionString = f"{Scheme}://{Hostname}:{Port}"
                     ConnectionStringNoPort = f"{Scheme}://{Hostname}"
                     Handler = Location.replace(ConnectionString, "").replace(ConnectionStringNoPort, "")
