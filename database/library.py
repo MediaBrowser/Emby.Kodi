@@ -406,6 +406,7 @@ class Library:
                         index += 1
 
                         if not Continue:
+                            self.EmbyServer.API.ProcessProgress[WorkerName] = -1
                             xbmc.log("EMBY.database.library: --<[ worker update interrupt ]", 1) # LOGINFO
                             return False
 
@@ -414,6 +415,7 @@ class Library:
             if not Continue:
                 break
 
+        self.EmbyServer.API.ProcessProgress[WorkerName] = -1
         SQLs["emby"].update_LastIncrementalSync(utils.currenttime())
         self.close_Worker(WorkerName, RefreshVideo, RefreshAudio, ProgressBar)
         xbmc.log("EMBY.database.library: --<[ worker update completed ]", 1) # LOGINFO
@@ -608,7 +610,7 @@ class Library:
                 self.EmbyServer.API.ProcessProgress["worker_library"] = ItemIndex
 
                 if not Continue:
-                    self.EmbyServer.API.ProcessProgress["worker_library"] = -1
+                    self.EmbyServer.API.ProcessProgress[WorkerName] = -1
                     xbmc.log("EMBY.database.library: --<[ worker library interrupt ]", 1) # LOGINFO
                     return
 

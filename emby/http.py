@@ -537,7 +537,7 @@ class HTTP:
                 ConnectionString = self.EmbyServer.ServerData['ServerUrl']
 
             # Connectionstring changed
-            if ConnectionId in self.Connection and (not CloseConnection or ConnectionString.find(self.Connection[ConnectionId]['Hostname']) == -1):
+            if not CloseConnection and ConnectionId in self.Connection and ConnectionString.find(self.Connection[ConnectionId]['Hostname']) == -1:
                 self.socket_close(ConnectionId)
 
             while True:
