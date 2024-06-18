@@ -1,3 +1,11 @@
+10.0.32
+=============
+fix sync paused issue for realtime library updates
+fix http connection
+fix node typo
+
+
+
 10.0.31
 =============
 fix connection issues with SubUrl connection strings (also fixes websocket issues behind proxies)

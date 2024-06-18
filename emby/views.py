@@ -585,7 +585,7 @@ class Views:
                 NodeIndex += 1
 
                 if view['ContentType'] == "root":
-                    NodeData = {'title': node[1].replace("EMBY:", ""), 'path': f"library://video/{node[0]}.xml", 'icon': node[2]}
+                    NodeData = {'title': node[1].replace("EMBY: ", ""), 'path': f"library://video/{node[0]}.xml", 'icon': node[2]}
                     NodeAdd = True
 
                     if node[0] in ('emby_collections_movies', 'emby_collections_tvshows', 'emby_collections_musicvideos'):
