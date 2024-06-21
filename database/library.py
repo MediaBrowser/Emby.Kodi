@@ -1411,7 +1411,7 @@ def StringToDict(Data):
 def Worker_is_paused(WorkerName):
     for Key, Busy in list(utils.SyncPause.items()):
         if Busy:
-            if WorkerName == "worker_userdata" and Key.startswith("server_busy_"): # Continue on progress updates, even emby server is busy
+            if WorkerName in ("worker_userdata", "worker_remove") and Key.startswith("server_busy_"): # Continue on progress updates, even emby server is busy
                 continue
 
             xbmc.log(f"EMBY.database.library: Worker_is_paused: {WorkerName} / {utils.SyncPause}", 1) # LOGINFO

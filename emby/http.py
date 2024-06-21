@@ -31,6 +31,7 @@ class HTTP:
         self.SSLContext.load_default_certs()
         self.Websocket = websocket.WebSocket(EmbyServer)
         self.WebsocketBuffer = b""
+        self.AddrInfo = {}
 
         if utils.sslverify:
             self.SSLContext.verify_mode = ssl.CERT_REQUIRED
@@ -66,6 +67,27 @@ class HTTP:
                 for ConnectionId in list(self.Connection.keys()):
                     self.socket_close(ConnectionId)
 
+    def socket_addrinfo(self, ConnectionId, Hostname, Force):
+        if Hostname in self.AddrInfo and not Force:
+            return 0
+
+        try:
+            AddrInfo = _socket.getaddrinfo(Hostname, None)
+            xbmc.log(f"EMBY.emby.http: AddrInfo: {AddrInfo}", 0) # LOGDEBUG
+            self.AddrInfo[Hostname] = (AddrInfo[0][4][0], AddrInfo[0][0])
+        except Exception as error:
+            xbmc.log(f"EMBY.emby.http: Socket open {ConnectionId}: Wrong Hostname: {error}", 2) # LOGWARNING
+
+            if ConnectionId == "MAIN":
+                utils.Dialog.notification(heading=utils.addon_name, icon="DefaultIconError.png", message="Invalid server address", time=utils.displayMessage, sound=False)
+
+            if ConnectionId in self.Connection:
+                del self.Connection[ConnectionId]
+
+            return 609
+
+        return 0
+
     def socket_open(self, ConnectionString, ConnectionId):
         NewHeader = False
 
@@ -100,32 +122,30 @@ class HTTP:
             if ConnectionId == "DOWNLOAD":
                 self.Connection[ConnectionId]["RequestHeader"]['Accept-encoding'] = "identity"
 
-            try:
-                self.Connection[ConnectionId]["AddressFamily"] = _socket.getaddrinfo(self.Connection[ConnectionId]['Hostname'], None)[0][0]
-            except Exception as error:
-                xbmc.log(f"EMBY.emby.http: Socket open {ConnectionId}: Wrong Hostname: {error}", 2) # LOGWARNING
+            StatusCodeSocket = self.socket_addrinfo(ConnectionId, self.Connection[ConnectionId]["Hostname"], False)
 
-                if ConnectionId == "MAIN":
-                    utils.Dialog.notification(heading=utils.addon_name, icon="DefaultIconError.png", message="Invalid server address", time=utils.displayMessage, sound=False)
+            if StatusCodeSocket:
+                return StatusCodeSocket
 
-                if ConnectionId in self.Connection:
-                    del self.Connection[ConnectionId]
-
-                return 609
-
-        TimeoutCounter = 0
+        RetryCounter = 0
 
         while True:
             try:
-                self.Connection[ConnectionId]["Socket"] = _socket.socket(self.Connection[ConnectionId]["AddressFamily"], _socket.SOCK_STREAM)
+                self.Connection[ConnectionId]["Socket"] = _socket.socket(self.AddrInfo[self.Connection[ConnectionId]["Hostname"]][1], _socket.SOCK_STREAM)
                 self.Connection[ConnectionId]["Socket"].setsockopt(_socket.IPPROTO_TCP, _socket.TCP_NODELAY, 1)
                 self.Connection[ConnectionId]["Socket"].settimeout(1) # set timeout
-                self.Connection[ConnectionId]["Socket"].connect((self.Connection[ConnectionId]['Hostname'], self.Connection[ConnectionId]['Port']))
+                self.Connection[ConnectionId]["Socket"].connect((self.AddrInfo[self.Connection[ConnectionId]["Hostname"]][0], self.Connection[ConnectionId]['Port']))
                 break
             except TimeoutError:
-                TimeoutCounter += 1
+                RetryCounter += 1
 
-                if TimeoutCounter < 10:
+                if RetryCounter == 1:
+                    StatusCodeSocket = self.socket_addrinfo(ConnectionId, self.Connection[ConnectionId]["Hostname"], True)
+
+                    if StatusCodeSocket:
+                        return StatusCodeSocket
+
+                if RetryCounter <= 10:
                     continue
 
                 xbmc.log(f"EMBY.emby.http: Socket open {ConnectionId}: Timeout", 2) # LOGWARNING
@@ -135,6 +155,17 @@ class HTTP:
 
                 return 606
             except ConnectionRefusedError:
+                RetryCounter += 1
+
+                if RetryCounter == 1:
+                    StatusCodeSocket = self.socket_addrinfo(ConnectionId, self.Connection[ConnectionId]["Hostname"], True)
+
+                    if StatusCodeSocket:
+                        return StatusCodeSocket
+
+                if RetryCounter == 1:
+                    continue
+
                 if ConnectionId in self.Connection:
                     del self.Connection[ConnectionId]
 
@@ -142,10 +173,16 @@ class HTTP:
                 xbmc.log(f"EMBY.emby.http: [ ServerUnreachable ] {ConnectionString}", 0) # LOGDEBUG
                 return 607
             except Exception as error:
-                if str(error) == "timed out": # workaround when TimeoutError not raised
-                    TimeoutCounter += 1
+                RetryCounter += 1
 
-                    if TimeoutCounter < 10:
+                if RetryCounter == 1:
+                    StatusCodeSocket = self.socket_addrinfo(ConnectionId, self.Connection[ConnectionId]["Hostname"], True)
+
+                    if StatusCodeSocket:
+                        return StatusCodeSocket
+
+                if str(error) == "timed out": # workaround when TimeoutError not raised
+                    if RetryCounter <= 10:
                         continue
 
                     xbmc.log(f"EMBY.emby.http: Socket open {ConnectionId}: Timeout", 2) # LOGWARNING
@@ -154,6 +191,9 @@ class HTTP:
                         del self.Connection[ConnectionId]
 
                     return 606
+
+                if RetryCounter == 1:
+                    continue
 
                 if str(error).lower().find("errno 22") != -1 or str(error).lower().find("invalid argument") != -1: # [Errno 22] Invalid argument
                     if ConnectionId in self.Connection:
@@ -520,7 +560,6 @@ class HTTP:
 
         xbmc.log("EMBY.emby.http: THREAD: ---<[ file download ]", 0) # LOGDEBUG
 
-    # decide threaded or wait for response
     def request(self, Method, Handler, Params, RequestHeader, Binary, ConnectionString, CloseConnection):
         xbmc.log(f"EMBY.emby.http: [ http ] Method: {Method} / Handler: {Handler} / Params: {Params} / Binary: {Binary} / ConnectionString: {ConnectionString} / CloseConnection: {CloseConnection} / RequestHeader: {RequestHeader}", 0) # LOGDEBUG
 

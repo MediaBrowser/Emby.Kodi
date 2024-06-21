@@ -34,6 +34,7 @@ CustomDialogParameters = (Addon.getAddonInfo('path'), "default", "1080i")
 EmbyServers = {}
 ItemSkipUpdate = []
 MinimumVersion = "9.4.0"
+EmbyServerVersionResync = "4.9.0.25"
 refreshskin = False
 device_name = "Kodi"
 xspplaylists = False
@@ -524,6 +525,9 @@ def get_unixtime_emby_format(): # Position(ticks) in Emby format 1 tick = 10000m
     return datetime.timestamp(datetime.utcnow()) * 10000
 
 def get_url_info(ConnectionString):
+    if not ConnectionString.startswith("http://") and not ConnectionString.startswith("https://"):
+        ConnectionString = f"http://{ConnectionString}"
+
     Temp = ConnectionString.split(":")
     Scheme = Temp[0]
 

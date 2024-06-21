@@ -129,7 +129,6 @@ SyncNodes = {
         ('randomalbums', utils.Translate(33391), 'special://home/addons/plugin.service.emby-next-gen/resources/random.png', "albums", (("type", "is", "LIBRARYTAG"),), ("random",), True, False),
         ('random', utils.Translate(33394), 'special://home/addons/plugin.service.emby-next-gen/resources/random.png', "songs", (("comment", "endswith", "LIBRARYTAG"),), ("random",), True, False)
     ],
-    'playlists': [],
     'root': [
         ('emby_inprogressmixed', f"EMBY: {utils.Translate(33628)}", 'DefaultInProgressShows.png', "mixed", (("PLUGIN", "inprogressmixed", "mixed"),)),
         ('emby_nextepisodes', f"EMBY: {utils.Translate(33665)}", 'DefaultInProgressShows.png', "tvshows", (("PLUGIN", "nextepisodes", "episode"),)),
@@ -150,156 +149,156 @@ SyncNodes = {
 }
 DynamicNodes = {
     'tvshows': [
-        ('Letter', utils.Translate(33611), 'special://home/addons/plugin.service.emby-next-gen/resources/letter.png', "Series"),
-        ('Series', utils.Translate(33349), 'DefaultTVShows.png', "Series"),
-        ('Folder', utils.Translate(33335), 'DefaultFolder.png', "Folder"),
-        ('Recentlyadded', utils.Translate(30170), 'DefaultRecentlyAddedEpisodes.png', "Series"),
-        ('Recentlyadded', utils.Translate(30175), 'DefaultRecentlyAddedEpisodes.png', "Episode"),
-        ('Unwatched', utils.Translate(33345), 'OverlayUnwatched.png', "Series"),
-        ('Unwatched', utils.Translate(33344), 'OverlayUnwatched.png', "Episode"),
-        ('Favorite', utils.Translate(33558), 'DefaultFavourites.png', "tvshows"),
-        ('Favorite', utils.Translate(33346), 'DefaultFavourites.png', "Series"),
-        ('Favorite', utils.Translate(30182), 'DefaultFavourites.png', "Episode"),
-        ('Tag', utils.Translate(33353), 'DefaultTags.png', "tvshows"),
-        ('Inprogress', utils.Translate(30178), 'DefaultInProgressShows.png', "Episode"),
-        ('Genre', utils.Translate(135), 'DefaultGenre.png', "Series"),
-        ('BoxSet', utils.Translate(30185), 'DefaultSets.png', "tvshows"),
-        ('Upcoming', utils.Translate(33348), 'DefaultSets.png', "Episode"),
-        ('NextUp', utils.Translate(30179), 'DefaultSets.png', "Episode"),
-        ('Resume', utils.Translate(33355), 'DefaultInProgressShows.png', "Episode"),
-        ('Random', utils.Translate(33339), 'special://home/addons/plugin.service.emby-next-gen/resources/random.png', "Series"),
-        ('Random', utils.Translate(33338), 'special://home/addons/plugin.service.emby-next-gen/resources/random.png', "Episode")
+        ('Letter', utils.Translate(33611), 'special://home/addons/plugin.service.emby-next-gen/resources/letter.png', "Series", False),
+        ('Series', utils.Translate(33349), 'DefaultTVShows.png', "Series", False),
+        ('Folder', utils.Translate(33335), 'DefaultFolder.png', "Folder", True),
+        ('Recentlyadded', utils.Translate(30170), 'DefaultRecentlyAddedEpisodes.png', "Series", False),
+        ('Recentlyadded', utils.Translate(30175), 'DefaultRecentlyAddedEpisodes.png', "Episode", False),
+        ('Unwatched', utils.Translate(33345), 'OverlayUnwatched.png', "Series", False),
+        ('Unwatched', utils.Translate(33344), 'OverlayUnwatched.png', "Episode", False),
+        ('Favorite', utils.Translate(33558), 'DefaultFavourites.png', "tvshows", False),
+        ('Favorite', utils.Translate(33346), 'DefaultFavourites.png', "Series", False),
+        ('Favorite', utils.Translate(30182), 'DefaultFavourites.png', "Episode", False),
+        ('Tag', utils.Translate(33353), 'DefaultTags.png', "tvshows", True),
+        ('Inprogress', utils.Translate(30178), 'DefaultInProgressShows.png', "Episode", False),
+        ('Genre', utils.Translate(135), 'DefaultGenre.png', "Series", True),
+        ('BoxSet', utils.Translate(30185), 'DefaultSets.png', "tvshows", True),
+        ('Upcoming', utils.Translate(33348), 'DefaultSets.png', "Episode", False),
+        ('NextUp', utils.Translate(30179), 'DefaultSets.png', "Episode", False),
+        ('Resume', utils.Translate(33355), 'DefaultInProgressShows.png', "Episode", False),
+        ('Random', utils.Translate(33339), 'special://home/addons/plugin.service.emby-next-gen/resources/random.png', "Series", False),
+        ('Random', utils.Translate(33338), 'special://home/addons/plugin.service.emby-next-gen/resources/random.png', "Episode", False)
     ],
     'mixedvideo': [
-        ('Letter', utils.Translate(33621), 'special://home/addons/plugin.service.emby-next-gen/resources/letter.png', "Movie"),
-        ('Letter', utils.Translate(33622), 'special://home/addons/plugin.service.emby-next-gen/resources/letter.png', "Series"),
-        ('Letter', utils.Translate(33617), 'special://home/addons/plugin.service.emby-next-gen/resources/letter.png', "Video"),
-        ('Letter', utils.Translate(33620), 'special://home/addons/plugin.service.emby-next-gen/resources/letter.png', "VideoMusicArtist"),
-        ('Movie', utils.Translate(30302), 'DefaultMovies.png', "Movie"),
-        ('Video', utils.Translate(33367), 'DefaultAddonVideo.png', "Video"),
-        ('Series', utils.Translate(33349), 'DefaultTVShows.png', "Series"),
-        ('Folder', utils.Translate(33335), 'DefaultFolder.png', "Folder"),
-        ('Recentlyadded', utils.Translate(30174), 'DefaultRecentlyAddedMovies.png', "Movie"),
-        ('Recentlyadded', utils.Translate(30256), 'DefaultRecentlyAddedMusicVideos.png', "MusicVideo"),
-        ('Recentlyadded', utils.Translate(30170), 'DefaultRecentlyAddedEpisodes.png', "Series"),
-        ('Recentlyadded', utils.Translate(30175), 'DefaultRecentlyAddedEpisodes.png', "Episode"),
-        ('Unwatched', utils.Translate(30189), 'OverlayUnwatched.png', "Movie"),
-        ('Unwatched', utils.Translate(30258), 'OverlayUnwatched.png', "MusicVideo"),
-        ('Unwatched', utils.Translate(33345), 'OverlayUnwatched.png', "Series"),
-        ('Unwatched', utils.Translate(33344), 'OverlayUnwatched.png', "Episode"),
-        ('Inprogress', utils.Translate(30177), 'DefaultInProgressShows.png', "Movie"),
-        ('Inprogress', utils.Translate(30257), 'DefaultInProgressShows.png', "MusicVideo"),
-        ('Inprogress', utils.Translate(30178), 'DefaultInProgressShows.png', "Episode"),
-        ('Genre', utils.Translate(135), 'DefaultGenre.png', "Series"),
-        ('Genre', utils.Translate(135), 'DefaultGenre.png', "Movie"),
-        ('MusicGenre', utils.Translate(135), 'DefaultGenre.png', "MusicVideo"),
-        ('Random', utils.Translate(33339), 'special://home/addons/plugin.service.emby-next-gen/resources/random.png', "Series"),
-        ('Random', utils.Translate(30229), 'special://home/addons/plugin.service.emby-next-gen/resources/random.png', "Movie"),
-        ('Random', utils.Translate(33338), 'special://home/addons/plugin.service.emby-next-gen/resources/random.png', "Episode"),
-        ('Random', utils.Translate(33365), 'special://home/addons/plugin.service.emby-next-gen/resources/random.png', "MusicVideo")
+        ('Letter', utils.Translate(33621), 'special://home/addons/plugin.service.emby-next-gen/resources/letter.png', "Movie", False),
+        ('Letter', utils.Translate(33622), 'special://home/addons/plugin.service.emby-next-gen/resources/letter.png', "Series", False),
+        ('Letter', utils.Translate(33617), 'special://home/addons/plugin.service.emby-next-gen/resources/letter.png', "Video", False),
+        ('Letter', utils.Translate(33620), 'special://home/addons/plugin.service.emby-next-gen/resources/letter.png', "VideoMusicArtist", False),
+        ('Movie', utils.Translate(30302), 'DefaultMovies.png', "Movie", False),
+        ('Video', utils.Translate(33367), 'DefaultAddonVideo.png', "Video", False),
+        ('Series', utils.Translate(33349), 'DefaultTVShows.png', "Series", False),
+        ('Folder', utils.Translate(33335), 'DefaultFolder.png', "Folder", True),
+        ('Recentlyadded', utils.Translate(30174), 'DefaultRecentlyAddedMovies.png', "Movie", False),
+        ('Recentlyadded', utils.Translate(30256), 'DefaultRecentlyAddedMusicVideos.png', "MusicVideo", False),
+        ('Recentlyadded', utils.Translate(30170), 'DefaultRecentlyAddedEpisodes.png', "Series", False),
+        ('Recentlyadded', utils.Translate(30175), 'DefaultRecentlyAddedEpisodes.png', "Episode", False),
+        ('Unwatched', utils.Translate(30189), 'OverlayUnwatched.png', "Movie", False),
+        ('Unwatched', utils.Translate(30258), 'OverlayUnwatched.png', "MusicVideo", False),
+        ('Unwatched', utils.Translate(33345), 'OverlayUnwatched.png', "Series", False),
+        ('Unwatched', utils.Translate(33344), 'OverlayUnwatched.png', "Episode", False),
+        ('Inprogress', utils.Translate(30177), 'DefaultInProgressShows.png', "Movie", False),
+        ('Inprogress', utils.Translate(30257), 'DefaultInProgressShows.png', "MusicVideo", False),
+        ('Inprogress', utils.Translate(30178), 'DefaultInProgressShows.png', "Episode", False),
+        ('Genre', utils.Translate(135), 'DefaultGenre.png', "Series", True),
+        ('Genre', utils.Translate(135), 'DefaultGenre.png', "Movie", True),
+        ('MusicGenre', utils.Translate(135), 'DefaultGenre.png', "MusicVideo", True),
+        ('Random', utils.Translate(33339), 'special://home/addons/plugin.service.emby-next-gen/resources/random.png', "Series", False),
+        ('Random', utils.Translate(30229), 'special://home/addons/plugin.service.emby-next-gen/resources/random.png', "Movie", False),
+        ('Random', utils.Translate(33338), 'special://home/addons/plugin.service.emby-next-gen/resources/random.png', "Episode", False),
+        ('Random', utils.Translate(33365), 'special://home/addons/plugin.service.emby-next-gen/resources/random.png', "MusicVideo", False)
     ],
     'movies': [
-        ('Letter', utils.Translate(33611), 'special://home/addons/plugin.service.emby-next-gen/resources/letter.png', "Movie"),
-        ('Movie', utils.Translate(30302), 'DefaultMovies.png', "Movie"),
-        ('Folder', utils.Translate(33335), 'DefaultFolder.png', "Folder"),
-        ('Recentlyadded', utils.Translate(30174), 'DefaultRecentlyAddedMovies.png', "Movie"),
-        ('Inprogress', utils.Translate(30177), 'DefaultInProgressShows.png', "Movie"),
-        ('Unwatched', utils.Translate(30189), 'OverlayUnwatched.png', "Movie"),
-        ('BoxSet', utils.Translate(20434), 'DefaultSets.png', "movies"),
-        ('Recommendations', utils.Translate(33613), 'DefaultInProgressShows.png', "Movie"),
-        ('Tag', utils.Translate(33356), 'DefaultTags.png', "movies"),
-        ('Favorite', utils.Translate(33558), 'DefaultFavourites.png', "movies"),
-        ('Favorite', utils.Translate(33614), 'DefaultFavourites.png', "Movie"),
-        ('Genre', utils.Translate(135), 'DefaultGenre.png', "Movie"),
-        ('Random', utils.Translate(30229), 'special://home/addons/plugin.service.emby-next-gen/resources/random.png', "Movie")
+        ('Letter', utils.Translate(33611), 'special://home/addons/plugin.service.emby-next-gen/resources/letter.png', "Movie", False),
+        ('Movie', utils.Translate(30302), 'DefaultMovies.png', "Movie", False),
+        ('Folder', utils.Translate(33335), 'DefaultFolder.png', "Folder", True),
+        ('Recentlyadded', utils.Translate(30174), 'DefaultRecentlyAddedMovies.png', "Movie", False),
+        ('Inprogress', utils.Translate(30177), 'DefaultInProgressShows.png', "Movie", False),
+        ('Unwatched', utils.Translate(30189), 'OverlayUnwatched.png', "Movie", False),
+        ('BoxSet', utils.Translate(20434), 'DefaultSets.png', "movies", True),
+        ('Recommendations', utils.Translate(33613), 'DefaultInProgressShows.png', "Movie", False),
+        ('Tag', utils.Translate(33356), 'DefaultTags.png', "movies", True),
+        ('Favorite', utils.Translate(33558), 'DefaultFavourites.png', "movies", False),
+        ('Favorite', utils.Translate(33614), 'DefaultFavourites.png', "Movie", False),
+        ('Genre', utils.Translate(135), 'DefaultGenre.png', "Movie", True),
+        ('Random', utils.Translate(30229), 'special://home/addons/plugin.service.emby-next-gen/resources/random.png', "Movie", False)
     ],
     'channels': [
-        ('Folder', utils.Translate(33335), 'DefaultFolder.png', "Folder")
+        ('Folder', utils.Translate(33335), 'DefaultFolder.png', "Folder", True)
     ],
     'boxsets': [
-        ('Letter', utils.Translate(33611), 'special://home/addons/plugin.service.emby-next-gen/resources/letter.png', "BoxSet"),
-        ('BoxSet', utils.Translate(30185), 'DefaultSets.png', "BoxSet"),
-        ('Favorite', utils.Translate(33615), 'DefaultFavourites.png', "BoxSet"),
+        ('Letter', utils.Translate(33611), 'special://home/addons/plugin.service.emby-next-gen/resources/letter.png', "BoxSet", False),
+        ('BoxSet', utils.Translate(30185), 'DefaultSets.png', "BoxSet", True),
+        ('Favorite', utils.Translate(33615), 'DefaultFavourites.png', "BoxSet", False),
     ],
     'livetv': [
-        ('TvChannel', utils.Translate(33593), 'DefaultAddonPVRClient.png', 'TvChannel')
+        ('TvChannel', utils.Translate(33593), 'DefaultAddonPVRClient.png', 'TvChannel', False)
     ],
     'musicvideos': [
-        ('Letter', utils.Translate(33611), 'special://home/addons/plugin.service.emby-next-gen/resources/letter.png', "VideoMusicArtist"),
-        ('MusicVideo', utils.Translate(33363), 'DefaultMusicVideos.png', "MusicVideo"),
-        ('VideoMusicArtist', utils.Translate(33343), 'DefaultMusicArtists.png', "VideoMusicArtist"),
-        ('Folder', utils.Translate(33335), 'DefaultFolder.png', "Folder"),
-        ('Recentlyadded', utils.Translate(30256), 'DefaultRecentlyAddedMusicVideos.png', "MusicVideo"),
-        ('Inprogress', utils.Translate(30257), 'DefaultInProgressShows.png', "MusicVideo"),
-        ('Unwatched', utils.Translate(30258), 'OverlayUnwatched.png', "MusicVideo"),
-        ('Tag', utils.Translate(33364), 'DefaultTags.png', "musicvideos"),
-        ('BoxSet', utils.Translate(30185), 'DefaultSets.png', "musicvideos"),
-        ('Random', utils.Translate(33365), 'special://home/addons/plugin.service.emby-next-gen/resources/random.png', "MusicVideo"),
-        ('Favorite', utils.Translate(33610), 'DefaultFavourites.png', "MusicVideo"),
-        ('Favorite', utils.Translate(33168), 'DefaultFavourites.png', "musicvideos"),
-        ('MusicGenre', utils.Translate(135), 'DefaultGenre.png', "MusicVideo")
+        ('Letter', utils.Translate(33611), 'special://home/addons/plugin.service.emby-next-gen/resources/letter.png', "VideoMusicArtist", False),
+        ('MusicVideo', utils.Translate(33363), 'DefaultMusicVideos.png', "MusicVideo", False),
+        ('VideoMusicArtist', utils.Translate(33343), 'DefaultMusicArtists.png', "VideoMusicArtist", False),
+        ('Folder', utils.Translate(33335), 'DefaultFolder.png', "Folder", True),
+        ('Recentlyadded', utils.Translate(30256), 'DefaultRecentlyAddedMusicVideos.png', "MusicVideo", False),
+        ('Inprogress', utils.Translate(30257), 'DefaultInProgressShows.png', "MusicVideo", False),
+        ('Unwatched', utils.Translate(30258), 'OverlayUnwatched.png', "MusicVideo", False),
+        ('Tag', utils.Translate(33364), 'DefaultTags.png', "musicvideos", True),
+        ('BoxSet', utils.Translate(30185), 'DefaultSets.png', "musicvideos", True),
+        ('Random', utils.Translate(33365), 'special://home/addons/plugin.service.emby-next-gen/resources/random.png', "MusicVideo", False),
+        ('Favorite', utils.Translate(33610), 'DefaultFavourites.png', "MusicVideo", False),
+        ('Favorite', utils.Translate(33168), 'DefaultFavourites.png', "musicvideos", False),
+        ('MusicGenre', utils.Translate(135), 'DefaultGenre.png', "MusicVideo", True)
     ],
     'homevideos': [
-        ('Letter', utils.Translate(33616), 'special://home/addons/plugin.service.emby-next-gen/resources/letter.png', "PhotoAlbum"),
-        ('Letter', utils.Translate(33617), 'special://home/addons/plugin.service.emby-next-gen/resources/letter.png', "Video"),
-        ('Folder', utils.Translate(33335), 'DefaultFolder.png', "Folder"),
-        ('Video', utils.Translate(33367), 'DefaultAddonVideo.png', "Video"),
-        ('Photo', utils.Translate(33368), 'DefaultPicture.png', "Photo"),
-        ('PhotoAlbum', utils.Translate(33369), 'DefaultAddonPicture.png', "PhotoAlbum"),
-        ('Tag', utils.Translate(33370), 'DefaultTags.png', "PhotoAlbum"),
-        ('Tag', utils.Translate(33371), 'DefaultTags.png', "Photo"),
-        ('Tag', utils.Translate(33372), 'DefaultTags.png', "Video"),
-        ('Favorite', utils.Translate(33608), 'DefaultFavourites.png', "Video"),
-        ('Favorite', utils.Translate(33609), 'DefaultFavourites.png', "Photo"),
-        ('BoxSet', utils.Translate(30185), 'DefaultSets.png', "BoxSet"),
-        ('Recentlyadded', utils.Translate(33373), 'DefaultRecentlyAddedMovies.png', "Photo"),
-        ('Recentlyadded', utils.Translate(33566), 'DefaultRecentlyAddedMovies.png', "PhotoAlbum"),
-        ('Recentlyadded', utils.Translate(33375), 'DefaultRecentlyAddedMovies.png', "Video")
+        ('Letter', utils.Translate(33616), 'special://home/addons/plugin.service.emby-next-gen/resources/letter.png', "PhotoAlbum", False),
+        ('Letter', utils.Translate(33617), 'special://home/addons/plugin.service.emby-next-gen/resources/letter.png', "Video", False),
+        ('Folder', utils.Translate(33335), 'DefaultFolder.png', "Folder", True),
+        ('Video', utils.Translate(33367), 'DefaultAddonVideo.png', "Video", False),
+        ('Photo', utils.Translate(33368), 'DefaultPicture.png', "Photo", False),
+        ('PhotoAlbum', utils.Translate(33369), 'DefaultAddonPicture.png', "PhotoAlbum", True),
+        ('Tag', utils.Translate(33370), 'DefaultTags.png', "PhotoAlbum", True),
+        ('Tag', utils.Translate(33371), 'DefaultTags.png', "Photo", True),
+        ('Tag', utils.Translate(33372), 'DefaultTags.png', "Video", True),
+        ('Favorite', utils.Translate(33608), 'DefaultFavourites.png', "Video", False),
+        ('Favorite', utils.Translate(33609), 'DefaultFavourites.png', "Photo", False),
+        ('BoxSet', utils.Translate(30185), 'DefaultSets.png', "BoxSet", True),
+        ('Recentlyadded', utils.Translate(33373), 'DefaultRecentlyAddedMovies.png', "Photo", False),
+        ('Recentlyadded', utils.Translate(33566), 'DefaultRecentlyAddedMovies.png', "PhotoAlbum", False),
+        ('Recentlyadded', utils.Translate(33375), 'DefaultRecentlyAddedMovies.png', "Video", False)
     ],
     'playlists': [
-        ('Letter', utils.Translate(33611), 'special://home/addons/plugin.service.emby-next-gen/resources/letter.png', "Playlist"),
-        ('Playlists', utils.Translate(33376), 'DefaultPlaylist.png', "Playlist")
+        ('Letter', utils.Translate(33611), 'special://home/addons/plugin.service.emby-next-gen/resources/letter.png', "Playlist", False),
+        ('Playlists', utils.Translate(33376), 'DefaultPlaylist.png', "Playlist", True)
     ],
     'audiobooks': [
-        ('Letter', utils.Translate(33611), 'special://home/addons/plugin.service.emby-next-gen/resources/letter.png', "MusicArtist"),
-        ('MusicArtist', utils.Translate(33343), 'DefaultMusicArtists.png', "MusicArtist"),
-        ('Folder', utils.Translate(33335), 'DefaultFolder.png', "Folder"),
-        ('Audio', utils.Translate(33377), 'DefaultFolder.png', "Audio"),
-        ('Recentlyadded', utils.Translate(33167), 'DefaultRecentlyAddedMovies.png', "Audio"),
-        ('Inprogress', utils.Translate(33169), 'DefaultInProgressShows.png', "Audio"),
-        ('Favorite', utils.Translate(33168), 'DefaultFavourites.png', "Audio"),
-        ('Random', utils.Translate(33378), 'special://home/addons/plugin.service.emby-next-gen/resources/random.png', "Audio"),
-        ('MusicGenre', utils.Translate(135), 'DefaultGenre.png', "Audio"),
-        ('Unwatched', utils.Translate(33379), 'OverlayUnwatched.png', "Audio")
+        ('Letter', utils.Translate(33611), 'special://home/addons/plugin.service.emby-next-gen/resources/letter.png', "MusicArtist", False),
+        ('MusicArtist', utils.Translate(33343), 'DefaultMusicArtists.png', "MusicArtist", False),
+        ('Folder', utils.Translate(33335), 'DefaultFolder.png', "Folder", True),
+        ('Audio', utils.Translate(33377), 'DefaultFolder.png', "Audio", False),
+        ('Recentlyadded', utils.Translate(33167), 'DefaultRecentlyAddedMovies.png', "Audio", False),
+        ('Inprogress', utils.Translate(33169), 'DefaultInProgressShows.png', "Audio", False),
+        ('Favorite', utils.Translate(33168), 'DefaultFavourites.png', "Audio", False),
+        ('Random', utils.Translate(33378), 'special://home/addons/plugin.service.emby-next-gen/resources/random.png', "Audio", False),
+        ('MusicGenre', utils.Translate(135), 'DefaultGenre.png', "Audio", True),
+        ('Unwatched', utils.Translate(33379), 'OverlayUnwatched.png', "Audio", False)
     ],
     'podcasts': [
-        ('Letter', utils.Translate(33611), 'special://home/addons/plugin.service.emby-next-gen/resources/letter.png', "MusicArtist"),
-        ('MusicArtist', utils.Translate(33343), 'DefaultMusicArtists.png', "MusicArtist"),
-        ('Folder', utils.Translate(33335), 'DefaultFolder.png', "Folder"),
-        ('Audio', utils.Translate(33382), 'DefaultFolder.png', "Audio"),
-        ('Recentlyadded', utils.Translate(33167), 'DefaultRecentlyAddedMovies.png', "Audio"),
-        ('Inprogress', utils.Translate(33169), 'DefaultInProgressShows.png', "Audio"),
-        ('Favorite', utils.Translate(33168), 'DefaultFavourites.png', "Audio"),
-        ('Random', utils.Translate(33381), 'special://home/addons/plugin.service.emby-next-gen/resources/random.png', "Audio"),
-        ('MusicGenre', utils.Translate(135), 'DefaultGenre.png', "Audio"),
-        ('Unwatched', utils.Translate(33379), 'OverlayUnwatched.png', "Audio")
+        ('Letter', utils.Translate(33611), 'special://home/addons/plugin.service.emby-next-gen/resources/letter.png', "MusicArtist", False),
+        ('MusicArtist', utils.Translate(33343), 'DefaultMusicArtists.png', "MusicArtist", False),
+        ('Folder', utils.Translate(33335), 'DefaultFolder.png', "Folder", True),
+        ('Audio', utils.Translate(33382), 'DefaultFolder.png', "Audio", False),
+        ('Recentlyadded', utils.Translate(33167), 'DefaultRecentlyAddedMovies.png', "Audio", False),
+        ('Inprogress', utils.Translate(33169), 'DefaultInProgressShows.png', "Audio", False),
+        ('Favorite', utils.Translate(33168), 'DefaultFavourites.png', "Audio", False),
+        ('Random', utils.Translate(33381), 'special://home/addons/plugin.service.emby-next-gen/resources/random.png', "Audio", False),
+        ('MusicGenre', utils.Translate(135), 'DefaultGenre.png', "Audio", True),
+        ('Unwatched', utils.Translate(33379), 'OverlayUnwatched.png', "Audio", False)
     ],
     'music': [
-        ('Letter', utils.Translate(33611), 'special://home/addons/plugin.service.emby-next-gen/resources/letter.png', "MusicArtist"),
-        ('MusicArtist', utils.Translate(33343), 'DefaultMusicArtists.png', "MusicArtist"),
-        ('Folder', utils.Translate(33335), 'DefaultFolder.png', "Folder"),
-        ('Random', utils.Translate(33380), 'special://home/addons/plugin.service.emby-next-gen/resources/random.png', "Audio"),
-        ('MusicGenre', utils.Translate(135), 'DefaultMusicGenres.png', "Audio"),
-        ('Unwatched', utils.Translate(33379), 'OverlayUnwatched.png', "Audio"),
-        ('Favorite', utils.Translate(33623), 'DefaultFavourites.png', "Audio"),
-        ('Favorite', utils.Translate(33168), 'DefaultFavourites.png', "music"),
-        ('Recentlyadded', utils.Translate(33167), 'DefaultRecentlyAddedMovies.png', "Audio")
+        ('Letter', utils.Translate(33611), 'special://home/addons/plugin.service.emby-next-gen/resources/letter.png', "MusicArtist", False),
+        ('MusicArtist', utils.Translate(33343), 'DefaultMusicArtists.png', "MusicArtist", False),
+        ('Folder', utils.Translate(33335), 'DefaultFolder.png', "Folder", True),
+        ('Random', utils.Translate(33380), 'special://home/addons/plugin.service.emby-next-gen/resources/random.png', "Audio", False),
+        ('MusicGenre', utils.Translate(135), 'DefaultMusicGenres.png', "Audio", True),
+        ('Unwatched', utils.Translate(33379), 'OverlayUnwatched.png', "Audio", False),
+        ('Favorite', utils.Translate(33623), 'DefaultFavourites.png', "Audio", False),
+        ('Favorite', utils.Translate(33168), 'DefaultFavourites.png', "music", False),
+        ('Recentlyadded', utils.Translate(33167), 'DefaultRecentlyAddedMovies.png', "Audio", False)
     ],
     'root': [
-        ('Favorite', utils.Translate(33624), 'DefaultFavourites.png', "Person"),
-        ('Favorite', utils.Translate(33608), 'DefaultFavourites.png', "videos"),
-        ('Favorite', utils.Translate(33625), 'DefaultFavourites.png', "music"),
-        ('Search', utils.Translate(33626), 'DefaultAddonsSearch.png', "All"),
+        ('Favorite', utils.Translate(33624), 'DefaultFavourites.png', "Person", False),
+        ('Favorite', utils.Translate(33608), 'DefaultFavourites.png', "videos", False),
+        ('Favorite', utils.Translate(33625), 'DefaultFavourites.png', "music", False),
+        ('Search', utils.Translate(33626), 'DefaultAddonsSearch.png', "All", False),
     ]
 }
 
@@ -440,6 +439,9 @@ class Views:
 
     # Create or update the video node file
     def add_nodes(self, view, Dynamic):
+        if not Dynamic and view['ContentType'] == "playlists":
+            return
+
         if 'Icon' not in view or not view['Icon']:
             if view['ContentType'] == 'tvshows':
                 view['Icon'] = 'DefaultTVShows.png'
@@ -549,6 +551,10 @@ class Views:
                         Data += f'    <label>{node[1]}</label>\n'
                         Data += f'    <icon>{node[2]}</icon>\n'
                         Data += f'    <path>plugin://plugin.service.emby-next-gen/?mode=browse&amp;id={view["LibraryId"]}&amp;parentid={view["LibraryId"]}&amp;libraryid={view["LibraryId"]}&amp;content={node[3]}&amp;server={view["ServerId"]}&amp;query={node[0]}</path>\n'
+
+                        if node[4]:
+                            Data += '    <group/>\n'
+
                         Data += '</node>'
                         utils.writeFileBinary(FilePath, Data.encode("utf-8"))
             else:

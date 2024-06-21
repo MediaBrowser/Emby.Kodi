@@ -120,7 +120,7 @@ class WebSocket:
                     xbmc.executebuiltin('Action(VolumeDown)')
             elif IncomingData['MessageType'] == 'ScheduledTasksInfo':
                 for Task in IncomingData['Data']:
-                    xbmc.log(f"EMBY.emby.emby: Task update: {Task['Name']} / {Task['State']}", 0) # LOGDEBUG
+                    xbmc.log(f"EMBY.hooks.websocket: Task update: {Task['Name']} / {Task['State']}", 0) # LOGDEBUG
 
                     if not Task['Name'].lower().startswith("scan"):
                         continue
