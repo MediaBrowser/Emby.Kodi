@@ -1,3 +1,13 @@
+10.0.33
+=============
+disable remove worker pause
+cache DNS
+fix connection when http prefix is missing
+add tracking of Emby server version (for mandatory resets)
+workaround for dynamic nodes folder browse (Emby server bug)
+
+
+
 10.0.32
 =============
 fix sync paused issue for realtime library updates

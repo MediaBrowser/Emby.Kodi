@@ -50,7 +50,7 @@ def browse(Handle, Id, query, ParentId, Content, ServerId, LibraryId, ContentSup
 #    xbmc.executebuiltin('Dialog.Close(busydialog,true)')
 
     # Limit number of nodes for widget queries
-    if WindowId not in (10502, 10025, 10002):
+    if WindowId not in (10502, 10025, 10002, 10035): # 10035=skinsettings, 10502=music, 10002=pictures, 10025=videos
         Extras = {"Limit": utils.maxnodeitems}
         CacheId = f"{Id}{query}{ParentId}{ServerId}{LibraryId}{utils.maxnodeitems}"
     else:
@@ -293,7 +293,17 @@ def browse(Handle, Id, query, ParentId, Content, ServerId, LibraryId, ContentSup
     SortItems = {"MusicArtist": (), "MusicAlbum": (), "Audio": (), "Movie": (), "Trailer": (), "BoxSet": (), "Series": (), "Season": (), "Episode": (), "MusicVideo": (), "Video": (), "Photo": (), "PhotoAlbum": (), "TvChannel": (), "Folder": (), "Playlist": (), "Genre": (), "MusicGenre": (), "Person": (), "Tag": (), "Channel": (), "CollectionFolder": (), "Studio": ()}
 
     if EmbyContentQuery:
+        Doublesfilter = set() # Emby server workaround bug -> IncludeItemTypes not respected by folders
+
         for Item in utils.EmbyServers[ServerId].API.get_Items_dynamic(*EmbyContentQuery):
+
+            ItemId = Item.get("Id", "")
+
+            if ItemId not in Doublesfilter:
+                Doublesfilter.add(ItemId)
+            else:
+                continue
+
             if utils.SystemShutdown:
                 return
 
@@ -981,32 +991,39 @@ def downloadreset(Path=""):
     xbmc.log("EMBY.helper.pluginmenu: --<[ reset download ]", 1) # LOGINFO
 
 # Factory reset. wipes all db records etc.
-def factoryreset(Forced=False):
+def factoryreset(Forced=False, KeepServerConfig=False):
     xbmc.log("EMBY.helper.pluginmenu: [ factory reset ]", 2) # LOGWARNING
 
-    if utils.Dialog.yesno(heading=utils.addon_name, message=utils.Translate(33074)):
+    if KeepServerConfig or utils.Dialog.yesno(heading=utils.addon_name, message=utils.Translate(33074)):
         utils.SyncPause = {}
         utils.Dialog.notification(heading=utils.addon_name, message=utils.Translate(33223), icon=utils.icon, time=960000, sound=True)
         xbmc.executebuiltin('Dialog.Close(addoninformation)')
         xmls.sources() # verify sources.xml
         xmls.advanced_settings() # verify advancedsettings.xml
 
-        for EmbyServer in list(utils.EmbyServers.values()):
-            EmbyServer.ServerDisconnect()
-            EmbyServer.stop()
+        if not KeepServerConfig:
+            for EmbyServer in list(utils.EmbyServers.values()):
+                EmbyServer.ServerDisconnect()
+                EmbyServer.stop()
 
+            if not Forced:
+                utils.delFolder(utils.FolderAddonUserdata, "", "")
+                DeleteThumbnails()
+                Filepath = 'special://profile/favourites.xml'
+
+                if utils.checkFileExists(Filepath):
+                    utils.delFile(Filepath)
+            else:
+                utils.delFolder(utils.FolderAddonUserdata, "", "settings.xml")
+                utils.set_settings('MinimumSetup', "")
+                utils.set_settings_bool('WizardCompleted', False)
+
+            utils.delete_playlists()
+            utils.delete_nodes()
+
+        # delete downloaded content
         utils.delFolder(utils.PathAddTrailing(f"{utils.DownloadPath}EMBY-offline-content"))
         utils.delFolder(utils.PathAddTrailing(f"{utils.DownloadPath}EMBY-themes"))
-
-        if not Forced:
-            utils.delFolder(utils.FolderAddonUserdata, "", "")
-        else:
-            utils.delFolder(utils.FolderAddonUserdata, "", "settings.xml")
-            utils.set_settings('MinimumSetup', "")
-            utils.set_settings_bool('WizardCompleted', False)
-
-        utils.delete_playlists()
-        utils.delete_nodes()
 
         # delete databases
         delete_database('emby')
@@ -1016,14 +1033,6 @@ def factoryreset(Forced=False):
         SQLs = dbio.DBOpenRW("music", "factoryreset", {})
         SQLs["music"].common_db.delete_tables("Music")
         dbio.DBCloseRW("music", "factoryreset", {})
-
-        if not Forced:
-            DeleteThumbnails()
-            Filepath = 'special://profile/favourites.xml'
-
-            if utils.checkFileExists(Filepath):
-                utils.delFile(Filepath)
-
         dbio.DBVacuum()
         xbmc.log("EMBY.helper.pluginmenu: [ complete reset ]", 1) # LOGINFO
         utils.restart_kodi()

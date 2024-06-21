@@ -4,7 +4,7 @@ from _thread import start_new_thread
 import _socket
 import xbmc
 from dialogs import serverconnect, usersconnect, loginconnect, loginmanual, servermanual
-from helper import utils, playerops
+from helper import utils, playerops, pluginmenu
 from database import library
 from . import views, api, http
 
@@ -16,7 +16,7 @@ class EmbyServer:
         self.Found_Servers = []
         self.ServerSettings = ServerSettings
         self.Firstrun = not bool(self.ServerSettings)
-        self.ServerData = {'AccessToken': "", 'UserId': "", 'UserName': "", 'UserImageUrl': "", 'ServerName': "", 'ServerId': "", 'ServerUrl': "", 'EmbyConnectExchangeToken': "", 'EmbyConnectUserId': "", 'EmbyConnectUserName': "", 'EmbyConnectAccessToken': "", 'ManualAddress': "", 'RemoteAddress': "", 'LocalAddress': "" ,'AdditionalUsers': {}, "DeviceId": ""}
+        self.ServerData = {'AccessToken': "", 'UserId': "", 'UserName': "", 'UserImageUrl': "", 'ServerName': "", 'ServerId': "", 'ServerUrl': "", 'EmbyConnectExchangeToken': "", 'EmbyConnectUserId': "", 'EmbyConnectUserName': "", 'EmbyConnectAccessToken': "", 'ManualAddress': "", 'RemoteAddress': "", 'LocalAddress': "" ,'AdditionalUsers': {}, "DeviceId": "", "ServerVersion": ""}
         self.ServerReconnecting = False
         self.http = http.HTTP(self)
         self.API = api.API(self)
@@ -163,7 +163,9 @@ class EmbyServer:
                 del Dialog
 
                 if ConnectionMode == "ListSelection":
-                    if self.TestConnections():
+                    isValid, _, _ = self.TestConnections()
+
+                    if isValid:
                         Password = self.UserSelection()
 
                         if self.ServerLogin(Password):
@@ -177,7 +179,9 @@ class EmbyServer:
                     del Dialog
 
                     if self.ServerData['ManualAddress']:
-                        if self.TestConnections():
+                        isValid, _, _ = self.TestConnections()
+
+                        if isValid:
                             Password = self.UserSelection()
 
                             if self.ServerLogin(Password):
@@ -208,10 +212,30 @@ class EmbyServer:
 
     def EstablishExistingConnection(self):
         xbmc.log("EMBY.emby.emby: THREAD: --->[ EstablishExistingConnection ]", 0) # LOGDEBUG
+        isValid, Resync, SaveConfig = self.TestConnections()
 
-        if self.TestConnections():
+        if isValid:
+            ForceResync = False
+
+            if Resync:
+                xbmc.log("EMBY.emby.emby: EstablishExistingConnection: init resync", 0) # LOGDEBUG
+                ForceResync = utils.Dialog.yesno(heading=utils.addon_name, message=utils.Translate(33222)) # final warning
+
+                if not ForceResync: # final warning
+                    xbmc.log("EMBY.emby.emby: THREAD: ---<[ EstablishExistingConnection ] resync abort", 0) # LOGDEBUG
+                    return
+
             if self.ServerHandshake():
                 self.start()
+
+                if ForceResync:
+                    xbmc.log("EMBY.emby.emby: EstablishExistingConnection: init resync", 0) # LOGDEBUG
+                    self.ServerData["ServerVersion"] = Resync
+                    self.save_credentials()
+                    pluginmenu.factoryreset(True, True)
+                elif SaveConfig:
+                    xbmc.log("EMBY.emby.emby: EstablishExistingConnection: Save config", 0) # LOGDEBUG
+                    self.save_credentials()
 
         xbmc.log("EMBY.emby.emby: THREAD: ---<[ EstablishExistingConnection ]", 0) # LOGDEBUG
 
@@ -395,32 +419,57 @@ class EmbyServer:
 
     def TestConnections(self):
         xbmc.log("EMBY.emby.emby: Begin connectToServer", 0) # LOGDEBUG
+        Resync = ""
+        SaveConfig = False
 
         for Connection in ("ManualAddress", "LocalAddress", "RemoteAddress"):
             if utils.SystemShutdown:
-                return False
+                return False, Resync, SaveConfig
 
             if not self.ServerData[Connection]:
                 xbmc.log(f"EMBY.emby.emby: Skip Emby server connection test: {Connection}", 1) # LOGINFO
                 continue
 
             self.ServerData['ServerUrl'] = self.ServerData[Connection]
+            PublicInfo = self.API.get_publicinfo()
 
-            if not self.UpdateServerInfo():
-                self.ServerData['ServerUrl'] = ""
-                continue
+            if PublicInfo:
+                ServerVersion = PublicInfo.get('Version', "")
+                ServerVersionPrevious = self.ServerData.get('ServerVersion', "")
 
-            return True
+                if ServerVersion:
+                    if ServerVersionPrevious:
+                        if ServerVersionPrevious != ServerVersion:
+                            ServerVersionCompare = get_CompareVersion(ServerVersion)
+                            EmbyServerVersionPreviousCompare = get_CompareVersion(ServerVersionPrevious)
+                            EmbyServerVersionResyncCompare = get_CompareVersion(utils.EmbyServerVersionResync)
+
+                            if (EmbyServerVersionPreviousCompare < EmbyServerVersionResyncCompare >= ServerVersionCompare) or (ServerVersionCompare < EmbyServerVersionPreviousCompare >= EmbyServerVersionResyncCompare):
+                                Resync = ServerVersion
+
+                            self.ServerData["ServerVersion"] = ServerVersion
+                            SaveConfig = True
+                    else:
+                        self.ServerData["ServerVersion"] = ServerVersion
+                        SaveConfig = True
+
+                xbmc.log(f"EMBY.emby.emby: Server version: {ServerVersion}", 1) # LOGINFO
+                self.ServerData.update({'RemoteAddress': PublicInfo.get('WanAddress', self.ServerData['RemoteAddress']), 'LocalAddress': PublicInfo.get('LocalAddress', self.ServerData['LocalAddress']), 'ServerName': PublicInfo.get('ServerName'), 'ServerId': PublicInfo.get('Id')})
+                utils.DatabaseFiles[self.ServerData['ServerId']] = utils.translatePath(f"special://profile/Database/emby_{self.ServerData['ServerId']}.db")
+                return True, Resync, SaveConfig
+
+            self.ServerData['ServerUrl'] = ""
+            continue
 
         xbmc.log("EMBY.emby.emby: Tested all connection modes. Failing server connection", 1) # LOGINFO
-        return False
+        return False, Resync, SaveConfig
 
-    def UpdateServerInfo(self):
-        PublicInfo = self.API.get_publicinfo()
+def get_CompareVersion(Version):
+    CompareVersion = ""
+    SubVersions = Version.split(".")
 
-        if PublicInfo:
-            self.ServerData.update({'RemoteAddress': PublicInfo.get('WanAddress', self.ServerData['RemoteAddress']), 'LocalAddress': PublicInfo.get('LocalAddress', self.ServerData['LocalAddress']), 'ServerName': PublicInfo.get('ServerName'), 'ServerId': PublicInfo.get('Id')})
-            utils.DatabaseFiles[self.ServerData['ServerId']] = utils.translatePath(f"special://profile/Database/emby_{self.ServerData['ServerId']}.db")
-            return True
+    for SubVersion in SubVersions:
+        SubVersionInt = int(SubVersion)
+        CompareVersion += f"{SubVersionInt:03d}"
 
-        return False
+    return int(CompareVersion)
