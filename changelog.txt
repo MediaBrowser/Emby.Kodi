@@ -1,3 +1,9 @@
+10.0.34
+=============
+fix dynamic nodes in hybrid mode
+
+
+
 10.0.33
 =============
 disable remove worker pause

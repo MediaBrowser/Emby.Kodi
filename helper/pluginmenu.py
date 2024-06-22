@@ -296,13 +296,13 @@ def browse(Handle, Id, query, ParentId, Content, ServerId, LibraryId, ContentSup
         Doublesfilter = set() # Emby server workaround bug -> IncludeItemTypes not respected by folders
 
         for Item in utils.EmbyServers[ServerId].API.get_Items_dynamic(*EmbyContentQuery):
-
             ItemId = Item.get("Id", "")
 
-            if ItemId not in Doublesfilter:
-                Doublesfilter.add(ItemId)
-            else:
-                continue
+            if ItemId:
+                if ItemId not in Doublesfilter:
+                    Doublesfilter.add(ItemId)
+                else:
+                    continue
 
             if utils.SystemShutdown:
                 return
