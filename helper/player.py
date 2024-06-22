@@ -690,7 +690,7 @@ def sync_workers():
     TasksRunning.append("sync_workers")
 
     if not utils.sleep(2):
-        for EmbyServer in utils.EmbyServers.values():
+        for EmbyServer in list(utils.EmbyServers.values()):
             EmbyServer.library.RunJobs()
 
     TasksRunning.remove("sync_workers")
