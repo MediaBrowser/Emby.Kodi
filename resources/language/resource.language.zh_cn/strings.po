@@ -2850,3 +2850,11 @@ msgstr "URI长度限制"
 msgctxt "#33674"
 msgid "Higher limits are faster in some cases, but could trigger http 414 issues"
 msgstr "在某些情况下，较高的限制速度更快，但可能会触发 http 414 问题"
+
+msgctxt "#33675"
+msgid "EMBY: Settings"
+msgstr ""
+
+msgctxt "#33676"
+msgid "Settings"
+msgstr ""

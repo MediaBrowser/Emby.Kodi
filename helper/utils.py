@@ -62,6 +62,7 @@ connectMsg = False
 enableDeleteByKodiEvent = False
 addUsersHidden = False
 enableContextDelete = False
+enableContextSettingsOptions = False
 enableContextRemoteOptions = True
 enableContextDownloadOptions = True
 enableContextFavouriteOptions = True
@@ -765,6 +766,7 @@ def InitSettings():
     load_settings_bool('connectMsg')
     load_settings_bool('addUsersHidden')
     load_settings_bool('enableContextDelete')
+    load_settings_bool('enableContextSettingsOptions')
     load_settings_bool('enableContextRemoteOptions')
     load_settings_bool('enableContextDownloadOptions')
     load_settings_bool('enableContextFavouriteOptions')
@@ -903,6 +905,7 @@ def InitSettings():
     xbmcgui.Window(10000).setProperty('EmbyRecording', str(enableContextRecordingOptions))
     xbmcgui.Window(10000).setProperty('EmbyRefresh', str(enableContextRefreshOptions))
     xbmcgui.Window(10000).setProperty('EmbyGoto', str(enableContextGotoOptions))
+    xbmcgui.Window(10000).setProperty('EmbySettings', str(enableContextSettingsOptions))
 
 def update_mode_settings():
     # disable file metadata extraction

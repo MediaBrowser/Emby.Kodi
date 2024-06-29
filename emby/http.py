@@ -137,6 +137,10 @@ class HTTP:
                 self.Connection[ConnectionId]["Socket"].connect((self.AddrInfo[self.Connection[ConnectionId]["Hostname"]][0], self.Connection[ConnectionId]['Port']))
                 break
             except TimeoutError:
+                if ConnectionId not in self.Connection:
+                    xbmc.log(f"EMBY.emby.http: TimeoutError: No {ConnectionId}", 2) # LOGWARNING
+                    return 699
+
                 RetryCounter += 1
 
                 if RetryCounter == 1:
@@ -155,6 +159,10 @@ class HTTP:
 
                 return 606
             except ConnectionRefusedError:
+                if ConnectionId not in self.Connection:
+                    xbmc.log(f"EMBY.emby.http: ConnectionRefusedError: No {ConnectionId}", 2) # LOGWARNING
+                    return 699
+
                 RetryCounter += 1
 
                 if RetryCounter == 1:
@@ -173,6 +181,10 @@ class HTTP:
                 xbmc.log(f"EMBY.emby.http: [ ServerUnreachable ] {ConnectionString}", 0) # LOGDEBUG
                 return 607
             except Exception as error:
+                if ConnectionId not in self.Connection:
+                    xbmc.log(f"EMBY.emby.http: Undefined: No {ConnectionId}", 2) # LOGWARNING
+                    return 699
+
                 RetryCounter += 1
 
                 if RetryCounter == 1:
@@ -354,21 +366,25 @@ class HTTP:
 
         IncomingData = b""
 
-        # Receive Data
         while True:
-            StatusCodeSocket, IncomingData = self.socket_io("", ConnectionId, TimeoutRecv)
+            StatusCodeSocket, RecvData = self.socket_io("", ConnectionId, TimeoutRecv)
+            IncomingData += RecvData
 
             if StatusCodeSocket:
                 return StatusCodeSocket, {}, ""
 
-            IncomingData = IncomingData.split(b'\x0d\x0a\x0d\x0a', 1) # Receive initial package 1MB
-            IncomingDataHeadArray = IncomingData[0].decode("utf-8").split("\r\n")
-            StatusCode = int(IncomingDataHeadArray[0].split(" ")[1])
+            if b'\x0d\x0a\x0d\x0a' not in IncomingData:
+                xbmc.log("EMBY.emby.emby: Incomplete header", 0) # LOGDEBUG
+                continue
+
+            IncomingData = IncomingData.split(b'\x0d\x0a\x0d\x0a', 1) # Split header/payload
+            IncomingMetaData = IncomingData[0].decode("utf-8").split("\r\n")
+            StatusCode = int(IncomingMetaData[0].split(" ")[1])
 
             if StatusCode not in (200, 206, 301, 302, 307, 308, 101) or StatusCode == 204: # 200 = OK, 206 = Partial content, 204 = OK but no content, 3XX redirects, 101 wesocket
                 return StatusCode, {}, ""
 
-            IncomingDataHeaderArray = IncomingDataHeadArray[1:]
+            IncomingDataHeaderArray = IncomingMetaData[1:]
             IncomingDataHeader = {}
 
             for IncomingDataHeaderArrayData in IncomingDataHeaderArray:
