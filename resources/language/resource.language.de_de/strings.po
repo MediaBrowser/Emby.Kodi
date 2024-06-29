@@ -2846,3 +2846,11 @@ msgstr "URI-Längenbegrenzung"
 msgctxt "#33674"
 msgid "Higher limits are faster in some cases, but could trigger http 414 issues"
 msgstr "Höhere Grenzwerte sind in manchen Fällen schneller, könnten jedoch http 414-Probleme auslösen"
+
+msgctxt "#33675"
+msgid "EMBY: Settings"
+msgstr ""
+
+msgctxt "#33676"
+msgid "Settings"
+msgstr ""

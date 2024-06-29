@@ -675,6 +675,7 @@ def setup():
             return False
 
     # copy default nodes
+    utils.mkDir("special://profile/library/")
     utils.mkDir("special://profile/library/video/")
     utils.mkDir("special://profile/library/music/")
     utils.copytree("special://xbmc/system/library/video/", "special://profile/library/video/")

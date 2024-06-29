@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8' standalone="yes"?>
-<addon id="plugin.service.emby-next-gen" name="Emby for Kodi Next Gen" version="10.0.34" provider-name="quickmic">
+<addon id="plugin.service.emby-next-gen" name="Emby for Kodi Next Gen" version="10.0.35" provider-name="quickmic">
     <requires>
         <import addon="xbmc.python" version="3.0.1"/>
         <import addon="script.module.dateutil" version="2.8.1" />
@@ -61,6 +61,10 @@
             <item library="service.py" args="deleteitem">
                 <label>30409</label>
                 <visible>[!String.StartsWith(ListItem.FolderPath,"library://") + !String.StartsWith(ListItem.FolderPath,"addons://") + !String.StartsWith(ListItem.FolderPath,"plugin://") + String.IsEqual(Window(10000).Property(EmbyDelete),True)]</visible>
+            </item>
+            <item library="service.py" args="settings">
+                <label>33675</label>
+                <visible>String.IsEqual(Window(10000).Property(EmbySettings),True)</visible>
             </item>
         </menu>
     </extension>

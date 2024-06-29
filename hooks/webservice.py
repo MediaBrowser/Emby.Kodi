@@ -212,6 +212,13 @@ def worker_Query(fd):  # thread by caller
             xbmc.log("EMBY.hooks.webservice: THREAD: ---<[ worker_Query ] event favorites", 0) # LOGDEBUG
             return
 
+        if args[1] == "settings":
+            client.send(sendOK)
+            client.close()
+            xbmc.executebuiltin('Addon.OpenSettings(plugin.service.emby-next-gen)')
+            xbmc.log("EMBY.hooks.webservice: THREAD: ---<[ worker_Query ] event settings", 0) # LOGDEBUG
+            return
+
         # no delay
         Handle = args[1]
         params = dict(urllibparse.parse_qsl(args[2][1:]))

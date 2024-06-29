@@ -2850,3 +2850,11 @@ msgstr "URI-lengtelimiet"
 msgctxt "#33674"
 msgid "Higher limits are faster in some cases, but could trigger http 414 issues"
 msgstr "Hogere limieten zijn in sommige gevallen sneller, maar kunnen http 414-problemen veroorzaken"
+
+msgctxt "#33675"
+msgid "EMBY: Settings"
+msgstr ""
+
+msgctxt "#33676"
+msgid "Settings"
+msgstr ""
