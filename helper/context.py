@@ -121,13 +121,13 @@ def download():
         Path = utils.PathAddTrailing(f"{utils.DownloadPath}EMBY-offline-content")
 
         if not utils.mkDir(Path):
-            utils.Dialog.notification(heading=utils.Translate(33558), message="Download path not found", icon=utils.icon, time=utils.displayMessage)
+            utils.Dialog.notification(heading=utils.Translate(33558), message=utils.Translate(33680), icon=utils.icon, time=utils.displayMessage)
             return
 
         Path = utils.PathAddTrailing(f"{Path}{KodiType}")
 
         if not utils.mkDir(Path):
-            utils.Dialog.notification(heading=utils.Translate(33558), message="Download path not found", icon=utils.icon, time=utils.displayMessage)
+            utils.Dialog.notification(heading=utils.Translate(33558), message=utils.Translate(33680), icon=utils.icon, time=utils.displayMessage)
             return
 
         Path = utils.translatePath(Path).decode('utf-8')

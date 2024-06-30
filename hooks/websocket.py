@@ -250,12 +250,12 @@ class WebSocket:
                 if utils.restartMsg:
                     utils.Dialog.notification(heading=utils.addon_name, message=utils.Translate(33006), icon=utils.icon, time=utils.newContentTime)
 
-                self.EmbyServer.ServerReconnect()
+                self.EmbyServer.ServerReconnect(False)
             elif IncomingData['MessageType'] == 'ServerShuttingDown':
                 xbmc.log("EMBY.hooks.websocket: [ ServerShuttingDown ]", 1) # LOGINFO
                 self.close_EmbyServerBusy()
                 utils.Dialog.notification(heading=utils.addon_name, message=utils.Translate(33236), time=utils.newContentTime)
-                self.EmbyServer.ServerReconnect()
+                self.EmbyServer.ServerReconnect(False)
             elif IncomingData['MessageType'] == 'RestartRequired':
                 xbmc.log("EMBY.hooks.websocket: [ RestartRequired ]", 1) # LOGINFO
                 utils.Dialog.notification(heading=utils.addon_name, message=utils.Translate(33237), time=utils.newContentTime)
