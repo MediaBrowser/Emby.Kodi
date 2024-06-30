@@ -1368,6 +1368,11 @@
                     <default>true</default>
                     <control type="toggle"/>
                 </setting>
+                <setting label="33677" id="offlineMsg" type="boolean" help="">
+                    <level>2</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                </setting>
                 <setting id="displayMessage" type="integer" label="33646" help="33647">
                     <level>2</level>
                     <default>10</default>

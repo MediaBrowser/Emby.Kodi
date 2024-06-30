@@ -117,6 +117,7 @@ def monitor_EventQueue(): # Threaded / queued
 
         for Event in Events:
             if Event == "QUIT":
+                utils.SyncPause['kodi_rw'] = False
                 xbmc.log("EMBY.hooks.monitor: THREAD: ---<[ Kodi events ]", 0) # LOGDEBUG
                 return
 
@@ -156,7 +157,10 @@ def monitor_EventQueue(): # Threaded / queued
 
                 xbmc.log("EMBY.hooks.monitor: --<[ sleep ]", 1) # LOGINFO
                 SleepMode = False
-                EmbyServer_ReconnectAll()
+
+                for EmbyServer in list(utils.EmbyServers.values()):
+                    EmbyServer.ServerReconnect(False)
+
                 utils.SyncPause['kodi_sleep'] = False
             elif Event[0] == "managelibsselection":
                 start_new_thread(pluginmenu.select_managelibs, ())
@@ -520,10 +524,6 @@ def Backup():
 def ServerConnect(ServerSettings):
     EmbyServerObj = emby.EmbyServer(ServerSettings)
     EmbyServerObj.ServerInitConnection()
-
-def EmbyServer_ReconnectAll():
-    for EmbyServer in list(utils.EmbyServers.values()):
-        EmbyServer.ServerReconnect()
 
 def EmbyServer_DisconnectAll():
     for EmbyServer in list(utils.EmbyServers.values()):

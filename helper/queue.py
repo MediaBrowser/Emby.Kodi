@@ -10,17 +10,16 @@ class Queue:
         self.Busy = allocate_lock()
 
     def get(self):
+        ReturnData = ()
+
         try:
             with self.Lock:
                 with self.Busy:
                     if self.QueuedItems:
                         ReturnData = self.QueuedItems[0]
                         self.QueuedItems = self.QueuedItems[1:]
-                    else: # clear triggered
-                        ReturnData = ()
         except Exception as Error:
             xbmc.log(f"EMBY.helper.queue: get: {Error}", 2) # LOGWARNING
-            ReturnData = ()
 
         if not self.QueuedItems:
             self.LockQueue()
@@ -28,6 +27,8 @@ class Queue:
         return ReturnData
 
     def getall(self):
+        ReturnData = ()
+
         try:
             with self.Lock:
                 with self.Busy:
@@ -35,7 +36,6 @@ class Queue:
                     self.QueuedItems = ()
         except Exception as Error:
             xbmc.log(f"EMBY.helper.queue: getall: {Error}", 2) # LOGWARNING
-            ReturnData = ()
 
         self.LockQueue()
         return ReturnData

@@ -79,7 +79,7 @@ class HTTP:
             xbmc.log(f"EMBY.emby.http: Socket open {ConnectionId}: Wrong Hostname: {error}", 2) # LOGWARNING
 
             if ConnectionId == "MAIN":
-                utils.Dialog.notification(heading=utils.addon_name, icon="DefaultIconError.png", message="Invalid server address", time=utils.displayMessage, sound=False)
+                utils.Dialog.notification(heading=utils.addon_name, icon="DefaultIconError.png", message=utils.Translate(33678), time=utils.displayMessage, sound=False)
 
             if ConnectionId in self.Connection:
                 del self.Connection[ConnectionId]
@@ -109,7 +109,7 @@ class HTTP:
                 xbmc.log(f"EMBY.emby.http: Socket open {ConnectionId}: Wrong ConnectionString: {ConnectionString} / {error}", 2) # LOGWARNING
 
                 if ConnectionId == "MAIN":
-                    utils.Dialog.notification(heading=utils.addon_name, icon="DefaultIconError.png", message="Invalid server address", time=utils.displayMessage, sound=False)
+                    utils.Dialog.notification(heading=utils.addon_name, icon="DefaultIconError.png", message=utils.Translate(33678), time=utils.displayMessage, sound=False)
 
                 if ConnectionId in self.Connection:
                     del self.Connection[ConnectionId]
@@ -214,7 +214,7 @@ class HTTP:
                     xbmc.log(f"EMBY.emby.http: Socket open {ConnectionId}: Invalid argument", 2) # LOGWARNING
 
                     if ConnectionId == "MAIN":
-                        utils.Dialog.notification(heading=utils.addon_name, icon="DefaultIconError.png", message="Invalid argument", time=utils.displayMessage, sound=False)
+                        utils.Dialog.notification(heading=utils.addon_name, icon="DefaultIconError.png", message=utils.Translate(33679), time=utils.displayMessage, sound=False)
 
                     return 610
 
@@ -609,7 +609,7 @@ class HTTP:
 
                     if StatusCode:
                         if StatusCode not in (608, 609, 610, 611): # wrong Emby server address or SSL issue
-                            self.EmbyServer.ServerReconnect()
+                            self.EmbyServer.ServerReconnect(True)
 
                         return noData(StatusCode, {}, Binary)
 

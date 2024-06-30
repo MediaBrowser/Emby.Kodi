@@ -134,6 +134,7 @@ synctime = ""
 syncduringplayback = False
 usepathsubstitution = False
 busyMsg = True
+offlineMsg = True
 imdbrating = True
 websocketenabled = True
 remotecontrol_force_clients = True
@@ -833,6 +834,7 @@ def InitSettings():
     load_settings_bool('askSkipCredits')
     load_settings_bool('skipintroembuarydesign')
     load_settings_bool('busyMsg')
+    load_settings_bool('offlineMsg')
     load_settings_bool('AssignEpisodePostersToTVShowPoster')
     load_settings_bool('WizardCompleted')
     load_settings_bool('verifyFreeSpace')

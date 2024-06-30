@@ -2854,3 +2854,20 @@ msgstr ""
 msgctxt "#33676"
 msgid "Settings"
 msgstr ""
+
+msgctxt "#33677"
+msgid "Enable offline message"
+msgstr ""
+
+msgctxt "#33678"
+msgid "Invalid server address"
+msgstr ""
+
+msgctxt "#33679"
+msgid "Invalid argument"
+msgstr ""
+
+msgctxt "#33680"
+msgid "Download path not found"
+msgstr ""
+

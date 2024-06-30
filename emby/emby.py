@@ -25,18 +25,20 @@ class EmbyServer:
         self.Online = False
         xbmc.log("EMBY.emby.emby: ---[ INIT EMBYCLIENT: ]---", 1) # LOGINFO
 
-    def ServerReconnect(self):
+    def ServerReconnect(self, Wake=False):
         if self.Firstrun:
             return
 
         if not self.ServerReconnecting:
-            start_new_thread(self.worker_ServerReconnect, ())
+            start_new_thread(self.worker_ServerReconnect, (Wake,))
 
-    def worker_ServerReconnect(self):
+    def worker_ServerReconnect(self, ShowMsg):
         xbmc.log(f"EMBY.emby.emby: THREAD: --->[ Reconnecting ] {self.ServerData['ServerName']} / {self.ServerData['ServerId']}", 0) # LOGDEBUG
 
         if not self.ServerReconnecting:
-            utils.Dialog.notification(heading=utils.addon_name, icon="DefaultIconError.png", message=utils.Translate(33575), time=utils.displayMessage, sound=False)
+            if ShowMsg and utils.offlineMsg:
+                utils.Dialog.notification(heading=utils.addon_name, icon="DefaultIconError.png", message=utils.Translate(33575), time=utils.displayMessage, sound=False)
+
             utils.SyncPause.update({f"server_reconnecting_{self.ServerData['ServerId']}": True, f"server_busy_{self.ServerData['ServerId']}": False})
             self.ServerReconnecting = True
 
