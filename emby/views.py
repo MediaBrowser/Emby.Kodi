@@ -693,13 +693,13 @@ def set_synced_node(Folder, view, node, NodeIndex, LimitFactor):
 
                         Data += f'    <rule field="{Rule[0]}" operator="{Rule[1]}">{Tag}</rule>\n'
 
-            if node[6]:
-                if node[5]:
-                    if len(node[5]) > 1:
-                        Data += f'    <order direction="{node[5][0]}">{node[5][1]}</order>\n'
-                    else:
-                        Data += f'    <order>{node[5][0]}</order>\n'
+            if node[5]:
+                if len(node[5]) > 1:
+                    Data += f'    <order direction="{node[5][0]}">{node[5][1]}</order>\n'
+                else:
+                    Data += f'    <order>{node[5][0]}</order>\n'
 
+            if node[6]:
                 Data += f'    <limit>{utils.maxnodeitems * LimitFactor}</limit>\n'
 
             if node[7]:

@@ -1,3 +1,13 @@
+10.0.37
+=============
+fix remote playback client selection
+fix remote playback commands
+fix nodes sort order
+fix minor shutdown issue
+add translations
+
+
+
 10.0.36
 =============
 disable Emby server offline msg on wake from sleep mode

@@ -2853,24 +2853,24 @@ msgstr "Högre gränser är snabbare i vissa fall, men kan utlösa http 414-prob
 
 msgctxt "#33675"
 msgid "EMBY: Settings"
-msgstr ""
+msgstr "EMBY: Inställningar"
 
 msgctxt "#33676"
 msgid "Settings"
-msgstr ""
+msgstr "Inställningar"
 
 msgctxt "#33677"
 msgid "Enable offline message"
-msgstr ""
+msgstr "Aktivera offlinemeddelande"
 
 msgctxt "#33678"
 msgid "Invalid server address"
-msgstr ""
+msgstr "Ogiltig serveradress"
 
 msgctxt "#33679"
 msgid "Invalid argument"
-msgstr ""
+msgstr "Ogiltigt argument"
 
 msgctxt "#33680"
 msgid "Download path not found"
-msgstr ""
+msgstr "Nedladdningssökväg hittades inte"

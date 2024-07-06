@@ -2854,24 +2854,24 @@ msgstr "Vyšší limity jsou v některých případech rychlejší, ale mohou zp
 
 msgctxt "#33675"
 msgid "EMBY: Settings"
-msgstr ""
+msgstr "EMBY: Nastavení"
 
 msgctxt "#33676"
 msgid "Settings"
-msgstr ""
+msgstr "Nastavení"
 
 msgctxt "#33677"
 msgid "Enable offline message"
-msgstr ""
+msgstr "Povolte offline zprávu"
 
 msgctxt "#33678"
 msgid "Invalid server address"
-msgstr ""
+msgstr "Neplatná adresa serveru"
 
 msgctxt "#33679"
 msgid "Invalid argument"
-msgstr ""
+msgstr "Neplatný argument"
 
 msgctxt "#33680"
 msgid "Download path not found"
-msgstr ""
+msgstr "Cesta ke stažení nebyla nalezena"

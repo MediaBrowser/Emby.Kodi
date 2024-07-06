@@ -2853,24 +2853,24 @@ msgstr "在某些情况下，较高的限制速度更快，但可能会触发 ht
 
 msgctxt "#33675"
 msgid "EMBY: Settings"
-msgstr ""
+msgstr "EMBY：设置"
 
 msgctxt "#33676"
 msgid "Settings"
-msgstr ""
+msgstr "设置"
 
 msgctxt "#33677"
 msgid "Enable offline message"
-msgstr ""
+msgstr "启用离线消息"
 
 msgctxt "#33678"
 msgid "Invalid server address"
-msgstr ""
+msgstr "服务器地址无效"
 
 msgctxt "#33679"
 msgid "Invalid argument"
-msgstr ""
+msgstr "无效参数"
 
 msgctxt "#33680"
 msgid "Download path not found"
-msgstr ""
+msgstr "找不到下载路径"
