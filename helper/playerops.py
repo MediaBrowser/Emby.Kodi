@@ -88,6 +88,16 @@ def GetPlaylistSize(PlaylistId):
     xbmc.log(f"EMBY.helper.playerops: GetPlaylistSize failed: Result={Result}", 3) # LOGERROR
     return 0
 
+def GetActivePlayer():
+    Result = utils.SendJson('{{"jsonrpc":"2.0","method":"Player.GetActivePlayers","id":1}}', True).get("result", {})
+
+    if Result:
+        xbmc.log(f"EMBY.helper.playerops: [ GetActivePlayer ] {Result}", 1) # LOGINFO
+        return True
+
+    xbmc.log("EMBY.helper.playerops: GetActivePlayer: No active player", 1) # LOGINFO
+    return False
+
 def PlayPlaylistItem(PlaylistId, Index):
     utils.SendJson(f'{{"jsonrpc":"2.0","method":"Player.Open","params":{{"item":{{"playlistid":{PlaylistId},"position":{Index}}} ,"options": {{"resume": true}}   }},"id":1}}')
     globals()['PlayerId'] = PlaylistId
@@ -137,11 +147,15 @@ def Stop(isRemote=False, LocalPlayerId=None):
         LocalPlayerId = PlayerId
 
     if LocalPlayerId != -1:
-        if isRemote:
-            globals()['RemoteCommandActive'][3] += 1
+        if GetActivePlayer():
+            if isRemote:
+                globals()['RemoteCommandActive'][3] += 1
 
-        utils.SendJson(f'{{"jsonrpc":"2.0","method":"Player.Stop","params":{{"playerid":{LocalPlayerId}}},"id":1}}', True)
-        xbmc.log("EMBY.helper.playerops: [ Stop ]", 1) # LOGINFO
+            utils.SendJson(f'{{"jsonrpc":"2.0","method":"Player.Stop","params":{{"playerid":{LocalPlayerId}}},"id":1}}', True)
+
+            xbmc.log("EMBY.helper.playerops: [ Stop ]", 1) # LOGINFO
+        else:
+            xbmc.log("EMBY.helper.playerops: Stop: No active player", 1) # LOGINFO
     else:
         xbmc.log(f"EMBY.helper.playerops: Stop failed: PlayerId={LocalPlayerId}", 3) # LOGERROR
 

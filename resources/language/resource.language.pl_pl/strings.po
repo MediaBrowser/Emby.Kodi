@@ -2853,24 +2853,24 @@ msgstr "Wyższe limity są w niektórych przypadkach szybsze, ale mogą powodowa
 
 msgctxt "#33675"
 msgid "EMBY: Settings"
-msgstr ""
+msgstr "EMBY: Ustawienia"
 
 msgctxt "#33676"
 msgid "Settings"
-msgstr ""
+msgstr "Ustawienia"
 
 msgctxt "#33677"
 msgid "Enable offline message"
-msgstr ""
+msgstr "Włącz wiadomość offline"
 
 msgctxt "#33678"
 msgid "Invalid server address"
-msgstr ""
+msgstr "Nieprawidłowy adres serwera"
 
 msgctxt "#33679"
 msgid "Invalid argument"
-msgstr ""
+msgstr "Nieprawidłowy argument"
 
 msgctxt "#33680"
 msgid "Download path not found"
-msgstr ""
+msgstr "Nie znaleziono ścieżki pobierania"

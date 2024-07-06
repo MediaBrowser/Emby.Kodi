@@ -182,7 +182,7 @@ class HTTP:
                 return 607
             except Exception as error:
                 if ConnectionId not in self.Connection:
-                    xbmc.log(f"EMBY.emby.http: Undefined: No {ConnectionId}", 2) # LOGWARNING
+                    xbmc.log(f"EMBY.emby.http: No ConnectionId {ConnectionId}", 2) # LOGWARNING
                     return 699
 
                 RetryCounter += 1
@@ -226,25 +226,29 @@ class HTTP:
 
                 return 699
 
-        if self.Connection[ConnectionId]["SSL"]:
-            try:
-                self.Connection[ConnectionId]["Socket"] = self.SSLContext.wrap_socket(self.Connection[ConnectionId]["Socket"], do_handshake_on_connect=True, suppress_ragged_eofs=True, server_hostname=self.Connection[ConnectionId]["Hostname"])
-            except ssl.CertificateError:
-                if ConnectionId in self.Connection:
-                    del self.Connection[ConnectionId]
+        if ConnectionId in self.Connection:
+            if self.Connection[ConnectionId]["SSL"]:
+                try:
+                    self.Connection[ConnectionId]["Socket"] = self.SSLContext.wrap_socket(self.Connection[ConnectionId]["Socket"], do_handshake_on_connect=True, suppress_ragged_eofs=True, server_hostname=self.Connection[ConnectionId]["Hostname"])
+                except ssl.CertificateError:
+                    if ConnectionId in self.Connection:
+                        del self.Connection[ConnectionId]
 
-                xbmc.log("EMBY.emby.http: socket_open ssl certificate error", 3) # LOGERROR
+                    xbmc.log("EMBY.emby.http: socket_open ssl certificate error", 3) # LOGERROR
 
-                if ConnectionId == "MAIN":
-                    utils.Dialog.notification(heading=utils.addon_name, message=utils.Translate(33428), time=utils.displayMessage)
+                    if ConnectionId == "MAIN":
+                        utils.Dialog.notification(heading=utils.addon_name, message=utils.Translate(33428), time=utils.displayMessage)
 
-                return 608
-            except Exception as error:
-                if ConnectionId in self.Connection:
-                    del self.Connection[ConnectionId]
+                    return 608
+                except Exception as error:
+                    if ConnectionId in self.Connection:
+                        del self.Connection[ConnectionId]
 
-                xbmc.log(f"EMBY.emby.http: socket_open ssl undefined error: {error}", 2) # LOGWARNING
-                return 699
+                    xbmc.log(f"EMBY.emby.http: socket_open ssl undefined error: {error}", 2) # LOGWARNING
+                    return 699
+        else:
+            xbmc.log(f"EMBY.emby.http: socket_open ssl: No ConnectionId {ConnectionId}", 2) # LOGWARNING
+            return 699
 
         xbmc.log(f"EMBY.emby.http: Socket {ConnectionId} opened", 0) # LOGDEBUG
         return 0

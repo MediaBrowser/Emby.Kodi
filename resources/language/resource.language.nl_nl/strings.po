@@ -2853,24 +2853,24 @@ msgstr "Hogere limieten zijn in sommige gevallen sneller, maar kunnen http 414-p
 
 msgctxt "#33675"
 msgid "EMBY: Settings"
-msgstr ""
+msgstr "EMBY: Instellingen"
 
 msgctxt "#33676"
 msgid "Settings"
-msgstr ""
+msgstr "Instellingen"
 
 msgctxt "#33677"
 msgid "Enable offline message"
-msgstr ""
+msgstr "Offline bericht inschakelen"
 
 msgctxt "#33678"
 msgid "Invalid server address"
-msgstr ""
+msgstr "Ongeldig serveradres"
 
 msgctxt "#33679"
 msgid "Invalid argument"
-msgstr ""
+msgstr "Ongeldig argument"
 
 msgctxt "#33680"
 msgid "Download path not found"
-msgstr ""
+msgstr "Downloadpad niet gevonden"

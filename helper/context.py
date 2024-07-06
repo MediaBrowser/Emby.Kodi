@@ -257,7 +257,7 @@ def remoteplay():
     ClientData = []
 
     for ActiveSession in ActiveSessions:
-        if ActiveSession['Id'] != utils.EmbyServers[ServerId].EmbySession[0]['Id']:
+        if ActiveSession['SupportsRemoteControl'] and ActiveSession['Id'] != utils.EmbyServers[ServerId].EmbySession[0]['Id']:
             UserName = ActiveSession.get('UserName', "unknown")
             SelectionLabels.append(f"{ActiveSession['DeviceName']}, {UserName}")
             ClientData.append(ActiveSession['Id'])

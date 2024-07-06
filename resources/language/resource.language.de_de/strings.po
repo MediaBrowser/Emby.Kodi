@@ -2849,25 +2849,24 @@ msgstr "Höhere Grenzwerte sind in manchen Fällen schneller, könnten jedoch ht
 
 msgctxt "#33675"
 msgid "EMBY: Settings"
-msgstr ""
+msgstr "EMBY: Einstellungen"
 
 msgctxt "#33676"
 msgid "Settings"
-msgstr ""
+msgstr "Einstellungen"
 
 msgctxt "#33677"
 msgid "Enable offline message"
-msgstr ""
+msgstr "Offline-Nachricht aktivieren"
 
 msgctxt "#33678"
 msgid "Invalid server address"
-msgstr ""
+msgstr "Ungültige Serveradresse"
 
 msgctxt "#33679"
 msgid "Invalid argument"
-msgstr ""
+msgstr "Ungültiges Argument"
 
 msgctxt "#33680"
 msgid "Download path not found"
-msgstr ""
-
+msgstr "Download-Pfad nicht gefunden"

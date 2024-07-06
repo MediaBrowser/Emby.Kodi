@@ -73,6 +73,9 @@ def PlayerCommands():
         elif Commands[0] == "avchange":
             xbmc.log("EMBY.hooks.player: [ onAVChange ]", 1) # LOGINFO
 
+            if QueuedPlayingItem:
+                globals()["PlayingItem"] = QueuedPlayingItem
+
             if PlayingItem[0]:
                 globals()["PlayingItem"][0]['PositionTicks'] = playerops.PlayBackPosition()
 
