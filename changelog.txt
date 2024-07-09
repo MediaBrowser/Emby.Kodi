@@ -1,3 +1,10 @@
+10.0.38
+=============
+rename dialog files
+fix remote playback issue
+
+
+
 10.0.37
 =============
 fix remote playback client selection
