@@ -89,7 +89,7 @@ def GetPlaylistSize(PlaylistId):
     return 0
 
 def GetActivePlayer():
-    Result = utils.SendJson('{{"jsonrpc":"2.0","method":"Player.GetActivePlayers","id":1}}', True).get("result", {})
+    Result = utils.SendJson('{"jsonrpc":"2.0","method":"Player.GetActivePlayers","id":1}', True).get("result", {})
 
     if Result:
         xbmc.log(f"EMBY.helper.playerops: [ GetActivePlayer ] {Result}", 1) # LOGINFO

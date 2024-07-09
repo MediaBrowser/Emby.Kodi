@@ -31,9 +31,9 @@ SkipIntroJumpDone = False
 SkipCreditsJumpDone = False
 TasksRunning = []
 PlayerEventsQueue = queue.Queue()
-SkipIntroDialog = skipintrocredits.SkipIntro("SkipIntroDialog.xml", *utils.CustomDialogParameters)
-SkipIntroDialogEmbuary = skipintrocredits.SkipIntro("SkipIntroDialogEmbuary.xml", *utils.CustomDialogParameters)
-SkipCreditsDialog = skipintrocredits.SkipIntro("SkipCreditsDialog.xml", *utils.CustomDialogParameters)
+SkipIntroDialog = skipintrocredits.SkipIntro("script-emby-skipintrodialog.xml", *utils.CustomDialogParameters)
+SkipIntroDialogEmbuary = skipintrocredits.SkipIntro("script-emby-skipintrodialogembuary.xml", *utils.CustomDialogParameters)
+SkipCreditsDialog = skipintrocredits.SkipIntro("script-emby-skipcreditsdialog.xml", *utils.CustomDialogParameters)
 
 # Player events (queued by monitor notifications)
 def PlayerCommands():
