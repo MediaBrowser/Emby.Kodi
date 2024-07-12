@@ -66,7 +66,7 @@ class MusicArtist:
                             self.SQLs[KodiDBs[Index]].update_artist(KodiItemIdByDatabase, Item['Name'], Item['ProviderIds']['MusicBrainzArtist'], Item['MusicGenre'], Item['Overview'], Item['KodiArtwork']['thumb'], Item['KodiLastScraped'], Item['SortName'], Item['KodiDateCreated'])
 
                         self.set_favorite(KodiItemIdByDatabase, isFavorite, KodiDBs[Index], Item['Id'])
-                        xbmc.log(f"EMBY.core.musicartist: UPDATE ({KodiDBs[Index]}) {Item['Name']}: {Item['Id']}", 1) # LOGINFO
+                        xbmc.log(f"EMBY.core.musicartist: UPDATE ({KodiDBs[Index]}) {Item['Name']}: {Item['Id']}", 0) # LOGDEBUG
 
         # New library (insert new Kodi record)
         for Index in range(2):
@@ -82,7 +82,7 @@ class MusicArtist:
 
                 self.set_favorite(KodiItemIds[Index][-1], isFavorite, KodiDBs[Index], Item['Id'])
                 NewItem = True
-                xbmc.log(f"EMBY.core.musicartist: ADD ({KodiDBs[Index]}) {Item['Name']}: {Item['Id']}", 1) # LOGINFO
+                xbmc.log(f"EMBY.core.musicartist: ADD ({KodiDBs[Index]}) {Item['Name']}: {Item['Id']}", 0) # LOGDEBUG
 
         KodiItemIds[1] = ",".join(KodiItemIds[1])
         KodiItemIds[0] = ",".join(KodiItemIds[0])

@@ -40,7 +40,7 @@ class Series:
             if StackedKodiId:
                 Item['KodiItemId'] = StackedKodiId
                 self.SQLs["emby"].add_reference_series(Item['Id'], Item['LibraryId'], Item['KodiItemId'], IsFavorite, Item['PresentationUniqueKey'], Item['KodiPathId'])
-                xbmc.log(f"EMBY.core.series: ADD STACKED [{Item['KodiPathId']} / {Item['KodiItemId']}] {Item['Id']}: {Item['Name']}", 1) # LOGINFO
+                xbmc.log(f"EMBY.core.series: ADD STACKED [{Item['KodiPathId']} / {Item['KodiItemId']}] {Item['Id']}: {Item['Name']}", 0) # LOGDEBUG
                 utils.FavoriteQueue.put(((Item['KodiArtwork']['favourite'], IsFavorite, f"videodb://tvshows/titles/{Item['KodiItemId']}/", Item['Name'], "window", 10025),))
                 return False
 
@@ -76,12 +76,12 @@ class Series:
         if Item['UpdateItem']:
             self.SQLs["video"].update_tvshow(Item['Name'], Item['Overview'], Item['Status'], Item['KodiRatingId'], Item['KodiPremiereDate'], Item['KodiArtwork']['poster'], Item['Genre'], Item['OriginalTitle'], Item['KodiArtwork']['fanart'].get('fanart', None), Item['KodiUniqueId'], Item['OfficialRating'], Item['Studio'], Item['SortName'], Item['KodiRunTimeTicks'], Item['KodiItemId'], Item['Trailer'])
             self.SQLs["emby"].update_reference_generic(IsFavorite, Item['Id'], "Series", Item['LibraryId'])
-            xbmc.log(f"EMBY.core.series: UPDATE [{Item['KodiPathId']} / {Item['KodiItemId']}] {Item['Id']}: {Item['Name']}", 1) # LOGINFO
+            xbmc.log(f"EMBY.core.series: UPDATE [{Item['KodiPathId']} / {Item['KodiItemId']}] {Item['Id']}: {Item['Name']}", 0) # LOGDEBUG
         else:
             self.SQLs["video"].add_tvshow(Item['KodiItemId'], Item['Name'], Item['Overview'], Item['Status'], Item['KodiRatingId'], Item['KodiPremiereDate'], Item['KodiArtwork']['poster'], Item['Genre'], Item['OriginalTitle'], Item['KodiArtwork']['fanart'].get('fanart', None), Item['KodiUniqueId'], Item['OfficialRating'], Item['Studio'], Item['SortName'], Item['KodiRunTimeTicks'], Item['Trailer'])
             self.SQLs["emby"].add_reference_series(Item['Id'], Item['LibraryId'], Item['KodiItemId'], IsFavorite, Item['PresentationUniqueKey'], Item['KodiPathId'])
             self.SQLs["video"].add_link_tvshow(Item['KodiItemId'], Item['KodiPathId'])
-            xbmc.log(f"EMBY.core.series: ADD [{Item['KodiPathId']} / {Item['KodiItemId']}] {Item['Id']}: {Item['Name']}", 1) # LOGINFO
+            xbmc.log(f"EMBY.core.series: ADD [{Item['KodiPathId']} / {Item['KodiItemId']}] {Item['Id']}: {Item['Name']}", 0) # LOGDEBUG
 
         common.update_boxsets(StartSync, Item['ParentId'], Item['LibraryId'], self.SQLs, self.EmbyServer) # Update Boxset
         utils.FavoriteQueue.put(((common.set_Favorites_Artwork_Overlay("Series", "TV Shows", Item['Id'], self.EmbyServer.ServerData['ServerId'], Item['KodiArtwork']['favourite']), IsFavorite, f"videodb://tvshows/titles/{Item['KodiItemId']}/", Item['Name'], "window", 10025),))

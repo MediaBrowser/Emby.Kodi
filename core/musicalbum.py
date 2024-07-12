@@ -33,7 +33,7 @@ class MusicAlbum:
 
         if Item['AlbumArtist'].lower() in ("various artists", "various", "various items", "sountrack", "xvarious artistsx"):
             Compilation = 1
-            xbmc.log(f"EMBY.core.musicalbum: Compilation detected: {Item['Name']}", 1) # LOGINFO
+            xbmc.log(f"EMBY.core.musicalbum: Compilation detected: {Item['Name']}", 0) # LOGDEBUG
 
         if Item['KodiItemIds']:
             KodiItemIds = Item['KodiItemIds'].split(",")
@@ -56,7 +56,7 @@ class MusicAlbum:
             common.set_MusicArtist_links(KodiItemIds[Index], self.SQLs, Item["AlbumArtists"], LibraryId, None)
             self.SQLs["music"].common_db.add_artwork(Item['KodiArtwork'], KodiItemIds[Index], "album")
             utils.FavoriteQueue.put(((common.set_Favorites_Artwork_Overlay("Album", "Songs", Item['Id'], self.EmbyServer.ServerData['ServerId'], Item['KodiArtwork']['favourite']), isFavorite, f"musicdb://albums/{KodiItemIds[Index]}/", Item['Name'], "window", 10502),))
-            xbmc.log(f"EMBY.core.musicalbum: UPDATE [{KodiItemIds[Index]}] {Item['Name']}: {Item['Id']}", 1) # LOGINFO
+            xbmc.log(f"EMBY.core.musicalbum: UPDATE [{KodiItemIds[Index]}] {Item['Name']}: {Item['Id']}", 0) # LOGDEBUG
 
         # New library (insert new Kodi record)
         if Item['LibraryId'] not in LibraryIds:
@@ -65,7 +65,7 @@ class MusicAlbum:
             LibraryIds.append(str(Item['LibraryId']))
             KodiItemIds.append(str(KodiItemId))
             self.SQLs["emby"].add_reference_musicalbum(Item['Id'], Item['LibraryId'], KodiItemIds, isFavorite, LibraryIds)
-            xbmc.log(f"EMBY.core.musicalbum: ADD [{KodiItemId}] {Item['Name']}: {Item['Id']}", 1) # LOGINFO
+            xbmc.log(f"EMBY.core.musicalbum: ADD [{KodiItemId}] {Item['Name']}: {Item['Id']}", 0) # LOGDEBUG
             common.set_MusicArtist_links(KodiItemId, self.SQLs, Item["AlbumArtists"], Item['LibraryId'], None)
             self.SQLs["music"].common_db.add_artwork(Item['KodiArtwork'], KodiItemId, "album")
             utils.FavoriteQueue.put(((common.set_Favorites_Artwork_Overlay("Album", "Songs", Item['Id'], self.EmbyServer.ServerData['ServerId'], Item['KodiArtwork']['favourite']), isFavorite, f"musicdb://albums/{KodiItemId}/", Item['Name'], "window", 10502),))

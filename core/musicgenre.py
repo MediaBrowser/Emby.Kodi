@@ -44,7 +44,7 @@ class MusicGenre:
                 if KodiItemIds[Index] and KodiDBs[Index] in self.SQLs: # Update
                     self.SQLs[KodiDBs[Index]].update_genre(Item['Name'], KodiItemIds[Index])
                     self.set_favorite(isFavorite, KodiDBs[Index], KodiItemIds[Index], ImageUrl, Item['Id'])
-                    xbmc.log(f"EMBY.core.musicgenre: UPDATE ({KodiDBs[Index]}) {Item['Name']}: {Item['Id']}", 1) # LOGINFO
+                    xbmc.log(f"EMBY.core.musicgenre: UPDATE ({KodiDBs[Index]}) {Item['Name']}: {Item['Id']}", 0) # LOGDEBUG
 
         # New library (insert new Kodi record)
         for Index in range(2):
@@ -53,7 +53,7 @@ class MusicGenre:
                 KodiItemIds[Index] = str(self.SQLs[KodiDBs[Index]].get_add_genre(Item['Name']))
                 self.set_favorite(isFavorite, KodiDBs[Index], KodiItemIds[Index], ImageUrl, Item['Id'])
                 NewItem = True
-                xbmc.log(f"EMBY.core.musicgenre: ADD ({KodiDBs[Index]}) {Item['Name']}: {Item['Id']}", 1) # LOGINFO
+                xbmc.log(f"EMBY.core.musicgenre: ADD ({KodiDBs[Index]}) {Item['Name']}: {Item['Id']}", 0) # LOGDEBUG
 
         LibraryIds[1] = ",".join(LibraryIds[1])
         LibraryIds[0] = ",".join(LibraryIds[0])

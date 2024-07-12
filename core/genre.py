@@ -20,11 +20,11 @@ class Genre:
 
             self.SQLs["video"].update_genre(Item['Name'], Item['KodiItemId'])
             self.SQLs["emby"].update_reference_genre(Item['Id'], isFavorite, ImageUrl, Item['LibraryId'])
-            xbmc.log(f"EMBY.core.gerne: UPDATE [{Item['KodiItemId']}] {Item['Name']}: {Item['Id']}", 1) # LOGINFO
+            xbmc.log(f"EMBY.core.gerne: UPDATE [{Item['KodiItemId']}] {Item['Name']}: {Item['Id']}", 0) # LOGDEBUG
         else:
             Item['KodiItemId'] = self.SQLs["video"].get_add_genre(Item['Name'])
             self.SQLs["emby"].add_reference_genre(Item['Id'], Item['LibraryId'], Item['KodiItemId'], isFavorite, ImageUrl)
-            xbmc.log(f"EMBY.core.gerne: ADD [{Item['KodiItemId']}] {Item['Name']}: {Item['Id']}", 1) # LOGINFO
+            xbmc.log(f"EMBY.core.gerne: ADD [{Item['KodiItemId']}] {Item['Name']}: {Item['Id']}", 0) # LOGDEBUG
 
         self.set_favorite(isFavorite, Item['KodiItemId'], ImageUrl, Item['Id'])
         return not Item['UpdateItem']

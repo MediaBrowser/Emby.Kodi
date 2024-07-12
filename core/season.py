@@ -31,7 +31,7 @@ class Season:
             if StackedKodiId:
                 Item['KodiItemId'] = StackedKodiId
                 self.SQLs["emby"].add_reference_season(Item['Id'], Item['LibraryId'], Item['KodiItemId'], IsFavorite, Item['KodiParentId'], Item['PresentationUniqueKey'])
-                xbmc.log(f"EMBY.core.season: ADD STACKED [{Item['KodiParentId']} / {Item['KodiItemId']}] {Item['Name'] or Item['IndexNumber']}: {Item['Id']}", 1) # LOGINFO
+                xbmc.log(f"EMBY.core.season: ADD STACKED [{Item['KodiParentId']} / {Item['KodiItemId']}] {Item['Name'] or Item['IndexNumber']}: {Item['Id']}", 0) # LOGDEBUG
                 utils.FavoriteQueue.put(((Item['KodiArtwork']['favourite'], IsFavorite, f"videodb://tvshows/titles/{Item['KodiParentId']}/{Item['IndexNumber']}/", f"{Item['SeriesName']} - {Item['Name']}", "window", 10025),))
                 return False
 
@@ -47,11 +47,11 @@ class Season:
 
             self.SQLs["video"].update_season(Item['KodiParentId'], Item['IndexNumber'], Item['Name'], Item['KodiItemId'])
             self.SQLs["emby"].update_reference_generic(IsFavorite, Item['Id'], "Season", Item['LibraryId'])
-            xbmc.log(f"EMBY.core.season: UPDATE [{Item['KodiParentId']} / {Item['KodiItemId']}] {Item['Name'] or Item['IndexNumber']}: {Item['Id']}", 1) # LOGINFO
+            xbmc.log(f"EMBY.core.season: UPDATE [{Item['KodiParentId']} / {Item['KodiItemId']}] {Item['Name'] or Item['IndexNumber']}: {Item['Id']}", 0) # LOGDEBUG
         else:
             self.SQLs["video"].add_season(Item['KodiItemId'], Item['KodiParentId'], Item['IndexNumber'], Item['Name'])
             self.SQLs["emby"].add_reference_season(Item['Id'], Item['LibraryId'], Item['KodiItemId'], IsFavorite, Item['KodiParentId'], Item['PresentationUniqueKey'])
-            xbmc.log(f"EMBY.core.season: ADD [{Item['KodiParentId']} / {Item['KodiItemId']}] {Item['Name'] or Item['IndexNumber']}: {Item['Id']}", 1) # LOGINFO
+            xbmc.log(f"EMBY.core.season: ADD [{Item['KodiParentId']} / {Item['KodiItemId']}] {Item['Name'] or Item['IndexNumber']}: {Item['Id']}", 0) # LOGDEBUG
 
         utils.FavoriteQueue.put(((common.set_Favorites_Artwork_Overlay("Season", "TV Shows", Item['Id'], self.EmbyServer.ServerData['ServerId'], Item['KodiArtwork']['favourite']), IsFavorite, f"videodb://tvshows/titles/{Item['KodiParentId']}/{Item['IndexNumber']}/", f"{Item['SeriesName']} - {Item['Name']}", "window", 10025),))
         return not Item['UpdateItem']

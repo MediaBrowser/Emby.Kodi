@@ -319,7 +319,7 @@ def SwopMediaSources(Item):
 
     if len(Item['MediaSources']) > 1:
         if Item['MediaSources'][0].get('Video3DFormat'):
-            xbmc.log(f"EMBY.core.common: 3D detected, swap MediaSources {Item['Name']}", 1) # LOGINFO
+            xbmc.log(f"EMBY.core.common: 3D detected, swap MediaSources {Item['Name']}", 0) # LOGDEBUG
             Item0 = Item['MediaSources'][0]
             Item1 = Item['MediaSources'][1]
             Item['MediaSources'][0] = Item1

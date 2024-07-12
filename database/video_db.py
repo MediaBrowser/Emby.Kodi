@@ -692,7 +692,7 @@ class VideoDatabase:
                 self.cursor.execute("INSERT INTO actor(actor_id, name, art_urls) VALUES (?, ?, ?)", (PersonId, PersonNameMod, ArtUrl))
                 break
             except Exception as Error:
-                xbmc.log(f"EMBY.database.video_db: Add person, Duplicate ActorName detected: {PersonNameMod} / {Error}", 2) # LOGWARNING
+                xbmc.log(f"EMBY.database.video_db: Add person, Duplicate ActorName detected: {PersonNameMod} / {Error}", 0) # LOGDEBUG
                 PersonNameMod += " "
 
             if len(PersonNameMod) >= 255: # max 256 char

@@ -19,11 +19,11 @@ class Person:
             self.SQLs["video"].common_db.delete_artwork(Item['KodiItemId'], "actor")
             self.SQLs["video"].update_person(Item['KodiItemId'], Item['Name'], ImageUrl)
             self.SQLs["emby"].update_favourite(isFavorite, Item['Id'], "Person")
-            xbmc.log(f"EMBY.core.person: UPDATE [{Item['KodiItemId']}] {Item['Name']}: {Item['Id']}", 1) # LOGINFO
+            xbmc.log(f"EMBY.core.person: UPDATE [{Item['KodiItemId']}] {Item['Name']}: {Item['Id']}", 0) # LOGDEBUG
         else:
             Item['KodiItemId'] = self.SQLs["video"].add_person(Item['Name'], ImageUrl)
             self.SQLs["emby"].add_reference_metadata(Item['Id'], Item['LibraryId'], "Person", Item['KodiItemId'], isFavorite)
-            xbmc.log(f"EMBY.core.person: ADD [{Item['KodiItemId']}] {Item['Name']}: {Item['Id']}", 1) # LOGINFO
+            xbmc.log(f"EMBY.core.person: ADD [{Item['KodiItemId']}] {Item['Name']}: {Item['Id']}", 0) # LOGDEBUG
 
         self.SQLs["video"].common_db.add_artwork(Item['KodiArtwork'], Item['KodiItemId'], "actor")
         self.set_favorite(Item['KodiItemId'], isFavorite, Item['Id'])

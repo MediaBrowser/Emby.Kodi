@@ -62,11 +62,11 @@ class MusicVideo:
         if Item['UpdateItem']:
             self.SQLs["video"].update_musicvideos(Item['KodiItemId'], Item['KodiFileId'], Item['KodiName'], Item['KodiArtwork']['poster'], Item['KodiRunTimeTicks'], Item['Directors'], Item['Studio'], Item['Overview'], Item['Album'], Item['MusicArtist'], Item['MusicGenre'], Item['IndexNumber'], Item['KodiPremiereDate'], Item['KodiPlayCount'], Item['KodiLastPlayedDate'], Item['KodiFilename'], Item['KodiStackedFilename'], Item['KodiDateCreated'])
             self.SQLs["emby"].update_reference_movie_musicvideo(Item['Id'], "MusicVideo", Item['UserData']['IsFavorite'], Item['PresentationUniqueKey'], Item['LibraryId'])
-            xbmc.log(f"EMBY.core.musicvideo: UPDATE [{Item['KodiPathId']} / {Item['KodiFileId']} / {Item['KodiItemId']}] {Item['Id']}: {Item['Name']}", 1) # LOGINFO
+            xbmc.log(f"EMBY.core.musicvideo: UPDATE [{Item['KodiPathId']} / {Item['KodiFileId']} / {Item['KodiItemId']}] {Item['Id']}: {Item['Name']}", 0) # LOGDEBUG
         else:
             self.SQLs["video"].add_musicvideos(Item['KodiItemId'], Item['KodiFileId'], Item['Name'], Item['KodiArtwork']['poster'], Item['KodiRunTimeTicks'], Item['Directors'], Item['Studio'], Item['Overview'], Item['Album'], Item['MusicArtist'], Item['MusicGenre'], Item['IndexNumber'], f"{Item['KodiPath']}{Item['KodiFilename']}", Item['KodiPathId'], Item['KodiPremiereDate'], Item['KodiDateCreated'], Item['KodiPlayCount'], Item['KodiLastPlayedDate'], Item['KodiFilename'], Item['KodiStackedFilename'], Item['ChapterInfo'])
             self.SQLs["emby"].add_reference_movie_musicvideo(Item['Id'], Item['LibraryId'], "Musicvideo", Item['KodiItemId'], Item['UserData']['IsFavorite'], Item['KodiFileId'], Item['PresentationUniqueKey'], Item['Path'], Item['KodiPathId'])
-            xbmc.log(f"EMBY.core.musicvideo: ADD [{Item['KodiPathId']} / {Item['KodiFileId']} / {Item['KodiItemId']}] {Item['Id']}: {Item['Name']}", 1) # LOGINFO
+            xbmc.log(f"EMBY.core.musicvideo: ADD [{Item['KodiPathId']} / {Item['KodiFileId']} / {Item['KodiItemId']}] {Item['Id']}: {Item['Name']}", 0) # LOGDEBUG
 
         common.update_boxsets(StartSync, Item['ParentId'], Item['LibraryId'], self.SQLs, self.EmbyServer) # Update Boxset
         self.SQLs["emby"].add_multiversion(Item, "MusicVideo", self.EmbyServer.API, self.SQLs)

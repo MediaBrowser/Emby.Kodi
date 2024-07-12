@@ -14,7 +14,7 @@ class Folder:
                 Path = f"{Item['Path']}\\"
 
             self.SQLs["emby"].add_reference_folder(Item['Id'], Item['LibraryId'], Path)
-            xbmc.log(f"EMBY.core.folder: ADD OR REPLACE {Item['Id']}: {Path}", 1) # LOGINFO
+            xbmc.log(f"EMBY.core.folder: ADD OR REPLACE {Item['Id']}: {Path}", 0) # LOGDEBUG
 
         return True
 
