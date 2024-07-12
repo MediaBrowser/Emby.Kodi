@@ -53,14 +53,14 @@ class BoxSets:
                 if str(ContentItemKodiId) in CurrentBoxSetContent:
                     CurrentBoxSetContent.remove(str(ContentItemKodiId))
 
-                xbmc.log(f"EMBY.core.boxsets: ADD to Kodi set [{Item['KodiItemId']}] {ContentAssignedToBoxset['Name']}: {ContentAssignedToBoxset['Id']}", 1) # LOGINFO
+                xbmc.log(f"EMBY.core.boxsets: ADD to Kodi set [{Item['KodiItemId']}] {ContentAssignedToBoxset['Name']}: {ContentAssignedToBoxset['Id']}", 0) # LOGDEBUG
                 self.SQLs["video"].set_boxset(Item['KodiItemId'], ContentItemKodiId) # assign boxset to movie
                 BoxSetKodiParentIds += (str(ContentItemKodiId),)
 
             # Assign content to collection tag
             if utils.BoxSetsToTags and ContentItemKodiId:
                 common.set_Tag_links(ContentItemKodiId, self.SQLs, KodiTypeMapping[ContentAssignedToBoxset['Type']], TagItems)
-                xbmc.log(f"EMBY.core.boxsets: ADD to tag [{Item['KodiItemId']}] {ContentAssignedToBoxset['Name']}: {ContentAssignedToBoxset['Id']}", 1) # LOGINFO
+                xbmc.log(f"EMBY.core.boxsets: ADD to tag [{Item['KodiItemId']}] {ContentAssignedToBoxset['Name']}: {ContentAssignedToBoxset['Id']}", 0) # LOGDEBUG
 
         # Delete remove content from boxsets
         for KodiContentId in CurrentBoxSetContent:
@@ -72,7 +72,7 @@ class BoxSets:
         Item['KodiParentId'] = ",".join(BoxSetKodiParentIds)
         self.SQLs["emby"].add_reference_boxset(Item['Id'], Item['LibraryId'], Item['KodiItemId'], Item['UserData']['IsFavorite'], Item['KodiParentId'])
         self.set_favorite(Item['UserData']['IsFavorite'], Item['KodiItemId'], Item['Id'])
-        xbmc.log(f"EMBY.core.boxsets: UPDATE [{Item['Id']}] {Item['KodiItemId']} {Item['Name']}", 1) # LOGINFO
+        xbmc.log(f"EMBY.core.boxsets: UPDATE [{Item['Id']}] {Item['KodiItemId']} {Item['Name']}", 0) # LOGDEBUG
         return True
 
     # This updates: Favorite, LastPlayedDate, PlaybackPositionTicks

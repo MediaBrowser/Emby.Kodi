@@ -20,11 +20,11 @@ class Tag:
 
             self.SQLs["video"].update_tag(Item['Name'], Item['KodiItemId'])
             self.SQLs["emby"].update_reference_tag(Item['Id'], isFavorite, Item.get('Memo', None), ImageUrl, Item['LibraryId'])
-            xbmc.log(f"EMBY.core.tag: UPDATE [{Item['KodiItemId']}] {Item['Name']}: {Item['Id']}", 1) # LOGINFO
+            xbmc.log(f"EMBY.core.tag: UPDATE [{Item['KodiItemId']}] {Item['Name']}: {Item['Id']}", 0) # LOGDEBUG
         else:
             Item['KodiItemId'] = self.SQLs["video"].get_add_tag(Item['Name'])
             self.SQLs["emby"].add_reference_tag(Item['Id'], Item['LibraryId'], Item['KodiItemId'], isFavorite, Item.get('Memo', None), ImageUrl)
-            xbmc.log(f"EMBY.core.tag: ADD [{Item['KodiItemId']}] {Item['Name']}: {Item['Id']}", 1) # LOGINFO
+            xbmc.log(f"EMBY.core.tag: ADD [{Item['KodiItemId']}] {Item['Name']}: {Item['Id']}", 0) # LOGDEBUG
 
         self.set_favorite(isFavorite, Item['KodiItemId'], ImageUrl, Item['Id'])
         return not Item['UpdateItem']

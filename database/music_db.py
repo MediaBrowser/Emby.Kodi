@@ -425,25 +425,25 @@ def set_metadata_song(Artist, Title, BitRate, SampleRate, Channels, PlayCount):
         PlayCount = 0
 
     if not BitRate:
-        xbmc.log(f"EMBY.database.music_db: No bitrate info (add_song): {Artist} / {Title}", 2) # LOGWARNING
+        xbmc.log(f"EMBY.database.music_db: No bitrate info (add_song): {Artist} / {Title}", 0) # LOGDEBUG
         BitRate = 0
 
     if not SampleRate:
-        xbmc.log(f"EMBY.database.music_db: No bitrate info (add_song): {Artist} / {Title}", 2) # LOGWARNING
+        xbmc.log(f"EMBY.database.music_db: No bitrate info (add_song): {Artist} / {Title}", 0) # LOGDEBUG
         SampleRate = 0
 
     if not Channels:
-        xbmc.log(f"EMBY.database.music_db: No bitrate info (add_song): {Artist} / {Title}", 2) # LOGWARNING
+        xbmc.log(f"EMBY.database.music_db: No bitrate info (add_song): {Artist} / {Title}", 0) # LOGDEBUG
         Channels = 0
 
     return BitRate, SampleRate, Channels, PlayCount
 
 def errorhandler_MusicBrainzID(Title, MusicBrainzID, error):
     error = str(error)
-    xbmc.log(f"EMBY.database.music_db: {error}", 3) # LOGERROR
+    xbmc.log(f"EMBY.database.music_db: {error}", 0) # LOGDEBUG
 
     if "MusicBrainz" in error:  # Duplicate musicbrainz
-        xbmc.log(f"EMBY.database.music_db: Duplicate MusicBrainzID detected: {Title} / {MusicBrainzID}", 2) # LOGWARNING
+        xbmc.log(f"EMBY.database.music_db: Duplicate MusicBrainzID detected: {Title} / {MusicBrainzID}", 0) # LOGDEBUG
         MusicBrainzID += " "
         return MusicBrainzID
 

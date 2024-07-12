@@ -20,11 +20,11 @@ class Studio:
 
             self.SQLs["video"].update_studio(Item['Name'], Item['KodiItemId'])
             self.SQLs["emby"].update_reference_studio(Item['Id'], isFavorite, ImageUrl, Item['LibraryId'])
-            xbmc.log(f"EMBY.core.studio: UPDATE [{Item['KodiItemId']}] {Item['Name']}: {Item['Id']}", 1) # LOGINFO
+            xbmc.log(f"EMBY.core.studio: UPDATE [{Item['KodiItemId']}] {Item['Name']}: {Item['Id']}", 0) # LOGDEBUG
         else:
             Item['KodiItemId'] = self.SQLs["video"].get_add_studio(Item['Name'])
             self.SQLs["emby"].add_reference_studio(Item['Id'], Item['LibraryId'], Item['KodiItemId'], isFavorite, ImageUrl)
-            xbmc.log(f"EMBY.core.studio: ADD [{Item['KodiItemId']}] {Item['Name']}: {Item['Id']}", 1) # LOGINFO
+            xbmc.log(f"EMBY.core.studio: ADD [{Item['KodiItemId']}] {Item['Name']}: {Item['Id']}", 0) # LOGDEBUG
 
         self.set_favorite(isFavorite, Item['KodiItemId'], ImageUrl, Item['Id'])
         return not Item['UpdateItem']

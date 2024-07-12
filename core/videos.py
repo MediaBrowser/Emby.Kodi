@@ -65,11 +65,11 @@ class Videos:
             if Item['UpdateItem']: # new item
                 self.SQLs["video"].update_movie(Item['KodiItemId'], Item['KodiFileId'], Item['KodiName'], Item['Overview'], Item['ShortOverview'], Item['Tagline'], Item['KodiRatingId'], Item['Writers'], Item['KodiArtwork']['poster'], Item['KodiUniqueId'], Item['KodiSortName'], Item['KodiRunTimeTicks'], Item['OfficialRating'], Item['Genre'], Item['Directors'], Item['OriginalTitle'], Item['Studio'], Item['Trailer'], Item['KodiArtwork']['fanart'].get('fanart', None), Item['ProductionLocations'][0], Item['KodiPremiereDate'], Item['KodiPlayCount'], Item['KodiLastPlayedDate'], None, Item['KodiFilename'], Item['KodiStackedFilename'], Item['KodiDateCreated'])
                 self.SQLs["emby"].update_reference_video(Item['Id'], Item['UserData']['IsFavorite'], Item['ParentId'], Item['PresentationUniqueKey'], Item['LibraryId'])
-                xbmc.log(f"EMBY.core.videos: UPDATE {Item['Id']}: {Item['Name']}", 1) # LOGINFO
+                xbmc.log(f"EMBY.core.videos: UPDATE {Item['Id']}: {Item['Name']}", 0) # LOGDEBUG
             else:
                 self.SQLs["video"].add_movie(Item['KodiItemId'], Item['KodiFileId'], Item['Name'], Item['Overview'], Item['ShortOverview'], Item['Tagline'], Item['KodiRatingId'], Item['Writers'], Item['KodiArtwork']['poster'], Item['KodiUniqueId'], Item['SortName'], Item['KodiRunTimeTicks'], Item['OfficialRating'], Item['Genre'], Item['Directors'], Item['OriginalTitle'], Item['Studio'], Item['Trailer'], Item['KodiArtwork']['fanart'].get('fanart', None), Item['ProductionLocations'][0], Item['KodiPath'], Item['KodiPathId'], Item['KodiPremiereDate'], Item['KodiFilename'], Item['KodiDateCreated'], Item['KodiPlayCount'], Item['KodiLastPlayedDate'], None, Item['KodiStackedFilename'], Item['ChapterInfo'])
                 self.SQLs["emby"].add_reference_video(Item['Id'], Item['LibraryId'], Item['KodiItemId'], Item['UserData']['IsFavorite'], Item['KodiFileId'], Item['ParentId'], Item['PresentationUniqueKey'], Item['Path'], Item['KodiPathId'])
-                xbmc.log(f"EMBY.core.videos: ADD {Item['Id']}: {Item['Name']}", 1) # LOGINFO
+                xbmc.log(f"EMBY.core.videos: ADD {Item['Id']}: {Item['Name']}", 0) # LOGDEBUG
 
             common.update_boxsets(StartSync, Item['ParentId'], Item['LibraryId'], self.SQLs, self.EmbyServer) # Update Boxset
             utils.FavoriteQueue.put(((common.set_Favorites_Artwork_Overlay("Video", "Movies", Item['Id'], self.EmbyServer.ServerData['ServerId'], Item['KodiArtwork']['favourite']), Item['UserData']['IsFavorite'], f"{Item['KodiPath']}{Item['KodiFilename']}", Item['Name'], "media", 0),))
@@ -77,7 +77,7 @@ class Videos:
             common.SwopMediaSources(Item)  # 3D
             self.SQLs["emby"].add_streamdata(Item['Id'], Item['Streams'])
             self.SQLs["emby"].add_reference_video(Item['Id'], Item['LibraryId'], None, Item['UserData']['IsFavorite'], None, Item['ParentId'], Item['PresentationUniqueKey'], Item['Path'], None)
-            xbmc.log(f"EMBY.core.videos: ADD UNSYNCED {Item['Id']}: {Item['Name']}", 1) # LOGINFO
+            xbmc.log(f"EMBY.core.videos: ADD UNSYNCED {Item['Id']}: {Item['Name']}", 0) # LOGDEBUG
 
         self.SQLs["emby"].add_multiversion(Item, "Video", self.EmbyServer.API, self.SQLs)
         return not Item['UpdateItem']

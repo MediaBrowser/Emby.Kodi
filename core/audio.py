@@ -78,7 +78,7 @@ class Audio:
             KodiItemIds.append(str(KodiItemId))
             self.SQLs["emby"].add_reference_audio(Item['Id'], Item['LibraryId'], KodiItemIds, Item['UserData']['IsFavorite'], Item['Path'], Item['KodiPathId'], LibraryIds)
             self.set_links(Item, KodiItemId)
-            xbmc.log(f"EMBY.core.audio: ADD [{Item['KodiPathId']} / {KodiAlbumId} / {KodiItemId}] {Item['Id']}: {Item['Name']}", 1) # LOGINFO
+            xbmc.log(f"EMBY.core.audio: ADD [{Item['KodiPathId']} / {KodiAlbumId} / {KodiItemId}] {Item['Id']}: {Item['Name']}", 0) # LOGDEBUG
         else:
             self.SQLs["emby"].update_reference_generic(Item['UserData']['IsFavorite'], Item['Id'], "Audio", Item['LibraryId'])
 
