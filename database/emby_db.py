@@ -369,8 +369,12 @@ class EmbyDatabase:
         del Ids
 
         for Item in Items:
-            Data[Item[2]][Item[1]][Counter[Item[2]][Item[1]]] = str(Item[0])
-            Counter[Item[2]][Item[1]] += 1
+            if Item[1] in Data[Item[2]]:
+                Data[Item[2]][Item[1]][Counter[Item[2]][Item[1]]] = str(Item[0])
+                Counter[Item[2]][Item[1]] += 1
+            else: # e.g. photo updte -> # Item: (3541991, 'Photo', '999999999')
+                Data[Item[2]]["unknown"][Counter[Item[2]]["unknown"]] = str(Item[0])
+                Counter[Item[2]]["unknown"] += 1
 
         for Key, Array in list(Data.items()):
             DataProcessed[Key] = {"MusicVideo": Array["MusicVideo"][:Counter[Key]["MusicVideo"]], "Folder": Array["Folder"][:Counter[Key]["Folder"]], "Movie": Array["Movie"][:Counter[Key]["Movie"]], "Video": Array["Video"][:Counter[Key]["Video"]], "Series": Array["Series"][:Counter[Key]["Series"]], "Season": Array["Season"][:Counter[Key]["Season"]], "Episode": Array["Episode"][:Counter[Key]["Episode"]], "MusicArtist": Array["MusicArtist"][:Counter[Key]["MusicArtist"]], "MusicAlbum": Array["MusicAlbum"][:Counter[Key]["MusicAlbum"]], "Audio": Array["Audio"][:Counter[Key]["Audio"]], "Person": Array["Person"][:Counter[Key]["Person"]], "MusicGenre": Array["MusicGenre"][:Counter[Key]["MusicGenre"]], "Genre": Array["Genre"][:Counter[Key]["Genre"]], "Studio": Array["Studio"][:Counter[Key]["Studio"]], "Tag": Array["Tag"][:Counter[Key]["Tag"]], "BoxSet": Array["BoxSet"][:Counter[Key]["BoxSet"]], "Playlist": Array["Playlist"][:Counter[Key]["Playlist"]], "unknown": Array["unknown"][:Counter[Key]["unknown"]]} # Filter None

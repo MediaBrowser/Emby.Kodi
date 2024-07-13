@@ -1,3 +1,9 @@
+10.0.40
+=============
+fix realtime sync issue for unsyncable content e.g. photos
+
+
+
 10.0.39
 =============
 change log modes
