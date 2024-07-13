@@ -197,51 +197,47 @@ class API:
 
     def get_Items_Ids(self, Ids, MediaTypes, Dynamic, Basic, ProcessProgressId, LibraryId, Extra):
         ItemsQueue = queue.Queue()
-        Fields = []
 
-        if not Basic:
-            for MediaType in MediaTypes:
-                Fields += EmbyFields[MediaType.lower()]
+        for MediaType in MediaTypes:
+            if not Basic:
+                Fields = EmbyFields[MediaType.lower()]
 
-            #Dynamic list query, remove fields to improve performance
-            if Dynamic:
-                if "Series" in MediaTypes or "Season" in MediaTypes:
-                    Fields += ("RecursiveItemCount", "ChildCount")
+                #Dynamic list query, remove fields to improve performance
+                if Dynamic:
+                    if MediaType in ("Series", "Season"):
+                        Fields += ("RecursiveItemCount", "ChildCount")
 
-                for DynamicListsRemoveField in self.DynamicListsRemoveFields:
-                    if DynamicListsRemoveField in Fields:
-                        Fields.remove(DynamicListsRemoveField)
+                    for DynamicListsRemoveField in self.DynamicListsRemoveFields:
+                        if DynamicListsRemoveField in Fields:
+                            Fields.remove(DynamicListsRemoveField)
 
-            Fields = ",".join(list(dict.fromkeys(Fields))) # remove duplicates and join into string
-        else:
-            Fields = None
+                Fields = ",".join(list(dict.fromkeys(Fields))) # remove duplicates and join into string
+            else:
+                Fields = None
 
-        if len(MediaTypes) == 1:
-            Params = {'Fields': Fields, 'EnableTotalRecordCount': False, 'LocationTypes': "FileSystem,Remote,Offline", 'IncludeItemTypes': MediaTypes[0]}
-        else:
-            Params = {'Fields': Fields, 'EnableTotalRecordCount': False, 'LocationTypes': "FileSystem,Remote,Offline"}
+            Params = {'Fields': Fields, 'EnableTotalRecordCount': False, 'LocationTypes': "FileSystem,Remote,Offline", 'IncludeItemTypes': MediaType}
 
-        if Extra:
-            Params.update(Extra)
+            if Extra:
+                Params.update(Extra)
 
-        if 'SortBy' not in Params:
-            Params['SortBy'] = "None"
+            if 'SortBy' not in Params:
+                Params['SortBy'] = "None"
 
-        start_new_thread(self.async_get_Items_Ids, (f"Users/{self.EmbyServer.ServerData['UserId']}/Items", ItemsQueue, Params, Ids, Dynamic, ProcessProgressId, LibraryId))
+            start_new_thread(self.async_get_Items_Ids, (f"Users/{self.EmbyServer.ServerData['UserId']}/Items", ItemsQueue, Params, Ids, Dynamic, ProcessProgressId, LibraryId))
 
-        while True:
-            Items = ItemsQueue.getall()
+            while True:
+                Items = ItemsQueue.getall()
 
-            if not Items:
-                break
+                if not Items:
+                    break
 
-            if Items[-1] == "QUIT":
-                yield from Items[:-1]
+                if Items[-1] == "QUIT":
+                    yield from Items[:-1]
+                    del Items
+                    break
+
+                yield from Items
                 del Items
-                return
-
-            yield from Items
-            del Items
 
     def async_get_Items_Ids(self, Request, ItemsQueue, Params, Ids, Dynamic, ProcessProgressId, LibraryId):
         xbmc.log("EMBY.emby.api: THREAD: --->[ load Item by Ids ]", 0) # LOGDEBUG
