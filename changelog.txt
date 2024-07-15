@@ -1,3 +1,9 @@
+10.0.41
+=============
+fix http issue when chunked data are received
+
+
+
 10.0.40
 =============
 fix realtime sync issue for unsyncable content e.g. photos
