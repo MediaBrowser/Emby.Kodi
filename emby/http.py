@@ -117,7 +117,7 @@ class HTTP:
                 return 611
 
             self.Connection[ConnectionId]["SSL"] = bool(Scheme == "https")
-            self.Connection[ConnectionId]["RequestHeader"] = {"Host": f"{self.Connection[ConnectionId]['Hostname']}:{self.Connection[ConnectionId]['Port']}", 'Content-type': 'application/json; charset=utf-8', 'Accept-Charset': 'utf-8', 'Accept-encoding': 'gzip', 'User-Agent': f"{utils.addon_name}/{utils.addon_version}", 'Connection': 'keep-alive', 'Authorization': f'Emby Client="{utils.addon_name}", Device="{utils.device_name}", DeviceId="{self.EmbyServer.ServerData["DeviceId"]}", Version="{utils.addon_version}"'}
+            self.Connection[ConnectionId]["RequestHeader"] = {"Host": f"{self.Connection[ConnectionId]['Hostname']}:{self.Connection[ConnectionId]['Port']}", 'Content-type': 'application/json; charset=utf-8', 'Accept-Charset': 'utf-8', 'Accept-encoding': 'gzip, deflate', 'User-Agent': f"{utils.addon_name}/{utils.addon_version}", 'Connection': 'keep-alive', 'Authorization': f'Emby Client="{utils.addon_name}", Device="{utils.device_name}", DeviceId="{self.EmbyServer.ServerData["DeviceId"]}", Version="{utils.addon_version}"'}
 
             if ConnectionId == "DOWNLOAD":
                 self.Connection[ConnectionId]["RequestHeader"]['Accept-encoding'] = "identity"
@@ -332,12 +332,12 @@ class HTTP:
 
         return StatusCode, IncomingData
 
-    def socket_request(self, Method, Handler, Params, Binary, TimeoutSend, TimeoutRecv, ConnectionId, DownloadPath, DownloadName):
+    def socket_request(self, Method, Handler, Params, Binary, TimeoutSend, TimeoutRecv, ConnectionId, DownloadPath, DownloadFileSize, DownloadName):
         if ConnectionId not in self.Connection:
             return 601, {}, {}
 
         PayloadTotal = b""
-        PayloadTotalPosition = 0
+        PayloadTotalLength = 0
 
         # Prepare HTTP Header
         HeaderString = ""
@@ -370,22 +370,34 @@ class HTTP:
 
         IncomingData = b""
 
+        if DownloadPath:
+            ProgressBar = xbmcgui.DialogProgressBG()
+            ProgressBar.create("Download", DownloadName)
+            ProgressBarTotal = DownloadFileSize / 100
+            OutFile = open(DownloadPath, 'wb')
+        else:
+            ProgressBar = None
+            ProgressBarTotal = 0
+            OutFile = None
+
         while True:
             StatusCodeSocket, RecvData = self.socket_io("", ConnectionId, TimeoutRecv)
             IncomingData += RecvData
 
             if StatusCodeSocket:
+                closeDownload(OutFile, ProgressBar)
                 return StatusCodeSocket, {}, ""
 
-            if b'\x0d\x0a\x0d\x0a' not in IncomingData:
+            if b'\r\n\r\n' not in IncomingData:
                 xbmc.log("EMBY.emby.emby: Incomplete header", 0) # LOGDEBUG
                 continue
 
-            IncomingData = IncomingData.split(b'\x0d\x0a\x0d\x0a', 1) # Split header/payload
+            IncomingData = IncomingData.split(b'\r\n\r\n', 1) # Split header/payload
             IncomingMetaData = IncomingData[0].decode("utf-8").split("\r\n")
             StatusCode = int(IncomingMetaData[0].split(" ")[1])
 
             if StatusCode not in (200, 206, 301, 302, 307, 308, 101) or StatusCode == 204: # 200 = OK, 206 = Partial content, 204 = OK but no content, 3XX redirects, 101 wesocket
+                closeDownload(OutFile, ProgressBar)
                 return StatusCode, {}, ""
 
             IncomingDataHeaderArray = IncomingMetaData[1:]
@@ -397,73 +409,45 @@ class HTTP:
 
             # Redirects 3XX, websocket 1XX or HEAD requests
             if StatusCode in (301, 302, 307, 308, 101) or Method == "HEAD":
+                closeDownload(OutFile, ProgressBar)
                 return StatusCode, IncomingDataHeader, ""
 
-            try:
-                # Decompress flags
-                isGzip = IncomingDataHeader.get("content-encoding", "") == "gzip"
-                isDeflate = IncomingDataHeader.get("content-encoding", "") == "deflate"
+            # Decompress flags
+            isGzip = IncomingDataHeader.get("content-encoding", "") == "gzip"
+            isDeflate = IncomingDataHeader.get("content-encoding", "") == "deflate"
 
-                # Recv frame
-                PayloadLenghtTotal = int(IncomingDataHeader["content-length"])
+            # Recv payload
+            try:
+                if IncomingDataHeader.get('transfer-encoding', "") == "chunked":
+                    PayloadTotal, PayloadTotalLength, StatusCodeSocket = self.getPayloadByChunks(PayloadTotal, PayloadTotalLength, IncomingData[1], ConnectionId, TimeoutRecv, DownloadName, OutFile, ProgressBar, ProgressBarTotal)
+                else:
+                    PayloadTotal, PayloadTotalLength, StatusCodeSocket = self.getPayloadByFrames(PayloadTotal, PayloadTotalLength, IncomingData[1], ConnectionId, TimeoutRecv, int(IncomingDataHeader["content-length"]), DownloadName, OutFile, ProgressBar, ProgressBarTotal)
+
+                del IncomingData
+
+                if StatusCodeSocket:
+                    closeDownload(OutFile, ProgressBar)
+                    return 601, {}, ""
+
+                # request additional data
+                if StatusCode == 206: # partial content
+                    xbmc.log(f"EMBY.emby.http: Partial content {ConnectionId} closed", 1) # LOGINFO
+
+                    if Method == "GET":
+                        StatusCodeSocket, _ = self.socket_io(f"{Method} /{Handler}{ParamsString} HTTP/1.1\r\n{HeaderString}Range: bytes={PayloadTotalLength}-\r\nContent-Length: 0\r\n\r\n".encode("utf-8"), ConnectionId, TimeoutSend)
+                    else:
+                        StatusCodeSocket, _ = self.socket_io(f"{Method} /{Handler} HTTP/1.1\r\n{HeaderString}Content-Length: {len(ParamsString)}\r\n\r\n{ParamsString}".encode("utf-8"), ConnectionId, TimeoutSend)
+
+                    if StatusCodeSocket:
+                        closeDownload(OutFile, ProgressBar)
+                        return 601, {}, ""
+                else:
+                    break
             except Exception as error: # Can happen on Emby server hard reboot
                 xbmc.log(f"EMBY.emby.http: Header error {ConnectionId}: Undefined error {error}", 3) # LOGERROR
                 return 612, {}, ""
 
-            # Recv frame
-            PayloadTotalPosition += PayloadLenghtTotal
-            Payload = IncomingData[1]
-            del IncomingData
-            PayloadLenght = len(Payload)
-
-            if DownloadPath:
-                ProgressBar = xbmcgui.DialogProgressBG()
-                ProgressBar.create("Download", DownloadName)
-                ProgressBarTotal = PayloadLenghtTotal / 100
-                OutFile = open(DownloadPath, 'wb')
-
-            while PayloadLenght < PayloadLenghtTotal:
-                self.wait_for_main(ConnectionId)
-                StatusCodeSocket, PayloadRecv = self.socket_io("", ConnectionId, TimeoutRecv)
-
-                if StatusCodeSocket:
-                    if DownloadPath:
-                        OutFile.close()
-                        ProgressBar.close()
-                        del ProgressBar
-
-                    return StatusCodeSocket, {}, ""
-
-                Payload += PayloadRecv
-                PayloadLenght += len(PayloadRecv)
-                del PayloadRecv
-
-                if DownloadPath:
-                    OutFile.write(Payload)
-                    Payload = b""
-                    ProgressBar.update(int(PayloadLenght / ProgressBarTotal), "Download", DownloadName)
-
-            if DownloadPath:
-                OutFile.close()
-                ProgressBar.close()
-                del ProgressBar
-
-            PayloadTotal += Payload
-            del Payload
-
-            # request additional data
-            if StatusCode == 206: # partial content
-                xbmc.log(f"EMBY.emby.http: Partial content {ConnectionId} closed", 1) # LOGINFO
-
-                if Method == "GET":
-                    StatusCodeSocket, _ = self.socket_io(f"{Method} /{Handler}{ParamsString} HTTP/1.1\r\n{HeaderString}Range: bytes={PayloadTotalPosition}-\r\nContent-Length: 0\r\n\r\n".encode("utf-8"), ConnectionId, TimeoutSend)
-                else:
-                    StatusCodeSocket, _ = self.socket_io(f"{Method} /{Handler} HTTP/1.1\r\n{HeaderString}Content-Length: {len(ParamsString)}\r\n\r\n{ParamsString}".encode("utf-8"), ConnectionId, TimeoutSend)
-
-                if StatusCodeSocket:
-                    return 601, {}, ""
-            else:
-                break
+        closeDownload(OutFile, ProgressBar)
 
         # Decompress data
         if isDeflate:
@@ -472,12 +456,6 @@ class HTTP:
             PayloadTotal = zlib.decompress(PayloadTotal, zlib.MAX_WBITS|32)
 
         if Binary:
-            if DownloadPath and PayloadTotal:
-                with open(DownloadPath, 'wb') as OutFile:
-                    OutFile.write(PayloadTotal)
-
-                PayloadTotal = b""
-
             return StatusCode, IncomingDataHeader, PayloadTotal
 
         try:
@@ -514,7 +492,7 @@ class HTTP:
                     continue
 
                 self.update_header("DOWNLOAD")
-                StatusCode, _, _ = self.socket_request("GET", f"Items/{Command[0]}/Download", {}, True, 10, 300, "DOWNLOAD", Command[3], Command[5])
+                StatusCode, _, _ = self.socket_request("GET", f"Items/{Command[0]}/Download", {}, True, 10, 300, "DOWNLOAD", Command[3], Command[4], Command[5])
 
                 if StatusCode == 601: # quit
                     xbmc.log(f"EMBY.emby.emby: THREAD: ---<[ Download {self.EmbyServer.ServerData['ServerId']} ] shutdown 2", 0) # LOGDEBUG
@@ -624,7 +602,7 @@ class HTTP:
                 else:
                     self.update_header(ConnectionId)
 
-                StatusCode, Header, Payload = self.socket_request(Method, Handler, Params, Binary, 10, 300, ConnectionId, "", "")
+                StatusCode, Header, Payload = self.socket_request(Method, Handler, Params, Binary, 10, 300, ConnectionId, "", 0, "")
 
                 # Redirects
                 if StatusCode in (301, 302, 307, 308):
@@ -691,7 +669,7 @@ class HTTP:
             uid = uuid.uuid4()
             EncodingKey = base64.b64encode(uid.bytes).strip().decode('utf-8')
             self.Connection["WEBSOCKET"]["RequestHeader"].update({"Upgrade": "websocket", "Connection": "Upgrade", "Sec-WebSocket-Key": EncodingKey, "Sec-WebSocket-Version": "13"})
-            StatusCode, Header, _ = self.socket_request("GET", f"embywebsocket?api_key={self.EmbyServer.ServerData['AccessToken']}&deviceId={self.EmbyServer.ServerData['DeviceId']}", {}, True, 10, 30, "WEBSOCKET", "", "")
+            StatusCode, Header, _ = self.socket_request("GET", f"embywebsocket?api_key={self.EmbyServer.ServerData['AccessToken']}&deviceId={self.EmbyServer.ServerData['DeviceId']}", {}, True, 10, 30, "WEBSOCKET", "", 0, "")
 
             if StatusCode == 601: # quit
                 xbmc.log(f"EMBY.emby.emby: THREAD: ---<[ Websocket {self.EmbyServer.ServerData['ServerId']} quit ]", 0) # LOGDEBUG
@@ -898,7 +876,7 @@ class HTTP:
                         continue
 
                     self.update_header("ASYNC")
-                    StatusCode, _, _ = self.socket_request(CommandSorted[0], CommandSorted[1], CommandSorted[2], False, 1, 1, "ASYNC", "", "")
+                    StatusCode, _, _ = self.socket_request(CommandSorted[0], CommandSorted[1], CommandSorted[2], False, 1, 1, "ASYNC", "", 0, "")
 
                     if StatusCode == 601: # quit
                         self.Queues["ASYNC"].clear()
@@ -983,6 +961,72 @@ class HTTP:
 
             for Intro in ReceivedIntros[Index + 1:]:
                 start_new_thread(self.verify_intros, (Intro,))
+
+    def getPayloadByFrames(self, PayloadTotal, PayloadTotalLength, PayloadRecv, ConnectionId, TimeoutRecv, PayloadFrameLenght, DownloadName, OutFile, ProgressBar, ProgressBarTotal):
+        PayloadTotalLength, PayloadTotal = processData(PayloadTotal, PayloadTotalLength, PayloadRecv, OutFile, ProgressBar, ProgressBarTotal, DownloadName)
+
+        while PayloadTotalLength < PayloadFrameLenght:
+            self.wait_for_main(ConnectionId)
+            StatusCodeSocket, PayloadRecv = self.socket_io("", ConnectionId, TimeoutRecv)
+
+            if StatusCodeSocket:
+                return b"", 0, StatusCodeSocket
+
+            PayloadTotalLength, PayloadTotal = processData(PayloadTotal, PayloadTotalLength, PayloadRecv, OutFile, ProgressBar, ProgressBarTotal, DownloadName)
+
+        return PayloadTotal, PayloadTotalLength, 0
+
+    def getPayloadByChunks(self, PayloadTotal, PayloadTotalLength, PayloadRecv, ConnectionId, TimeoutRecv, DownloadName, OutFile, ProgressBar, ProgressBarTotal):
+        PayloadChunkBuffer = PayloadRecv
+        ChunkPosition = 0
+        Complete = False
+
+        while not Complete:
+            if PayloadChunkBuffer.endswith(b"\r\n\r\n"):  # last frame: PayloadRecv b'a\r\n\x03\x00\x1fG\xfe\xf6n\xad3\x00\r\n0\r\n\r\n'
+                xbmc.log("EMBY.emby.http: Chunks: Last frame received", 0) # LOGDEBUG
+                PayloadChunkBuffer = PayloadChunkBuffer[:-4]
+                Complete = True
+            elif not PayloadChunkBuffer.endswith(b"\r\n"):
+                xbmc.log("EMBY.emby.http: Chunks: Load additional data", 0) # LOGDEBUG
+                self.wait_for_main(ConnectionId)
+                StatusCodeSocket, PayloadRecv = self.socket_io("", ConnectionId, TimeoutRecv)
+
+                if StatusCodeSocket:
+                    return b"", 0, StatusCodeSocket
+
+                PayloadChunkBuffer += PayloadRecv
+                continue
+
+            ChunkedData = PayloadChunkBuffer.split(b"\r\n", 1)
+            ChunkDataLen = int(ChunkedData[0], 16)
+
+            if not ChunkDataLen:
+                xbmc.log("EMBY.emby.http: Chunks: Data complete", 0) # LOGDEBUG
+                return PayloadTotal, PayloadTotalLength, 0
+
+            Chunk = ChunkedData[1][:ChunkDataLen]
+            PayloadTotalLength, PayloadTotal = processData(PayloadTotal, PayloadTotalLength, Chunk, OutFile, ProgressBar, ProgressBarTotal, DownloadName)
+            ChunkPosition = ChunkDataLen + len(ChunkedData[0]) + 4
+            PayloadChunkBuffer = PayloadChunkBuffer[ChunkPosition:]
+
+        return PayloadTotal, PayloadTotalLength, 0
+
+def processData(PayloadTotal, PayloadTotalLength, Data, OutFile, ProgressBar, ProgressBarTotal, DownloadName):
+    PayloadTotalLength += len(Data)
+
+    if OutFile:
+        OutFile.write(Data)
+        ProgressBar.update(int(PayloadTotalLength / ProgressBarTotal), "Download", DownloadName)
+    else:
+        PayloadTotal += Data
+
+    return PayloadTotalLength, PayloadTotal
+
+def closeDownload(OutFile, ProgressBar):
+    if OutFile:
+        OutFile.close()
+        ProgressBar.close()
+        del ProgressBar
 
 # Return empty data
 def noData(StatusCode, Header, Binary):
