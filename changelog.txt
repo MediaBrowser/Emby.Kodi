@@ -1,3 +1,9 @@
+10.0.42
+=============
+fix player crash for edge cases
+
+
+
 10.0.41
 =============
 fix http issue when chunked data are received
