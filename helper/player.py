@@ -349,9 +349,14 @@ def PlayerCommands():
                 if not playerops.RemoteMode:
                     utils.ItemSkipUpdate += [f"KODI{PlayingItem[0]['ItemId']}", str(PlayingItem[0]['ItemId'])] # triple add -> for Emby (2 times incoming msg -> userdata changed) and once for Kodi database incoming msg -> VideoLibrary_OnUpdate; "KODI" prefix makes sure, VideoLibrary_OnUpdate is skipped even if more userdata requests from Emby server were received
 
-                xbmc.log(f"EMBY.hooks.player: PlayingItem: {PlayingItem}", 1) # LOGINFO
+                xbmc.log(f"EMBY.hooks.player: PlayingItem: {PlayingItem}", 0) # LOGDEBUG
                 globals()["PlayingItem"][0].update({'RunTimeTicks': RunTimeTicks, 'PositionTicks': PositionTicks, "NowPlayingQueue": NowPlayingQueue[playerops.PlayerId], "PlaylistLength": len(NowPlayingQueue[playerops.PlayerId]), "PlaylistIndex": PlaylistPosition})
-                PlayingItem[4].API.session_playing(PlayingItem[0])
+
+                if PlayingItem[4]:
+                    PlayingItem[4].API.session_playing(PlayingItem[0])
+                else:
+                    xbmc.log(f"EMBY.hooks.player: avstart error: {PlayingItem}", 3) # LOGERROR
+
                 xbmc.log(f"EMBY.hooks.player: ItemSkipUpdate: {utils.ItemSkipUpdate}", 0) # LOGDEBUG
                 playerops.AVStarted = True
 
@@ -365,7 +370,11 @@ def PlayerCommands():
 
             PlaylistPosition = playerops.GetPlayerPosition(playerops.PlayerId)
             globals()["PlayingItem"][0].update({"NowPlayingQueue": NowPlayingQueue[playerops.PlayerId], "PlaylistLength": len(NowPlayingQueue[playerops.PlayerId]), "PlaylistIndex": PlaylistPosition})
-            PlayingItem[4].API.session_progress(PlayingItem[0], "PlaylistItemAdd")
+
+            if PlayingItem[4]:
+                PlayingItem[4].API.session_progress(PlayingItem[0], "PlaylistItemAdd")
+            else:
+                xbmc.log(f"EMBY.hooks.player: playlistupdate error: {PlayingItem}", 3) # LOGERROR
         elif Commands[0] == "play":
             xbmc.log("EMBY.hooks.player: [ onPlay ]", 1) # LOGINFO
             EventData = json.loads(Commands[1])
@@ -394,10 +403,12 @@ def PlayerCommands():
 
             globals()["PlayingItem"][0].update({'PositionTicks': PositionTicks, 'IsPaused': True})
 
-            if PlayingItem[4] and PlayingItem[4].EmbySession:
-                playerops.RemoteCommand(PlayingItem[4].ServerData['ServerId'], PlayingItem[4].EmbySession[0]['Id'], "pause")
+            if PlayingItem[4]:
+                if PlayingItem[4].EmbySession:
+                    playerops.RemoteCommand(PlayingItem[4].ServerData['ServerId'], PlayingItem[4].EmbySession[0]['Id'], "pause")
 
-            PlayingItem[4].API.session_progress(PlayingItem[0], "Pause")
+                PlayingItem[4].API.session_progress(PlayingItem[0], "Pause")
+
             xbmc.log("EMBY.hooks.player: -->[ paused ]", 0) # LOGDEBUG
         elif Commands[0] == "resume":
             xbmc.log("EMBY.hooks.player: [ onPlayBackResumed ]", 1) # LOGINFO
@@ -406,11 +417,13 @@ def PlayerCommands():
             if not PlayingItem[0]:
                 continue
 
-            if PlayingItem[4] and PlayingItem[4].EmbySession:
-                playerops.RemoteCommand(PlayingItem[4].ServerData['ServerId'], PlayingItem[4].EmbySession[0]['Id'], "unpause")
+            if PlayingItem[4]:
+                if PlayingItem[4].EmbySession:
+                    playerops.RemoteCommand(PlayingItem[4].ServerData['ServerId'], PlayingItem[4].EmbySession[0]['Id'], "unpause")
 
-            globals()["PlayingItem"][0]['IsPaused'] = False
-            PlayingItem[4].API.session_progress(PlayingItem[0], "Unpause")
+                globals()["PlayingItem"][0]['IsPaused'] = False
+                PlayingItem[4].API.session_progress(PlayingItem[0], "Unpause")
+
             xbmc.log("EMBY.hooks.player: --<[ paused ]", 0) # LOGDEBUG
         elif Commands[0] == "stop":
             xbmc.log("EMBY.hooks.player: [ onPlayBackStopped ]", 1) # LOGINFO
@@ -446,7 +459,9 @@ def PlayerCommands():
                 continue
 
             globals()["PlayingItem"][0].update({'VolumeLevel': Volume, 'IsMuted': Muted})
-            PlayingItem[4].API.session_progress(PlayingItem[0], "VolumeChange")
+
+            if PlayingItem[4]:
+                PlayingItem[4].API.session_progress(PlayingItem[0], "VolumeChange")
 
     xbmc.log("EMBY.hooks.player: THREAD: ---<[ player commands ]", 0) # LOGDEBUG
 
@@ -573,7 +588,7 @@ def PositionTracker():
                 else:
                     close_SkipCreditsDialog()
 
-            if LoopCounter % 10 == 0: # modulo 10
+            if LoopCounter % 10 == 0 and PlayingItem[4]: # modulo 10
                 globals()["PlayingItem"][0]['PositionTicks'] = Position
                 xbmc.log(f"EMBY.hooks.player: PositionTracker: Report progress {PlayingItem[0]['PositionTicks']}", 0) # LOGDEBUG
                 PlayingItem[4].API.session_progress(PlayingItem[0], "TimeUpdate")
@@ -586,10 +601,14 @@ def PositionTracker():
 
 def jump_Intro():
     xbmc.log(f"EMBY.hooks.player: Skip intro jump {PlayingItem[2]}", 1) # LOGINFO
-    playerops.Seek(PlayingItem[2])
-    globals()["PlayingItem"][0]['PositionTicks'] = PlayingItem[2]
-    globals()["SkipIntroJumpDone"] = True
-    PlayingItem[4].API.session_progress(PlayingItem[0], "TimeUpdate")
+
+    if PlayingItem[4]:
+        playerops.Seek(PlayingItem[2])
+        globals()["PlayingItem"][0]['PositionTicks'] = PlayingItem[2]
+        globals()["SkipIntroJumpDone"] = True
+        PlayingItem[4].API.session_progress(PlayingItem[0], "TimeUpdate")
+    else:
+        xbmc.log(f"EMBY.hooks.player: Skip intro jump error: {PlayingItem}", 3) # LOGERROR
 
 def jump_Credits():
     if PlayingItem[0].get('RunTimeTicks', 0):
