@@ -1,3 +1,9 @@
+10.0.43
+=============
+fix recently played synced nodes
+
+
+
 10.0.42
 =============
 fix player crash for edge cases
