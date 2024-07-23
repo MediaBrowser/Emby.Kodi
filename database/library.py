@@ -634,10 +634,10 @@ class Library:
         self.RunJobs()
 
     def ItemOps(self, ProgressValue, ItemIndex, Item, SQLs, WorkerName, KodiDBs, ProgressBar, StartSync=False):
+        set_recording_type(Item)
+
         if not self.ContentObject:
             self.load_libraryObject(Item['Type'], SQLs)
-
-        set_recording_type(Item)
 
         if WorkerName in ("worker_library", "worker_update"):
             if Item['Type'] in ("Movie", "Video", "MusicVideo", "Series"):
