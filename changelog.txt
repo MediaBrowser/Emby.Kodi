@@ -1,3 +1,9 @@
+10.0.44
+=============
+fix init sync for records when recording in progress
+
+
+
 10.0.43
 =============
 fix recently played synced nodes
