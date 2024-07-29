@@ -1,45 +1,53 @@
 from _thread import allocate_lock
 import xbmc
 
+
 class Queue:
     def __init__(self):
         self.Lock = allocate_lock()
         self.QueuedItems = ()
         self.Lock.acquire()
-        self.Busy = False
+        self.Busy = allocate_lock()
 
     def get(self):
-        with self.Lock:
-            self.Busy = True
-            ReturnData = self.QueuedItems[0]
-            self.QueuedItems = self.QueuedItems[1:]
+        ReturnData = ()
+
+        try:
+            with self.Lock:
+                with self.Busy:
+                    if self.QueuedItems:
+                        ReturnData = self.QueuedItems[0]
+                        self.QueuedItems = self.QueuedItems[1:]
+        except Exception as Error:
+            xbmc.log(f"EMBY.helper.queue: get: {Error}", 2) # LOGWARNING
 
         if not self.QueuedItems:
             self.LockQueue()
 
-        self.Busy = False
         return ReturnData
 
     def getall(self):
+        ReturnData = ()
+
         try:
             with self.Lock:
-                self.Busy = True
-                ReturnData = self.QueuedItems
-                self.QueuedItems = ()
+                with self.Busy:
+                    ReturnData = self.QueuedItems
+                    self.QueuedItems = ()
         except Exception as Error:
             xbmc.log(f"EMBY.helper.queue: getall: {Error}", 2) # LOGWARNING
 
         self.LockQueue()
-        self.Busy = False
         return ReturnData
 
     def put(self, Data):
-        if isinstance(Data, list):
-            self.QueuedItems += tuple(Data)
-        elif isinstance(Data, tuple):
-            self.QueuedItems += Data
-        else:
-            self.QueuedItems += (Data,)
+        with self.Busy:
+            if isinstance(Data, list):
+                self.QueuedItems += tuple(Data)
+            elif isinstance(Data, tuple):
+                self.QueuedItems += Data
+            else:
+                self.QueuedItems += (Data,)
 
         self.UnLockQueue()
 
@@ -48,17 +56,13 @@ class Queue:
             self.Lock.acquire()
 
     def UnLockQueue(self):
-        while self.Busy:
-            xbmc.sleep(1)
-
         if self.Lock.locked():
             self.Lock.release()
 
     def clear(self):
-        self.Busy = True
-        self.LockQueue()
-        self.QueuedItems = ()
-        self.Busy = False
+        with self.Busy:
+            self.LockQueue()
+            self.QueuedItems = ()
 
     def isEmpty(self):
         return not bool(self.QueuedItems)

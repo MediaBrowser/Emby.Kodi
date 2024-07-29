@@ -16,6 +16,17 @@ class MusicDatabase:
         self.cursor.execute("CREATE INDEX IF NOT EXISTS idx_song_dateadded on song (dateAdded)")
         self.cursor.execute("CREATE INDEX IF NOT EXISTS idx_song_comment_strGenres on song (comment, strGenres)")
         self.cursor.execute("CREATE INDEX IF NOT EXISTS idx_artist_strDisambiguation on artist (strDisambiguation)")
+        self.cursor.execute("CREATE INDEX IF NOT EXISTS idx_album_strReleaseType on album (strReleaseType)")
+        self.cursor.execute("CREATE INDEX IF NOT EXISTS idx_song_idAlbum_lastplayed_iTimesPlayed on song (idAlbum, lastplayed, iTimesPlayed)")
+
+    def delete_Index(self):
+        self.cursor.execute("DROP INDEX IF EXISTS idx_album_strType")
+        self.cursor.execute("DROP INDEX IF EXISTS idx_album_dateadded")
+        self.cursor.execute("DROP INDEX IF EXISTS idx_song_dateadded")
+        self.cursor.execute("DROP INDEX IF EXISTS idx_song_comment_strGenres")
+        self.cursor.execute("DROP INDEX IF EXISTS idx_artist_strDisambiguation")
+        self.cursor.execute("DROP INDEX IF EXISTS idx_album_strReleaseType")
+        self.cursor.execute("DROP INDEX IF EXISTS idx_song_idAlbum_lastplayed_iTimesPlayed")
 
     # Make sure rescan and kodi db set
     def disable_rescan(self, Timestamp):
@@ -241,7 +252,7 @@ class MusicDatabase:
         Genres = sorted(Genres, reverse=False, key=str.lower)
         return Genres
 
-    def get_Genre_Name(self, GenreId):
+    def get_Genre_Name_hasSongs(self, GenreId):
         Songs = False
         self.cursor.execute("SELECT strGenre FROM genre WHERE idGenre = ?", (GenreId,))
         Data = self.cursor.fetchone()
@@ -366,7 +377,7 @@ class MusicDatabase:
 
     # Favorite for content
     def get_favoriteData(self, KodiId, ContentType):
-        self.cursor.execute("SELECT idPath, strTitle, strFilename FROM song WHERE idSong = ?", (KodiId,))
+        self.cursor.execute("SELECT idPath, strTitle, strFilename, idAlbum FROM song WHERE idSong = ?", (KodiId,))
         ItemData = self.cursor.fetchone()
         Thumbnail = ""
 
@@ -375,7 +386,7 @@ class MusicDatabase:
             DataPath = self.cursor.fetchone()
 
             if DataPath:
-                self.cursor.execute("SELECT url FROM art WHERE media_id = ? AND media_type = ? AND type = ?", (KodiId, ContentType, "thumb"))
+                self.cursor.execute("SELECT url FROM art WHERE media_id = ? AND media_type = ? AND type = ?", (ItemData[3], "album", "thumb"))
                 ArtworkData = self.cursor.fetchone()
 
                 if ArtworkData:
@@ -414,25 +425,25 @@ def set_metadata_song(Artist, Title, BitRate, SampleRate, Channels, PlayCount):
         PlayCount = 0
 
     if not BitRate:
-        xbmc.log(f"EMBY.database.music_db: No bitrate info (add_song): {Artist} / {Title}", 2) # LOGWARNING
+        xbmc.log(f"EMBY.database.music_db: No bitrate info (add_song): {Artist} / {Title}", 0) # LOGDEBUG
         BitRate = 0
 
     if not SampleRate:
-        xbmc.log(f"EMBY.database.music_db: No bitrate info (add_song): {Artist} / {Title}", 2) # LOGWARNING
+        xbmc.log(f"EMBY.database.music_db: No bitrate info (add_song): {Artist} / {Title}", 0) # LOGDEBUG
         SampleRate = 0
 
     if not Channels:
-        xbmc.log(f"EMBY.database.music_db: No bitrate info (add_song): {Artist} / {Title}", 2) # LOGWARNING
+        xbmc.log(f"EMBY.database.music_db: No bitrate info (add_song): {Artist} / {Title}", 0) # LOGDEBUG
         Channels = 0
 
     return BitRate, SampleRate, Channels, PlayCount
 
 def errorhandler_MusicBrainzID(Title, MusicBrainzID, error):
     error = str(error)
-    xbmc.log(f"EMBY.database.music_db: {error}", 3) # LOGERROR
+    xbmc.log(f"EMBY.database.music_db: {error}", 0) # LOGDEBUG
 
     if "MusicBrainz" in error:  # Duplicate musicbrainz
-        xbmc.log(f"EMBY.database.music_db: Duplicate MusicBrainzID detected: {Title} / {MusicBrainzID}", 2) # LOGWARNING
+        xbmc.log(f"EMBY.database.music_db: Duplicate MusicBrainzID detected: {Title} / {MusicBrainzID}", 0) # LOGDEBUG
         MusicBrainzID += " "
         return MusicBrainzID
 

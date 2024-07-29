@@ -1557,15 +1557,15 @@ msgstr "电视节目"
 
 msgctxt "#33350"
 msgid "Recently played"
-msgstr "最近玩过"
+msgstr "最近播放"
 
 msgctxt "#33351"
 msgid "Recently played Episode"
-msgstr "最近播放的情节"
+msgstr "最近播放的剧集"
 
 msgctxt "#33352"
 msgid "Directors"
-msgstr "董事"
+msgstr "导演"
 
 msgctxt "#33353"
 msgid "TV Show tags"
@@ -1709,7 +1709,7 @@ msgstr "最近添加的专辑"
 
 msgctxt "#33389"
 msgid "Recently added audiobooks"
-msgstr "最近添加了有声读物"
+msgstr "最近添加的有声读物"
 
 msgctxt "#33390"
 msgid "Recently added songs"
@@ -1805,7 +1805,7 @@ msgstr "Emby 服务器忙：正在同步"
 
 msgctxt "#33415"
 msgid "Delete Kodi"
-msgstr "删除科迪"
+msgstr "删除 Kodi"
 
 msgctxt "#33416"
 msgid "Database"
@@ -1813,11 +1813,11 @@ msgstr "数据库"
 
 msgctxt "#33417"
 msgid "Skip intro"
-msgstr "跳过介绍"
+msgstr "跳过片头"
 
 msgctxt "#33418"
 msgid "A message box will ask for jump to intro end position"
-msgstr "消息框会要求跳转到介绍结束位置"
+msgstr "消息框会要求跳转到片头结束位置"
 
 msgctxt "#33419"
 msgid "Markers"
@@ -1825,19 +1825,19 @@ msgstr "标记"
 
 msgctxt "#33420"
 msgid "Skip credits"
-msgstr "跳过学分"
+msgstr "跳过片尾"
 
 msgctxt "#33421"
 msgid "A message box will ask for skip credits"
-msgstr "一个消息框会要求跳过学分"
+msgstr "消息框会要求跳过片尾"
 
 msgctxt "#33422"
 msgid "Ask skip intro"
-msgstr "询问跳过介绍"
+msgstr "询问跳过片头"
 
 msgctxt "#33423"
 msgid "Ask skip credits"
-msgstr "询问跳过学分"
+msgstr "询问跳过片尾"
 
 msgctxt "#33424"
 msgid "Message box automatic close after X seconds"
@@ -1845,7 +1845,7 @@ msgstr "消息框在X秒后自动关闭"
 
 msgctxt "#33425"
 msgid "Skip intro, skip credits, cinema mode and delete option message boxes will automatically close after X seconds. 0 means, automatic close is disabled"
-msgstr "跳过介绍、跳过演职员表、电影模式和删除选项消息框将在 X 秒后自动关闭。 "
+msgstr "跳过片头、跳过片尾、电影模式和删除选项消息框将在 X 秒后自动关闭。 "
 
 msgctxt "#33426"
 msgid "Composers"
@@ -1861,7 +1861,7 @@ msgstr "SSL 错误"
 
 msgctxt "#33429"
 msgid "Artwork caching stopped: running low on space"
-msgstr "艺术品缓存停止：空间不足"
+msgstr "艺术图片缓存停止：空间不足"
 
 msgctxt "#33430"
 msgid "Websocket connection offline"
@@ -1889,7 +1889,7 @@ msgstr "按流派分类的歌曲"
 
 msgctxt "#33436"
 msgid "Vacuum databases"
-msgstr "真空数据库"
+msgstr "清空数据库"
 
 msgctxt "#33437"
 msgid "Assign TVShow posters to episodes"
@@ -1901,15 +1901,15 @@ msgstr "TVShow Kodi 海报（Emby TVShow 主图像）将用作剧集 Kodi 海报
 
 msgctxt "#33439"
 msgid "Use fanart images for next up episodes"
-msgstr "为下一集使用同人画图"
+msgstr "为下一集使用同人图片"
 
 msgctxt "#33440"
 msgid "Overwrites (Kodi) thumbs with (Kodi) fanarts for next up episodes node"
-msgstr "用（Kodi）粉丝覆盖（Kodi）拇指以用于下一集节点"
+msgstr "用（Kodi）同人图片覆盖（Kodi）缩略图以用于下一集节点"
 
 msgctxt "#33441"
 msgid "Use alternative skip intro (message) layout"
-msgstr "使用替代跳过介绍（消息）布局"
+msgstr "使用替代跳过片头（消息）布局"
 
 msgctxt "#33442"
 msgid "Embuary skin design"
@@ -2004,7 +2004,7 @@ msgid "MJPEG"
 msgstr ""
 
 msgctxt "#33464"
-msgid "MSMPEG4v3"
+msgid "MSMPEG4V3"
 msgstr ""
 
 msgctxt "#33465"
@@ -2049,7 +2049,7 @@ msgstr ""
 
 msgctxt "#33475"
 msgid "PCM MULAW"
-msgstr "PCM穆拉夫"
+msgstr ""
 
 msgctxt "#33476"
 msgid "PCM S24LE"
@@ -2057,7 +2057,7 @@ msgstr ""
 
 msgctxt "#33477"
 msgid "VORBIS"
-msgstr "沃尔比斯"
+msgstr ""
 
 msgctxt "#33478"
 msgid "WMAV2"
@@ -2089,7 +2089,7 @@ msgstr "选择字幕"
 
 msgctxt "#33485"
 msgid "EMBY: Specials"
-msgstr "EMBY: 特价"
+msgstr "EMBY: 特辑"
 
 msgctxt "#33486"
 msgid "Use path substitution"
@@ -2101,7 +2101,7 @@ msgstr "路径替换支持插件模式下的章节图像。"
 
 msgctxt "#33488"
 msgid "Assign unique actors for each emby library"
-msgstr "为每个emby库分配独特的演员"
+msgstr "为每个emby库分配特定的演员"
 
 msgctxt "#33489"
 msgid "Episodes"
@@ -2141,7 +2141,7 @@ msgstr "添加定时器"
 
 msgctxt "#33498"
 msgid "Force clients"
-msgstr "强制客户"
+msgstr "强制客户端"
 
 msgctxt "#33499"
 msgid "Clients not supporting watch together natively, will be force to participate"
@@ -2169,7 +2169,7 @@ msgstr "等待参与"
 
 msgctxt "#33505"
 msgid "Wait for participates in seconds"
-msgstr "等待秒参与"
+msgstr "等待参与的秒数"
 
 msgctxt "#33506"
 msgid "Delay playback"
@@ -2241,7 +2241,7 @@ msgstr "启用"
 
 msgctxt "#33523"
 msgid "Primary"
-msgstr "小学"
+msgstr "主图"
 
 msgctxt "#33524"
 msgid "Art"
@@ -2253,7 +2253,7 @@ msgstr "横幅"
 
 msgctxt "#33526"
 msgid "Disc"
-msgstr "圆盘"
+msgstr "光盘"
 
 msgctxt "#33527"
 msgid "Logo"
@@ -2261,7 +2261,7 @@ msgstr "标志"
 
 msgctxt "#33528"
 msgid "Thumb"
-msgstr "拇指"
+msgstr "缩略图"
 
 msgctxt "#33529"
 msgid "Backdrop"
@@ -2269,7 +2269,7 @@ msgstr "背景"
 
 msgctxt "#33530"
 msgid "Chapter"
-msgstr "第34章"
+msgstr "章节"
 
 msgctxt "#33531"
 msgid "Compression"
@@ -2281,7 +2281,7 @@ msgstr "最大分辨率"
 
 msgctxt "#33533"
 msgid "Limits the image resolution by a factor. Base is screen resolution. e.g. 50% of 1920x1080"
-msgstr "将图像分辨率限制一个因子。"
+msgstr "通过一个因子限制图像分辨率。"
 
 msgctxt "#33534"
 msgid "Select transencode audiostream"
@@ -2461,136 +2461,416 @@ msgstr "Emby服务器离线"
 
 msgctxt "#33576"
 msgid "Favorite Seasons"
-msgstr "最喜欢的季节"
+msgstr "最喜欢的季"
 
 msgctxt "#33577"
 msgid "Paging"
-msgstr ""
+msgstr "分页"
 
 msgctxt "#33578"
 msgid "Musicartist"
-msgstr ""
+msgstr "音乐艺术家"
 
 msgctxt "#33579"
 msgid "Musicalbum"
-msgstr ""
+msgstr "音乐专辑"
 
 msgctxt "#33580"
 msgid "Musicgenre"
-msgstr ""
+msgstr "音乐流派"
 
 msgctxt "#33581"
 msgid "Audio"
-msgstr ""
+msgstr "音频"
 
 msgctxt "#33582"
 msgid "Movie"
-msgstr ""
+msgstr "电影"
 
 msgctxt "#33583"
 msgid "Musicvideo"
-msgstr ""
+msgstr "音乐录影带"
 
 msgctxt "#33584"
 msgid "Series"
-msgstr ""
+msgstr "系列"
 
 msgctxt "#33585"
 msgid "Season"
-msgstr ""
+msgstr "季"
 
 msgctxt "#33586"
 msgid "Episode"
-msgstr ""
+msgstr "集"
 
 msgctxt "#33587"
 msgid "Video"
-msgstr ""
+msgstr "视频"
 
 msgctxt "#33588"
 msgid "Photoalbum"
-msgstr ""
+msgstr "相册"
 
 msgctxt "#33589"
 msgid "Genre"
-msgstr ""
+msgstr "流派"
 
 msgctxt "#33590"
 msgid "Photo"
-msgstr ""
+msgstr "照片"
 
 msgctxt "#33591"
 msgid "Playlist"
-msgstr ""
+msgstr "播放列表"
 
 msgctxt "#33592"
 msgid "Channels"
-msgstr ""
+msgstr "频道"
 
 msgctxt "#33593"
 msgid "LiveTV"
-msgstr ""
+msgstr "直播电视"
 
 msgctxt "#33594"
 msgid "Trailer"
-msgstr ""
+msgstr "预告片"
 
 msgctxt "#33595"
 msgid "Folder"
-msgstr ""
+msgstr "文件夹"
 
 msgctxt "#33596"
 msgid "Boxset"
-msgstr ""
+msgstr "盒装"
 
 msgctxt "#33597"
 msgid "Person"
-msgstr ""
+msgstr "人"
 
 msgctxt "#33598"
 msgid "Tag"
-msgstr ""
+msgstr "标签"
 
 msgctxt "#33599"
 msgid "Studio"
-msgstr ""
+msgstr "工作室"
 
 msgctxt "#33600"
 msgid "Multicontent"
-msgstr ""
+msgstr "多内容"
 
 msgctxt "#30614"
 msgid "Manage servers"
-msgstr ""
+msgstr "管理服务器"
 
 msgctxt "#33601"
 msgid "Remote playback"
-msgstr ""
+msgstr "远程回放"
 
 msgctxt "#33602"
 msgid "Download content"
-msgstr ""
+msgstr "下载内容"
 
 msgctxt "#33603"
 msgid "Context Menu"
-msgstr ""
+msgstr "上下文菜单"
 
 msgctxt "#33604"
-msgid "Favourite add/rempve"
-msgstr ""
+msgid "Favourite add/remove"
+msgstr "收藏夹添加/删除"
 
 msgctxt "#33605"
 msgid "Specials playback"
-msgstr ""
+msgstr "特价回放"
 
 msgctxt "#33606"
 msgid "Recording"
-msgstr ""
+msgstr "录音"
 
 msgctxt "#33607"
 msgid "Refresh item"
-msgstr ""
+msgstr "刷新项目"
 
 msgctxt "#33143"
 msgid "Delete item"
+msgstr "删除项目"
+
+msgctxt "#33608"
+msgid "Favorite videos"
+msgstr "最喜欢的视频"
+
+msgctxt "#33609"
+msgid "Favorite photos"
+msgstr "最喜欢的照片"
+
+msgctxt "#33610"
+msgid "Favorite musicvideos"
+msgstr "最喜欢的音乐视频"
+
+msgctxt "#33611"
+msgid "A-Z"
 msgstr ""
+
+msgctxt "#33612"
+msgid "Collections"
+msgstr "收藏"
+
+msgctxt "#33613"
+msgid "Recommendations"
+msgstr "建议"
+
+msgctxt "#33614"
+msgid "Favorite movies"
+msgstr "最喜欢的电影"
+
+msgctxt "#33615"
+msgid "Favorite boxsets"
+msgstr "最喜欢的合集"
+
+msgctxt "#33616"
+msgid "A-Z photoalbum"
+msgstr "A-Z相册"
+
+msgctxt "#33617"
+msgid "A-Z videos"
+msgstr "A-Z 视频"
+
+msgctxt "#33618"
+msgid "Recently Released Unwatched Movies"
+msgstr "最近上映的未观看的电影"
+
+msgctxt "#33619"
+msgid "Recently Released Movies"
+msgstr "最近上映的电影"
+
+msgctxt "#33620"
+msgid "A-Z musicvideos"
+msgstr "A-Z 音乐视频"
+
+msgctxt "#33621"
+msgid "A-Z movies"
+msgstr "A-Z 电影"
+
+msgctxt "#33622"
+msgid "A-Z series"
+msgstr "A-Z系列"
+
+msgctxt "#33623"
+msgid "Favorite songs"
+msgstr "最喜欢的歌曲"
+
+msgctxt "#33624"
+msgid "Favorite actors"
+msgstr "最喜欢的演员"
+
+msgctxt "#33625"
+msgid "Favorite audio"
+msgstr "最喜欢的音频"
+
+msgctxt "#33626"
+msgid "Search"
+msgstr "搜索"
+
+msgctxt "#33627"
+msgid "In progress (Mixed content)"
+msgstr "进行中（混合内容）"
+
+msgctxt "#33628"
+msgid "Continue watching (Mixed content)"
+msgstr "继续观看（混合内容）"
+
+msgctxt "#33629"
+msgid "Downloaded movies"
+msgstr "下载的电影"
+
+msgctxt "#33630"
+msgid "Downloaded episodes"
+msgstr "下载的剧集"
+
+msgctxt "#33631"
+msgid "Downloaded musicvideos"
+msgstr "下载的音乐视频"
+
+msgctxt "#33632"
+msgid "Movies"
+msgstr "电影"
+
+msgctxt "#33633"
+msgid "TVShows"
+msgstr "电视节目"
+
+msgctxt "#33634"
+msgid "Seasons"
+msgstr "季"
+
+msgctxt "#33638"
+msgid "Songs"
+msgstr "歌曲"
+
+msgctxt "#33639"
+msgid "Actors"
+msgstr "演员"
+
+msgctxt "#33640"
+msgid "Bookmarks"
+msgstr "书签"
+
+msgctxt "#33641"
+msgid "Download themes (YES) or link themes (NO)?"
+msgstr "下载主题（是）或链接主题（否）？"
+
+msgctxt "#33642"
+msgid "Select audio stream"
+msgstr "选择音频流"
+
+msgctxt "#33643"
+msgid "Select Backup"
+msgstr "选择备份"
+
+msgctxt "#33644"
+msgid "Changing artwork requires an artwork cache reset. Proceed?"
+msgstr "更改艺术品需要重置艺术品缓存。"
+
+msgctxt "#33645"
+msgid "Notifications"
+msgstr "通知"
+
+msgctxt "#33646"
+msgid "Message duration"
+msgstr "消息持续时间"
+
+msgctxt "#33647"
+msgid "Message duration in seconds"
+msgstr "消息持续时间（以秒为单位）"
+
+msgctxt "#33648"
+msgid "Server operations"
+msgstr "服务器操作"
+
+msgctxt "#33649"
+msgid "Connections"
+msgstr "连接"
+
+msgctxt "#33650"
+msgid "Delete item"
+msgstr "删除项目"
+
+msgctxt "#33651"
+msgid "Backup"
+msgstr "备份"
+
+msgctxt "#33652"
+msgid "EMBY: Remote play"
+msgstr "EMBY：远程播放"
+
+msgctxt "#33653"
+msgid "VC1"
+msgstr ""
+
+msgctxt "#33654"
+msgid "PRORES"
+msgstr ""
+
+msgctxt "#33655"
+msgid "MSMPEG4V2"
+msgstr ""
+
+msgctxt "#33656"
+msgid "AAC LATM"
+msgstr ""
+
+msgctxt "#33657"
+msgid "DTSHD HRA"
+msgstr ""
+
+msgctxt "#33658"
+msgid "DTSHD MA"
+msgstr ""
+
+msgctxt "#33659"
+msgid "PCM S16LE"
+msgstr ""
+
+msgctxt "#33660"
+msgid "TRUEHD"
+msgstr ""
+
+msgctxt "#33661"
+msgid "OPUS"
+msgstr ""
+
+msgctxt "#33662"
+msgid "Downloaded series"
+msgstr "下载系列"
+
+msgctxt "#33663"
+msgid "Set imdb as default rating provider"
+msgstr "将imdb设置为默认评级提供者"
+
+msgctxt "#33664"
+msgid "Assume Emby's community rating reflects imdb ratings"
+msgstr "假设 Emby 的社区评级反映了 IMDB 评级"
+
+msgctxt "#33665"
+msgid "Next Episodes (Mixed content)"
+msgstr "下一集（混合内容）"
+
+msgctxt "#33666"
+msgid "Continue last played (Mixed content)"
+msgstr "继续上次播放（混合内容）"
+
+msgctxt "#33667"
+msgid "Continue last played"
+msgstr "继续上次播放的内容"
+
+msgctxt "#33668"
+msgid "Go To Show"
+msgstr "去演出"
+
+msgctxt "#33669"
+msgid "EMBY: Go To"
+msgstr "EMBY：前往"
+
+msgctxt "#33670"
+msgid "Go To Show"
+msgstr "去演出"
+
+msgctxt "#33671"
+msgid "Go To Season"
+msgstr "去季节"
+
+msgctxt "#33672"
+msgid "Nodes reset finished"
+msgstr "节点重置完成"
+
+msgctxt "#33673"
+msgid "URI length limit"
+msgstr "URI长度限制"
+
+msgctxt "#33674"
+msgid "Higher limits are faster in some cases, but could trigger http 414 issues"
+msgstr "在某些情况下，较高的限制速度更快，但可能会触发 http 414 问题"
+
+msgctxt "#33675"
+msgid "EMBY: Settings"
+msgstr "EMBY：设置"
+
+msgctxt "#33676"
+msgid "Settings"
+msgstr "设置"
+
+msgctxt "#33677"
+msgid "Enable offline message"
+msgstr "启用离线消息"
+
+msgctxt "#33678"
+msgid "Invalid server address"
+msgstr "服务器地址无效"
+
+msgctxt "#33679"
+msgid "Invalid argument"
+msgstr "无效参数"
+
+msgctxt "#33680"
+msgid "Download path not found"
+msgstr "找不到下载路径"

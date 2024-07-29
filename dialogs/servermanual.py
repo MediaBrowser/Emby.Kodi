@@ -21,7 +21,7 @@ class ServerManual(xbmcgui.WindowXMLDialog):
         self.error_msg = None
         self.host_field = None
         self.port_field = None
-        self.connect_to_address = None
+        self.ManualAddress = ""
         xbmcgui.WindowXMLDialog.__init__(self, *args)
 
     def onInit(self):
@@ -45,13 +45,19 @@ class ServerManual(xbmcgui.WindowXMLDialog):
             # Sign in to emby connect
             self._disable_error()
             server = self.host_field.getText()
-            port = self.port_field.getText()
+            PortInput = self.port_field.getText()
 
             if not server:
                 # Display error
                 self._error(ERROR['Empty'], utils.Translate(30617))
                 xbmc.log("EMBY.dialogs.servermanual: Server cannot be null", 3) # LOGERROR
-            elif self._connect_to_server(server, port):
+            else:
+                Scheme, Hostname, Port, SubUrl = utils.get_url_info(server)
+
+                if PortInput:
+                    Port = PortInput
+
+                self.ManualAddress = f"{Scheme}://{Hostname}:{Port}{SubUrl}"
                 self.close()
         # Remind me later
         elif controlId == CANCEL:
@@ -71,16 +77,6 @@ class ServerManual(xbmcgui.WindowXMLDialog):
         control.setWidth(width)
         self.addControl(control)
         return control
-
-    def _connect_to_server(self, server, port):
-        server_address = f"{server}:{port}"
-        self._message(f"{utils.Translate(30610)} {server_address}...")
-
-        if not self.connect_to_address(server_address):  # Unavailable
-            self._message(utils.Translate(30609))
-            return False
-
-        return True
 
     def _message(self, message):
         self.error_msg.setLabel(message)

@@ -33,7 +33,7 @@ class MusicAlbum:
 
         if Item['AlbumArtist'].lower() in ("various artists", "various", "various items", "sountrack", "xvarious artistsx"):
             Compilation = 1
-            xbmc.log(f"EMBY.core.musicalbum: Compilation detected: {Item['Name']}", 1) # LOGINFO
+            xbmc.log(f"EMBY.core.musicalbum: Compilation detected: {Item['Name']}", 0) # LOGDEBUG
 
         if Item['KodiItemIds']:
             KodiItemIds = Item['KodiItemIds'].split(",")
@@ -47,7 +47,7 @@ class MusicAlbum:
 
         # Update all existing Kodi Albums
         for Index, LibraryId in enumerate(LibraryIds):
-            if int(Item['Id']) > 999999900: # Skip injected items updates
+            if Item['Name'] == "--NO INFO--": # Skip injected items updates
                 return False
 
             self.SQLs["music"].common_db.delete_artwork(KodiItemIds[Index], "album")
@@ -55,8 +55,8 @@ class MusicAlbum:
             self.SQLs["music"].update_album(KodiItemIds[Index], Item['Name'], AlbumType, Item['AlbumArtistsName'], Item['KodiProductionYear'], Item['KodiPremiereDate'], Item['MusicGenre'], Item['Overview'], Item['KodiArtwork']['thumb'], 0, Item['KodiLastScraped'], Item['KodiDateCreated'], Item['ProviderIds']['MusicBrainzAlbum'], Item['ProviderIds']['MusicBrainzReleaseGroup'], Compilation, Item['Studio'], Item['KodiRunTimeTicks'], Item['AlbumArtistsSortName'])
             common.set_MusicArtist_links(KodiItemIds[Index], self.SQLs, Item["AlbumArtists"], LibraryId, None)
             self.SQLs["music"].common_db.add_artwork(Item['KodiArtwork'], KodiItemIds[Index], "album")
-            utils.FavoriteQueue.put(((Item['KodiArtwork']['favourite'], isFavorite, f"musicdb://albums/{KodiItemIds[Index]}/", Item['Name'], "window", 10502),))
-            xbmc.log(f"EMBY.core.musicalbum: UPDATE [{KodiItemIds[Index]}] {Item['Name']}: {Item['Id']}", 1) # LOGINFO
+            utils.FavoriteQueue.put(((common.set_Favorites_Artwork_Overlay("Album", "Songs", Item['Id'], self.EmbyServer.ServerData['ServerId'], Item['KodiArtwork']['favourite']), isFavorite, f"musicdb://albums/{KodiItemIds[Index]}/", Item['Name'], "window", 10502),))
+            xbmc.log(f"EMBY.core.musicalbum: UPDATE [{KodiItemIds[Index]}] {Item['Name']}: {Item['Id']}", 0) # LOGDEBUG
 
         # New library (insert new Kodi record)
         if Item['LibraryId'] not in LibraryIds:
@@ -65,25 +65,25 @@ class MusicAlbum:
             LibraryIds.append(str(Item['LibraryId']))
             KodiItemIds.append(str(KodiItemId))
             self.SQLs["emby"].add_reference_musicalbum(Item['Id'], Item['LibraryId'], KodiItemIds, isFavorite, LibraryIds)
-            xbmc.log(f"EMBY.core.musicalbum: ADD [{KodiItemId}] {Item['Name']}: {Item['Id']}", 1) # LOGINFO
+            xbmc.log(f"EMBY.core.musicalbum: ADD [{KodiItemId}] {Item['Name']}: {Item['Id']}", 0) # LOGDEBUG
             common.set_MusicArtist_links(KodiItemId, self.SQLs, Item["AlbumArtists"], Item['LibraryId'], None)
             self.SQLs["music"].common_db.add_artwork(Item['KodiArtwork'], KodiItemId, "album")
-            utils.FavoriteQueue.put(((Item['KodiArtwork']['favourite'], isFavorite, f"musicdb://albums/{KodiItemId}/", Item['Name'], "window", 10502),))
+            utils.FavoriteQueue.put(((common.set_Favorites_Artwork_Overlay("Album", "Songs", Item['Id'], self.EmbyServer.ServerData['ServerId'], Item['KodiArtwork']['favourite']), isFavorite, f"musicdb://albums/{KodiItemId}/", Item['Name'], "window", 10502),))
         else:
             self.SQLs["emby"].update_reference_generic(isFavorite, Item['Id'], "MusicAlbum", Item['LibraryId'])
 
         return not Item['UpdateItem']
 
     def userdata(self, Item):
-        Image, Itemname = self.SQLs["music"].get_FavoriteSubcontent(Item['KodiItemId'], "album")
-        utils.FavoriteQueue.put(((Image, Item['IsFavorite'], f"musicdb://albums/{Item['KodiItemId']}/", Itemname, "window", 10502),))
+        ImageUrl, Itemname = self.SQLs["music"].get_FavoriteSubcontent(Item['KodiItemId'], "album")
+        utils.FavoriteQueue.put(((common.set_Favorites_Artwork_Overlay("Album", "Songs", Item['Id'], self.EmbyServer.ServerData['ServerId'], ImageUrl), Item['IsFavorite'], f"musicdb://albums/{Item['KodiItemId']}/", Itemname, "window", 10502),))
         self.SQLs["emby"].update_favourite(Item['Id'], Item['IsFavorite'], "MusicAlbum")
         pluginmenu.reset_querycache("MusicAlbum")
         xbmc.log(f"EMBY.core.musicalbum: USERDATA {Item['Type']} [{Item['KodiItemId']}] {Item['Id']}", 1) # LOGINFO
 
     def remove(self, Item):
-        Image, Itemname = self.SQLs["music"].get_FavoriteSubcontent(Item['KodiItemId'], "album")
+        ImageUrl, Itemname = self.SQLs["music"].get_FavoriteSubcontent(Item['KodiItemId'], "album")
         self.SQLs["emby"].remove_item(Item['Id'], "MusicAlbum", Item['LibraryId'])
-        utils.FavoriteQueue.put(((Image, False, f"musicdb://albums/{Item['KodiItemId']}/", Itemname, "window", 10502),))
+        utils.FavoriteQueue.put(((common.set_Favorites_Artwork_Overlay("Album", "Songs", Item['Id'], self.EmbyServer.ServerData['ServerId'], ImageUrl), False, f"musicdb://albums/{Item['KodiItemId']}/", Itemname, "window", 10502),))
         self.SQLs["music"].delete_album(Item['KodiItemId'], Item['LibraryId'])
         xbmc.log(f"EMBY.core.musicalbum: DELETE [{Item['KodiItemId']}] {Item['Id']}", 1) # LOGINFO

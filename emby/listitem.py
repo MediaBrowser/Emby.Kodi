@@ -122,26 +122,27 @@ def set_ListItem_from_Kodi_database(KodiItem, Path=None):
 #        set_MusicBrainzAlbumArtistID(item, InfoTags)
 
     # Common infotags
-    InfoTags.setMediaType(KodiItem['mediatype'])
-    InfoTags.setTitle(KodiItem['title'])
+    if InfoTags:
+        InfoTags.setMediaType(KodiItem['mediatype'])
+        InfoTags.setTitle(KodiItem['title'])
 
-    if KodiItem.get('duration'):
-        InfoTags.setDuration(int(float(KodiItem['duration'])))
+        if KodiItem.get('duration'):
+            InfoTags.setDuration(int(float(KodiItem['duration'])))
 
-    if KodiItem['artwork']:
-        ListItem.setArt(KodiItem['artwork'])
+        if KodiItem['artwork']:
+            ListItem.setArt(KodiItem['artwork'])
 
-    if KodiItem.get('genre'):
-        InfoTags.setGenres(KodiItem['genre'].split("/"))
+        if KodiItem.get('genre'):
+            InfoTags.setGenres(KodiItem['genre'].split("/"))
 
-    if KodiItem.get('playCount'):
-        InfoTags.setPlaycount(KodiItem['playCount'])
+        if KodiItem.get('playCount'):
+            InfoTags.setPlaycount(KodiItem['playCount'])
 
-    if KodiItem.get('lastplayed'):
-        InfoTags.setLastPlayed(KodiItem['lastplayed'])
+        if KodiItem.get('lastplayed'):
+            InfoTags.setLastPlayed(KodiItem['lastplayed'])
 
-    if KodiItem.get('year'):
-        InfoTags.setYear(int(KodiItem['year']))
+        if KodiItem.get('year'):
+            InfoTags.setYear(int(KodiItem['year']))
 
     ListItem.setProperties(KodiItem['properties'])
     IsFolder = bool(KodiItem['properties']['IsFolder'] == "true")
@@ -440,10 +441,8 @@ def set_ListItem(item, ServerId, Path=None, KodiId=None):
         Properties = {'embyserverid': str(ServerId), 'embyid': str(item['Id']), 'IsFolder': 'true', 'IsPlayable': 'true'}
     elif item['Type'] == "MusicAlbum":
         common.set_common(item, ServerId, True)
-        common.set_KodiArtwork(item, ServerId, True)
         item['KodiLastScraped'] = utils.currenttime_kodi_format()
         common.set_RunTimeTicks(item)
-        common.set_overview(item)
         InfoTags = listitem.getMusicInfoTag()
         InfoTags.setMediaType("album")
         InfoTags.setTitle(item['Name'])
@@ -460,10 +459,7 @@ def set_ListItem(item, ServerId, Path=None, KodiId=None):
         Properties = {'embyserverid': str(ServerId), 'embyid': str(item['Id']), 'IsFolder': 'true', 'IsPlayable': 'true'}
     elif item['Type'] == "Audio":
         common.set_common(item, ServerId, True)
-        common.set_KodiArtwork(item, ServerId, True)
         item['IndexNumber'] = item.get('IndexNumber', None)
-        common.set_playstate(item)
-        common.set_overview(item)
         common.set_RunTimeTicks(item)
         common.get_streams(item)
         InfoTags = listitem.getMusicInfoTag()
@@ -710,8 +706,8 @@ def set_Duration(Item, InfoTags):
         InfoTags.setDuration(int(float(Item['KodiRunTimeTicks'])))
 
 def set_Playcount(Item, InfoTags):
-    if 'UserData' in Item and Item['UserData']['PlayCount']:
-        InfoTags.setPlaycount(int(Item['UserData']['PlayCount']))
+    if 'KodiPlayCount' in Item and Item['KodiPlayCount']:
+        InfoTags.setPlaycount(Item['KodiPlayCount'])
 
 def set_LastPlayed(Item, InfoTags):
     if Item['KodiLastPlayedDate']:

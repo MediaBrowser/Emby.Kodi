@@ -1,10 +1,10 @@
 <?xml version="1.0" ?>
 <settings version="1">
-    <section id="plugin.video.emby-next-gen">
+    <section id="plugin.service.emby-next-gen">
         <category id="general" label="29999" help="">
-            <group id="1" label="30613">
+            <group id="1" label="33649">
                 <setting id="manageserver" label="30614" type="action" help="33307">
-                    <data>NotifyAll(plugin.video.emby-next-gen,manageserver)</data>
+                    <data>NotifyAll(plugin.service.emby-next-gen,manageserver)</data>
                     <level>0</level>
                     <control type="button" format="action"/>
                 </setting>
@@ -14,7 +14,7 @@
                     <control type="toggle"/>
                 </setting>
                 <setting id="factoryreset" label="33340" type="action" help="33400">
-                    <data>NotifyAll(plugin.video.emby-next-gen,factoryreset)</data>
+                    <data>NotifyAll(plugin.service.emby-next-gen,factoryreset)</data>
                     <level>0</level>
                     <control type="button" format="action"/>
                 </setting>
@@ -72,12 +72,12 @@
                     <control type="edit" format="string"/>
                 </setting>
                 <setting id="managelibsselection" label="33194" type="action" help="33309">
-                    <data>NotifyAll(plugin.video.emby-next-gen,managelibsselection)</data>
+                    <data>NotifyAll(plugin.service.emby-next-gen,managelibsselection)</data>
                     <level>0</level>
                     <control type="button" format="action"/>
                 </setting>
                 <setting id="texturecache" label="33059" type="action" help="33310">
-                    <data>NotifyAll(plugin.video.emby-next-gen,texturecache)</data>
+                    <data>NotifyAll(plugin.service.emby-next-gen,texturecache)</data>
                     <level>0</level>
                     <dependencies>
                         <dependency type="enable">
@@ -97,6 +97,11 @@
                     <control type="toggle"/>
                 </setting>
                 <setting id="SyncFavorites" label="33564" type="boolean" help="33565">
+                    <level>2</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting label="33663" id="imdbrating" type="boolean" help="33664">
                     <level>2</level>
                     <default>true</default>
                     <control type="toggle"/>
@@ -123,7 +128,7 @@
                 </setting>
                 <setting id="DownloadPath" type="path" label="33569" help="33574">
                     <level>2</level>
-                    <default>special://profile/addon_data/plugin.video.emby-next-gen/</default>
+                    <default>special://profile/addon_data/plugin.service.emby-next-gen/</default>
                     <constraints>
                         <writable>true</writable>
                         <allowempty>true</allowempty>
@@ -133,17 +138,17 @@
                     </control>
                 </setting>
                 <setting id="DownloadReset" label="33572" type="action" help="">
-                    <data>NotifyAll(plugin.video.emby-next-gen,downloadreset)</data>
+                    <data>NotifyAll(plugin.service.emby-next-gen,downloadreset)</data>
                     <level>2</level>
                     <control type="button" format="action"/>
                 </setting>
                 <setting id="nodesreset" label="33341" type="action" help="33401">
-                    <data>NotifyAll(plugin.video.emby-next-gen,nodesreset)</data>
+                    <data>NotifyAll(plugin.service.emby-next-gen,nodesreset)</data>
                     <level>3</level>
                     <control type="button" format="action"/>
                 </setting>
                 <setting id="databasereset" label="33058" type="action" help="33313">
-                    <data>NotifyAll(plugin.video.emby-next-gen,databasereset)</data>
+                    <data>NotifyAll(plugin.service.emby-next-gen,databasereset)</data>
                     <level>0</level>
                     <control type="button" format="action"/>
                 </setting>
@@ -163,6 +168,18 @@
                 </setting>
             </group>
             <group id="2" label="33577">
+                <setting id="MaxURILength" type="integer" label="33673" help="33674">
+                    <level>3</level>
+                    <default>1500</default>
+                    <constraints>
+                        <minimum>1000</minimum>
+                        <step>100</step>
+                        <maximum>15000</maximum>
+                    </constraints>
+                    <control type="slider" format="integer">
+                        <popup>false</popup>
+                    </control>
+                </setting>
                 <setting id="MusicartistPaging" type="integer" label="33578" help="33175">
                     <level>3</level>
                     <default>10000</default>
@@ -181,7 +198,7 @@
                     <constraints>
                         <minimum>100</minimum>
                         <step>100</step>
-                        <maximum>5000</maximum>
+                        <maximum>20000</maximum>
                     </constraints>
                     <control type="slider" format="integer">
                         <popup>false</popup>
@@ -525,7 +542,7 @@
                     </dependencies>
                 </setting>
             </group>
-            <group id="3" label="30409">
+            <group id="3" label="33650">
                 <setting label="30114" id="offerDelete" type="boolean" help="33304">
                     <level>2</level>
                     <default>false</default>
@@ -754,7 +771,37 @@
                         </dependency>
                     </dependencies>
                 </setting>
+                <setting label="33655" id="transcode_msmpeg4v2" type="boolean" help="">
+                    <level>2</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                    <dependencies>
+                        <dependency type="visible">
+                            <condition operator="is" setting="useDirectPaths">false</condition>
+                        </dependency>
+                    </dependencies>
+                </setting>
                 <setting label="33464" id="transcode_msmpeg4v3" type="boolean" help="">
+                    <level>2</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                    <dependencies>
+                        <dependency type="visible">
+                            <condition operator="is" setting="useDirectPaths">false</condition>
+                        </dependency>
+                    </dependencies>
+                </setting>
+                <setting label="33653" id="transcode_vc1" type="boolean" help="">
+                    <level>2</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                    <dependencies>
+                        <dependency type="visible">
+                            <condition operator="is" setting="useDirectPaths">false</condition>
+                        </dependency>
+                    </dependencies>
+                </setting>
+                <setting label="33654" id="transcode_prores" type="boolean" help="">
                     <level>2</level>
                     <default>false</default>
                     <control type="toggle"/>
@@ -836,6 +883,16 @@
                         </dependency>
                     </dependencies>
                 </setting>
+                <setting label="33659" id="transcode_pcm_s16le" type="boolean" help="">
+                    <level>2</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                    <dependencies>
+                        <dependency type="visible">
+                            <condition operator="is" setting="useDirectPaths">false</condition>
+                        </dependency>
+                    </dependencies>
+                </setting>
                 <setting label="33476" id="transcode_pcm_s24le" type="boolean" help="">
                     <level>2</level>
                     <default>false</default>
@@ -867,6 +924,56 @@
                     </dependencies>
                 </setting>
                 <setting label="33479" id="transcode_ac4" type="boolean" help="">
+                    <level>2</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                    <dependencies>
+                        <dependency type="visible">
+                            <condition operator="is" setting="useDirectPaths">false</condition>
+                        </dependency>
+                    </dependencies>
+                </setting>
+                <setting label="33656" id="transcode_aac_latm" type="boolean" help="">
+                    <level>2</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                    <dependencies>
+                        <dependency type="visible">
+                            <condition operator="is" setting="useDirectPaths">false</condition>
+                        </dependency>
+                    </dependencies>
+                </setting>
+                <setting label="33657" id="transcode_dtshd_hra" type="boolean" help="">
+                    <level>2</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                    <dependencies>
+                        <dependency type="visible">
+                            <condition operator="is" setting="useDirectPaths">false</condition>
+                        </dependency>
+                    </dependencies>
+                </setting>
+                <setting label="33658" id="transcode_dtshd_ma" type="boolean" help="">
+                    <level>2</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                    <dependencies>
+                        <dependency type="visible">
+                            <condition operator="is" setting="useDirectPaths">false</condition>
+                        </dependency>
+                    </dependencies>
+                </setting>
+                <setting label="33660" id="transcode_truehd" type="boolean" help="">
+                    <level>2</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                    <dependencies>
+                        <dependency type="visible">
+                            <condition operator="is" setting="useDirectPaths">false</condition>
+                        </dependency>
+                    </dependencies>
+                </setting>
+                <setting label="33661" id="transcode_opus" type="boolean" help="">
                     <level>2</level>
                     <default>false</default>
                     <control type="toggle"/>
@@ -1208,6 +1315,16 @@
                     <default>true</default>
                     <control type="toggle"/>
                 </setting>
+                <setting label="33668" id="enableContextGotoOptions" type="boolean" help="">
+                    <level>2</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting label="33676" id="enableContextSettingsOptions" type="boolean" help="">
+                    <level>2</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                </setting>
             </group>
             <group id="5" label="33300">
                 <setting label="33246" id="menuOptions" type="boolean" help="33323">
@@ -1235,7 +1352,7 @@
                     </control>
                 </setting>
             </group>
-            <group id="7" label="33108">
+            <group id="7" label="33645">
                 <setting label="30249" id="connectMsg" type="boolean" help="">
                     <level>2</level>
                     <default>true</default>
@@ -1251,7 +1368,12 @@
                     <default>true</default>
                     <control type="toggle"/>
                 </setting>
-                <setting id="displayMessage" type="integer" label="30547" help="">
+                <setting label="33677" id="offlineMsg" type="boolean" help="">
+                    <level>2</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="displayMessage" type="integer" label="33646" help="33647">
                     <level>2</level>
                     <default>10</default>
                     <constraints>
@@ -1276,7 +1398,7 @@
                     <default>false</default>
                     <control type="toggle"/>
                 </setting>
-                <setting id="newContentTime" type="integer" label="33558" help="">
+                <setting id="newContentTime" type="integer" label="33646" help="33647">
                     <level>2</level>
                     <default>5</default>
                     <constraints>
@@ -1321,7 +1443,7 @@
                     <control type="toggle"/>
                 </setting>
                 <setting id="skinreload" label="33409" type="action">
-                    <data>NotifyAll(plugin.video.emby-next-gen,skinreload)</data>
+                    <data>NotifyAll(plugin.service.emby-next-gen,skinreload)</data>
                     <level>0</level>
                     <control type="button" format="action"/>
                 </setting>
@@ -1385,11 +1507,6 @@
                     <default>false</default>
                     <control type="toggle"/>
                 </setting>
-                <setting label="33454" id="usekodiworkaroundswidget" type="boolean" help="33540">
-                    <level>3</level>
-                    <default>false</default>
-                    <control type="toggle"/>
-                </setting>
                 <setting label="33562" id="curltimeouts" type="integer" help="33563">
                     <level>2</level>
                     <default>2</default>
@@ -1413,12 +1530,12 @@
                     <control type="toggle"/>
                 </setting>
                 <setting id="databasevacuummanual" label="33436" type="action" help="334078">
-                    <data>NotifyAll(plugin.video.emby-next-gen,databasevacuummanual)</data>
+                    <data>NotifyAll(plugin.service.emby-next-gen,databasevacuummanual)</data>
                     <level>3</level>
                     <control type="button" format="action"/>
                 </setting>
             </group>
-            <group id="2" label="33104">
+            <group id="2" label="33651">
                 <setting id="backupPath" type="path" label="33093" help="">
                     <level>2</level>
                     <default/>
@@ -1431,7 +1548,7 @@
                     </control>
                 </setting>
                 <setting id="backup" label="33092" type="action" help="">
-                    <data>NotifyAll(plugin.video.emby-next-gen,backup)</data>
+                    <data>NotifyAll(plugin.service.emby-next-gen,backup)</data>
                     <level>2</level>
                     <control type="button" format="action"/>
                     <dependencies>
@@ -1441,7 +1558,7 @@
                     </dependencies>
                 </setting>
                 <setting id="restore" label="33255" type="action" help="">
-                    <data>NotifyAll(plugin.video.emby-next-gen,restore)</data>
+                    <data>NotifyAll(plugin.service.emby-next-gen,restore)</data>
                     <level>2</level>
                     <control type="button" format="action"/>
                     <dependencies>

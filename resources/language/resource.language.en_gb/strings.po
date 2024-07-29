@@ -2004,7 +2004,7 @@ msgid "MJPEG"
 msgstr ""
 
 msgctxt "#33464"
-msgid "MSMPEG4v3"
+msgid "MSMPEG4V3"
 msgstr ""
 
 msgctxt "#33465"
@@ -2576,7 +2576,7 @@ msgid "Context Menu"
 msgstr ""
 
 msgctxt "#33604"
-msgid "Favourite add/rempve"
+msgid "Favourite add/remove"
 msgstr ""
 
 msgctxt "#33605"
@@ -2593,4 +2593,284 @@ msgstr ""
 
 msgctxt "#33143"
 msgid "Delete item"
+msgstr ""
+
+msgctxt "#33608"
+msgid "Favorite videos"
+msgstr ""
+
+msgctxt "#33609"
+msgid "Favorite photos"
+msgstr ""
+
+msgctxt "#33610"
+msgid "Favorite musicvideos"
+msgstr ""
+
+msgctxt "#33611"
+msgid "A-Z"
+msgstr ""
+
+msgctxt "#33612"
+msgid "Collections"
+msgstr ""
+
+msgctxt "#33613"
+msgid "Recommendations"
+msgstr ""
+
+msgctxt "#33614"
+msgid "Favorite movies"
+msgstr ""
+
+msgctxt "#33615"
+msgid "Favorite boxsets"
+msgstr ""
+
+msgctxt "#33616"
+msgid "A-Z photoalbum"
+msgstr ""
+
+msgctxt "#33617"
+msgid "A-Z videos"
+msgstr ""
+
+msgctxt "#33618"
+msgid "Recently Released Unwatched Movies"
+msgstr ""
+
+msgctxt "#33619"
+msgid "Recently Released Movies"
+msgstr ""
+
+msgctxt "#33620"
+msgid "A-Z musicvideos"
+msgstr ""
+
+msgctxt "#33621"
+msgid "A-Z movies"
+msgstr ""
+
+msgctxt "#33622"
+msgid "A-Z series"
+msgstr ""
+
+msgctxt "#33623"
+msgid "Favorite songs"
+msgstr ""
+
+msgctxt "#33624"
+msgid "Favorite actors"
+msgstr ""
+
+msgctxt "#33625"
+msgid "Favorite audio"
+msgstr ""
+
+msgctxt "#33626"
+msgid "Search"
+msgstr ""
+
+msgctxt "#33627"
+msgid "In progress (Mixed content)"
+msgstr ""
+
+msgctxt "#33628"
+msgid "Continue watching (Mixed content)"
+msgstr ""
+
+msgctxt "#33629"
+msgid "Downloaded movies"
+msgstr ""
+
+msgctxt "#33630"
+msgid "Downloaded episodes"
+msgstr ""
+
+msgctxt "#33631"
+msgid "Downloaded musicvideos"
+msgstr ""
+
+msgctxt "#33632"
+msgid "Movies"
+msgstr ""
+
+msgctxt "#33633"
+msgid "TVShows"
+msgstr ""
+
+msgctxt "#33634"
+msgid "Seasons"
+msgstr ""
+
+msgctxt "#33638"
+msgid "Songs"
+msgstr ""
+
+msgctxt "#33639"
+msgid "Actors"
+msgstr ""
+
+msgctxt "#33640"
+msgid "Bookmarks"
+msgstr ""
+
+msgctxt "#33641"
+msgid "Download themes (YES) or link themes (NO)?"
+msgstr ""
+
+msgctxt "#33642"
+msgid "Select audio stream"
+msgstr ""
+
+msgctxt "#33643"
+msgid "Select Backup"
+msgstr ""
+
+msgctxt "#33644"
+msgid "Changing artwork requires an artwork cache reset. Proceed?"
+msgstr ""
+
+msgctxt "#33645"
+msgid "Notifications"
+msgstr ""
+
+msgctxt "#33646"
+msgid "Message duration"
+msgstr ""
+
+msgctxt "#33647"
+msgid "Message duration in seconds"
+msgstr ""
+
+msgctxt "#33648"
+msgid "Server operations"
+msgstr ""
+
+msgctxt "#33649"
+msgid "Connections"
+msgstr ""
+
+msgctxt "#33650"
+msgid "Delete item"
+msgstr ""
+
+msgctxt "#33651"
+msgid "Backup"
+msgstr ""
+
+msgctxt "#33652"
+msgid "EMBY: Remote play"
+msgstr ""
+
+msgctxt "#33653"
+msgid "VC1"
+msgstr ""
+
+msgctxt "#33654"
+msgid "PRORES"
+msgstr ""
+
+msgctxt "#33655"
+msgid "MSMPEG4V2"
+msgstr ""
+
+msgctxt "#33656"
+msgid "AAC LATM"
+msgstr ""
+
+msgctxt "#33657"
+msgid "DTSHD HRA"
+msgstr ""
+
+msgctxt "#33658"
+msgid "DTSHD MA"
+msgstr ""
+
+msgctxt "#33659"
+msgid "PCM S16LE"
+msgstr ""
+
+msgctxt "#33660"
+msgid "TRUEHD"
+msgstr ""
+
+msgctxt "#33661"
+msgid "OPUS"
+msgstr ""
+
+msgctxt "#33662"
+msgid "Downloaded series"
+msgstr ""
+
+msgctxt "#33663"
+msgid "Set imdb as default rating provider"
+msgstr ""
+
+msgctxt "#33664"
+msgid "Assume Emby's community rating reflects imdb ratings"
+msgstr ""
+
+msgctxt "#33665"
+msgid "Next Episodes (Mixed content)"
+msgstr ""
+
+msgctxt "#33666"
+msgid "Continue last played (Mixed content)"
+msgstr ""
+
+msgctxt "#33667"
+msgid "Continue last played"
+msgstr ""
+
+msgctxt "#33668"
+msgid "Go To Show"
+msgstr ""
+
+msgctxt "#33669"
+msgid "EMBY: Go To"
+msgstr ""
+
+msgctxt "#33670"
+msgid "Go To Show"
+msgstr ""
+
+msgctxt "#33671"
+msgid "Go To Season"
+msgstr ""
+
+msgctxt "#33672"
+msgid "Nodes reset finished"
+msgstr ""
+
+msgctxt "#33673"
+msgid "URI length limit"
+msgstr ""
+
+msgctxt "#33674"
+msgid "Higher limits are faster in some cases, but could trigger http 414 issues"
+msgstr ""
+
+msgctxt "#33675"
+msgid "EMBY: Settings"
+msgstr ""
+
+msgctxt "#33676"
+msgid "Settings"
+msgstr ""
+
+msgctxt "#33677"
+msgid "Enable offline message"
+msgstr ""
+
+msgctxt "#33678"
+msgid "Invalid server address"
+msgstr ""
+
+msgctxt "#33679"
+msgid "Invalid argument"
+msgstr ""
+
+msgctxt "#33680"
+msgid "Download path not found"
 msgstr ""

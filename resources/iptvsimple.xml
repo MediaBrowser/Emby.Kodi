@@ -2,7 +2,7 @@
     <setting id="kodi_addon_instance_name">multimedia</setting>
     <setting id="kodi_addon_instance_enabled" default="true">true</setting>
     <setting id="m3uPathType">0</setting>
-    <setting id="m3uPath">special://profile/addon_data/plugin.video.emby-next-gen/temp/SERVERID-livetv.m3u</setting>
+    <setting id="m3uPath">special://profile/addon_data/plugin.service.emby-next-gen/temp/SERVERID-livetv.m3u</setting>
     <setting id="m3uUrl" default="true" />
     <setting id="m3uCache" default="true">true</setting>
     <setting id="startNum" default="true">1</setting>
@@ -32,7 +32,7 @@
     <setting id="customRadioGroupsFile" default="true">special://userdata/addon_data/pvr.iptvsimple/channelGroups/customRadioGroups-example.xml</setting>
     <setting id="radioChannelGroupsOnly" default="true">false</setting>
     <setting id="epgPathType">0</setting>
-    <setting id="epgPath">special://profile/addon_data/plugin.video.emby-next-gen/temp/SERVERID-livetvepg.xml</setting>
+    <setting id="epgPath">special://profile/addon_data/plugin.service.emby-next-gen/temp/SERVERID-livetvepg.xml</setting>
     <setting id="epgUrl" default="true" />
     <setting id="epgCache" default="true">true</setting>
     <setting id="epgTimeShift" default="true">0</setting>

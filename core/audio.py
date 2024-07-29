@@ -60,7 +60,7 @@ class Audio:
 
         # Update all existing Kodi songs
         for Index, LibraryId in enumerate(LibraryIds):
-            if int(Item['Id']) > 999999900: # Skip injected items updates
+            if Item['Name'] == "--NO INFO--": # Skip injected items updates
                 return False
 
             self.SQLs["music"].common_db.delete_artwork(KodiItemIds[Index], "song")
@@ -78,11 +78,11 @@ class Audio:
             KodiItemIds.append(str(KodiItemId))
             self.SQLs["emby"].add_reference_audio(Item['Id'], Item['LibraryId'], KodiItemIds, Item['UserData']['IsFavorite'], Item['Path'], Item['KodiPathId'], LibraryIds)
             self.set_links(Item, KodiItemId)
-            xbmc.log(f"EMBY.core.audio: ADD [{Item['KodiPathId']} / {KodiAlbumId} / {KodiItemId}] {Item['Id']}: {Item['Name']}", 1) # LOGINFO
+            xbmc.log(f"EMBY.core.audio: ADD [{Item['KodiPathId']} / {KodiAlbumId} / {KodiItemId}] {Item['Id']}: {Item['Name']}", 0) # LOGDEBUG
         else:
             self.SQLs["emby"].update_reference_generic(Item['UserData']['IsFavorite'], Item['Id'], "Audio", Item['LibraryId'])
 
-        utils.FavoriteQueue.put(((Item['KodiArtwork']['favourite'], Item['UserData']['IsFavorite'], f"{Item['KodiPath']}{Item['KodiFilename']}", Item['Name'], "media", 0),))
+        utils.FavoriteQueue.put(((common.set_Favorites_Artwork_Overlay("Song", "Songs", Item['Id'], self.EmbyServer.ServerData['ServerId'], Item['KodiArtwork']['favourite']), Item['UserData']['IsFavorite'], f"{Item['KodiPath']}{Item['KodiFilename']}", Item['Name'], "media", 0),))
         return not Item['UpdateItem']
 
     def set_links(self, Item, KodiItemId):
@@ -96,14 +96,14 @@ class Audio:
 
         for KodiItemId in Item['KodiItemId'].split(","):
             self.SQLs["music"].rate_song(Item['KodiPlayCount'], Item['KodiLastPlayedDate'], 0, KodiItemId)
-            FullPath, Image, Itemname = self.SQLs["music"].get_favoriteData(KodiItemId, "song")
-            utils.FavoriteQueue.put(((Image, Item['IsFavorite'], FullPath, Itemname, "media", 0),))
+            FullPath, ImageUrl, Itemname = self.SQLs["music"].get_favoriteData(KodiItemId, "song")
+            utils.FavoriteQueue.put(((common.set_Favorites_Artwork_Overlay("Song", "Songs", Item['Id'], self.EmbyServer.ServerData['ServerId'], ImageUrl), Item['IsFavorite'], FullPath, Itemname, "media", 0),))
             self.SQLs["emby"].update_favourite(Item['Id'], Item['IsFavorite'], "Audio")
             xbmc.log(f"EMBY.core.audio: USERDATA {Item['Type']} [{KodiItemId}] {Item['Id']}", 1) # LOGINFO
 
     def remove(self, Item):
-        FullPath, Image, Itemname = self.SQLs["music"].get_favoriteData(Item['KodiItemId'], "song")
-        utils.FavoriteQueue.put(((Image, False, FullPath, Itemname, "media", 0),))
+        FullPath, ImageUrl, Itemname = self.SQLs["music"].get_favoriteData(Item['KodiItemId'], "song")
+        utils.FavoriteQueue.put(((common.set_Favorites_Artwork_Overlay("Song", "Songs", Item['Id'], self.EmbyServer.ServerData['ServerId'], ImageUrl), False, FullPath, Itemname, "media", 0),))
         self.SQLs["emby"].remove_item(Item['Id'], "Audio", Item['LibraryId'])
         self.SQLs["music"].delete_song(Item['KodiItemId'], Item['LibraryId'])
         xbmc.log(f"EMBY.core.audio: DELETE [{Item['KodiItemId']}] {Item['Id']}", 1) # LOGINFO

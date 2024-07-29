@@ -15,12 +15,15 @@
     </coordinates>
     <controls>
         <control type="button" id="1">
-            <left>85%</left>
-            <top>83%</top>
-            <width>14%</width>
-            <height>5%</height>
+            <left>1%</left>
+            <top>2%</top>
+            <width>98%</width>
+            <height>7%</height>
             <visible>true</visible>
-			<label>$ADDON[plugin.video.emby-next-gen 33417]</label>
+            <label>$ADDON[plugin.service.emby-next-gen 33417]</label>
+            <align>center</align>
+            <texturenofocus colordiffuse="203077ff">white.png</texturenofocus>
+            <texturefocus colordiffuse="203077ff">white.png</texturefocus>
         </control>
     </controls>
 </window>

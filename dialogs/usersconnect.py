@@ -1,6 +1,5 @@
 import xbmc
 import xbmcgui
-from helper import utils
 
 ACTION_PARENT_DIR = 9
 ACTION_PREVIOUS_MENU = 10
@@ -15,10 +14,7 @@ CANCEL = 201
 class UsersConnect(xbmcgui.WindowXMLDialog):
     def __init__(self, *args, **kwargs):
         self.SelectedUser = {}
-        self.ManualLogin = False
         self.list_ = None
-        self.ServerData = {}
-        self.API = None
         self.users = []
         xbmcgui.WindowXMLDialog.__init__(self, *args, **kwargs)
 
@@ -26,18 +22,6 @@ class UsersConnect(xbmcgui.WindowXMLDialog):
         self.list_ = self.getControl(LIST)
 
         for user in self.users:
-            user['UserImageUrl'] = utils.icon
-
-            # Download user picture
-            BinaryData, _, FileExtension = self.API.get_Image_Binary(user['Id'], "Primary", 0, 0, True)
-
-            if BinaryData:
-                Filename = utils.PathToFilenameReplaceSpecialCharecters(f"{self.ServerData['ServerName']}_{user['Name']}_{user['Id']}.{FileExtension}")
-                iconpath = f"{utils.FolderEmbyTemp}{Filename}"
-                utils.delFile(iconpath)
-                utils.writeFileBinary(iconpath, BinaryData)
-                user['UserImageUrl'] = iconpath
-
             item = xbmcgui.ListItem(user['Name'])
             item.setProperty('id', user['Id'])
             item.setArt({'Icon': user['UserImageUrl']})
@@ -58,15 +42,13 @@ class UsersConnect(xbmcgui.WindowXMLDialog):
                 for user in self.users:
                     if user['Id'] == selected_id:
                         self.SelectedUser = user
-                        self.ServerData['UserImageUrl'] = user['UserImageUrl']
-                        self.ServerData['UserName'] = user['Name']
                         break
 
                 self.close()
 
     def onClick(self, controlId):
         if controlId == MANUAL:
-            self.ManualLogin = True
+            self.SelectedUser = "MANUAL"
             self.close()
         elif controlId == CANCEL:
             self.close()

@@ -97,7 +97,8 @@ def DBOpenRW(Databases, TaskId, SQLs):
         DBConnectionsRW[DBID][0].execute("PRAGMA secure_delete=false")
         DBConnectionsRW[DBID][0].execute("PRAGMA synchronous=normal")
         DBConnectionsRW[DBID][0].execute("PRAGMA temp_store=memory")
-        DBConnectionsRW[DBID][0].execute("pragma mmap_size=1073741824")
+        DBConnectionsRW[DBID][0].execute("PRAGMA mmap_size=1073741824")
+        DBConnectionsRW[DBID][0].execute("PRAGMA automatic_index=0")
 
         if DBID == 'video':
             SQLs[DBID] = video_db.VideoDatabase(DBConnectionsRW[DBID][1])

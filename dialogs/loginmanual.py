@@ -14,7 +14,7 @@ ERROR = {'Invalid': 1, 'Empty': 2}
 
 class LoginManual(xbmcgui.WindowXMLDialog):
     def __init__(self, *args, **kwargs):
-        self.SelectedUser = {}
+        self.SelectedUser = "", ""
         self.error = None
         self.username = None
         self.user_field = None
@@ -23,7 +23,6 @@ class LoginManual(xbmcgui.WindowXMLDialog):
         self.error_toggle = None
         self.error_msg = None
         self.cancel_button = None
-        self.EmbyServer = None
         xbmcgui.WindowXMLDialog.__init__(self, *args, **kwargs)
 
     def onInit(self):
@@ -58,7 +57,8 @@ class LoginManual(xbmcgui.WindowXMLDialog):
                 # Display error
                 self._error(ERROR['Empty'], utils.Translate(30613))
                 xbmc.log("EMBY.dialogs.loginmanual: Username cannot be null", 3) # LOGERROR
-            elif self._login(user, password):
+            else:
+                self.SelectedUser = user, password
                 self.close()
         elif controlId == CANCEL:
             # Remind me later
@@ -82,17 +82,6 @@ class LoginManual(xbmcgui.WindowXMLDialog):
             control.setType(xbmcgui.INPUT_TYPE_PASSWORD, "Please enter password")
 
         return control
-
-    def _login(self, username, password):
-        server = self.EmbyServer.ServerData[self.EmbyServer.ServerData['LastConnectionMode']]
-        result = self.EmbyServer.ServerLogin(server, username, password)
-
-        if not result:
-            self._error(ERROR['Invalid'], utils.Translate(33009))
-            return False
-
-        self.SelectedUser = result
-        return True
 
     def _error(self, state, message):
         self.error = state

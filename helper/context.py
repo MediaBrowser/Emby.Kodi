@@ -119,9 +119,17 @@ def download():
             continue
 
         Path = utils.PathAddTrailing(f"{utils.DownloadPath}EMBY-offline-content")
-        utils.mkDir(Path)
+
+        if not utils.mkDir(Path):
+            utils.Dialog.notification(heading=utils.Translate(33558), message=utils.Translate(33680), icon=utils.icon, time=utils.displayMessage)
+            return
+
         Path = utils.PathAddTrailing(f"{Path}{KodiType}")
-        utils.mkDir(Path)
+
+        if not utils.mkDir(Path):
+            utils.Dialog.notification(heading=utils.Translate(33558), message=utils.Translate(33680), icon=utils.icon, time=utils.displayMessage)
+            return
+
         Path = utils.translatePath(Path).decode('utf-8')
         FilePath = f"{Path}{DownloadItem[4]}"
         embydb = dbio.DBOpenRO(ServerId, "download_item")
@@ -129,7 +137,28 @@ def download():
         dbio.DBCloseRO(ServerId, "download_item")
 
         if FileSize:
-            utils.EmbyServers[ServerId].API.download_file({"Id": EmbyId, "ParentPath": DownloadItem[1], "Path": Path, "FilePath": FilePath, "FileSize": FileSize, "Name": DownloadItem[5], "KodiType": KodiType, "KodiPathIdBeforeDownload": DownloadItem[2], "KodiFileId": DownloadItem[3], "KodiId": DownloadItem[0]})
+            utils.EmbyServers[ServerId].API.download_file(EmbyId, DownloadItem[1], Path, FilePath, FileSize, DownloadItem[5], KodiType, DownloadItem[2], DownloadItem[3], DownloadItem[0])
+
+def gotoshow():
+    KodiId = xbmc.getInfoLabel('ListItem.DBID')
+    videodb = dbio.DBOpenRO("video", "gotoshow")
+    KodiShowId = videodb.get_showid_by_episodeid(KodiId)
+    dbio.DBCloseRO("video", "gotoshow")
+    xbmc.log(f"EMBY.helper.context: Gotoshow, ShowId = {KodiShowId}", 0) # LOGDEBUG
+
+    if KodiShowId:
+        utils.SendJson(f'{{"jsonrpc": "2.0", "id": 1, "method": "GUI.ActivateWindow", "params": {{"window": "videos", "parameters": ["videodb://tvshows/titles/{KodiShowId}", "return"]}}}}')
+
+def gotoseason():
+    KodiId = xbmc.getInfoLabel('ListItem.DBID')
+    KodiSeason = xbmc.getInfoLabel('ListItem.Season')
+    videodb = dbio.DBOpenRO("video", "gotoshow")
+    KodiShowId = videodb.get_showid_by_episodeid(KodiId)
+    dbio.DBCloseRO("video", "gotoshow")
+    xbmc.log(f"EMBY.helper.context: Gotoseason, ShowId = {KodiShowId}, Season = {KodiSeason}", 0) # LOGDEBUG
+
+    if KodiShowId:
+        utils.SendJson(f'{{"jsonrpc": "2.0", "id": 1, "method": "GUI.ActivateWindow", "params": {{"window": "videos", "parameters": ["videodb://tvshows/titles/{KodiShowId}/{KodiSeason}", "return"]}}}}')
 
 def specials():
     SpecialFeaturesSelections = []
@@ -178,10 +207,10 @@ def favorites():
 
     if EmbyFavourite:
         utils.EmbyServers[ServerId].API.favorite(EmbyId, False)
-        utils.Dialog.notification(heading="Emby favorites", message="Removed", icon=utils.icon, time=int(utils.displayMessage) * 1000)
+        utils.Dialog.notification(heading=utils.Translate(33558), message=utils.Translate(33066), icon=utils.icon, time=utils.displayMessage)
     else:
         utils.EmbyServers[ServerId].API.favorite(EmbyId, True)
-        utils.Dialog.notification(heading="Emby favorites", message="Added", icon=utils.icon, time=int(utils.displayMessage) * 1000)
+        utils.Dialog.notification(heading=utils.Translate(33558), message=utils.Translate(33067), icon=utils.icon, time=utils.displayMessage)
 
 def refreshitem():
     EmbyId, ServerId, _ = load_item()
@@ -202,6 +231,45 @@ def deleteitem():
         utils.EmbyServers[ServerId].library.removed([EmbyId])
         xbmc.executebuiltin("Container.Refresh()")
 
+def remoteplay():
+    EmbyId, ServerId, _ = load_item()
+
+    if not EmbyId:
+        return
+
+    KodiId = xbmc.getInfoLabel('ListItem.DBID')
+    KodiType = xbmc.getInfoLabel('ListItem.DBTYPE')
+
+    if not KodiId or not KodiType:
+        return
+
+    videodb = dbio.DBOpenRO("video", "remoteplay")
+    Progress = videodb.get_Progress_by_KodiType_KodiId(KodiType, KodiId)
+    dbio.DBCloseRO("video", "remoteplay")
+
+    if Progress:
+        PositionTicks = int(Progress * 10000000)
+    else:
+        PositionTicks = 0
+
+    ActiveSessions = utils.EmbyServers[ServerId].API.get_active_sessions()
+    SelectionLabels = []
+    ClientData = []
+
+    for ActiveSession in ActiveSessions:
+        if ActiveSession['SupportsRemoteControl'] and ActiveSession['Id'] != utils.EmbyServers[ServerId].EmbySession[0]['Id']:
+            UserName = ActiveSession.get('UserName', "unknown")
+            SelectionLabels.append(f"{ActiveSession['DeviceName']}, {UserName}")
+            ClientData.append(ActiveSession['Id'])
+
+    Selections = utils.Dialog.multiselect(utils.Translate(33494), SelectionLabels)
+
+    if not Selections:
+        return
+
+    for Selection in Selections:
+        utils.EmbyServers[ServerId].API.send_play(ClientData[Selection], EmbyId, "PlayNow", PositionTicks, False)
+
 def watchtogether():
     EmbyId, ServerId, _ = load_item()
 
@@ -219,7 +287,7 @@ def watchtogether():
         if len(playerops.RemoteClientData[ServerId]["SessionIds"]) <= 1:
             return
 
-    playerops.PlayEmby([EmbyId], "PlayInit", 0, 0, utils.EmbyServers[ServerId], 0)
+    playerops.PlayEmby([EmbyId], "PlayInit", 0, 0, utils.EmbyServers[ServerId], 0, False)
 
     for SessionId in playerops.RemoteClientData[ServerId]["SessionIds"]:
         if SessionId in playerops.RemoteClientData[ServerId]["ExtendedSupportAck"] and SessionId != utils.EmbyServers[ServerId].EmbySession[0]['Id']:
@@ -251,7 +319,7 @@ def watchtogether():
     ProgressBar.close()
     playerops.WatchTogether = True
     playerops.enable_remotemode(ServerId)
-    playerops.Unpause()
+    playerops.Unpause(False)
 
 def delete_remoteclients():
     _, ServerId, _ = load_item()

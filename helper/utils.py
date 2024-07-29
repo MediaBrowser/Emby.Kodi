@@ -1,3 +1,4 @@
+import sys
 import os
 import shutil
 import json
@@ -17,16 +18,23 @@ import xbmc
 import xbmcaddon
 import xbmcgui
 
-Addon = xbmcaddon.Addon("plugin.video.emby-next-gen")
+try:
+    Addon = xbmcaddon.Addon("plugin.service.emby-next-gen")
+except Exception as error:
+    sys.exit(0)
+
 EmbyTypeMapping = {"Person": "actor", "Video": "movie", "Movie": "movie", "Series": "tvshow", "Season": "season", "Episode": "episode", "Audio": "song", "MusicAlbum": "album", "MusicArtist": "artist", "Genre": "genre", "MusicGenre": "genre", "Tag": "tag" , "Studio": "studio" , "BoxSet": "set", "Folder": None, "MusicVideo": "musicvideo", "Playlist": "Playlist"}
 KodiTypeMapping = {"actor": "Person", "tvshow": "Series", "season": "Season", "episode": "Episode", "song": "Audio", "album": "MusicAlbum", "artist": "MusicArtist", "genre": "Genre", "tag": "Tag", "studio": "Studio" , "set": "BoxSet", "musicvideo": "MusicVideo", "playlist": "Playlist", "movie": "Movie"}
 addon_version = Addon.getAddonInfo('version')
 addon_name = Addon.getAddonInfo('name')
 icon = ""
+ForbiddenCharecters = ("/", "<", ">", ":", '"', "\\", "|", "?", "*", " ", chr(0), chr(1), chr(2), chr(3), chr(4), chr(5), chr(6), chr(7), chr(8), chr(9), chr(10), chr(11), chr(12), chr(13), chr(14), chr(15), chr(16), chr(17), chr(18), chr(19), chr(20), chr(21), chr(22), chr(23), chr(24), chr(25), chr(26), chr(27), chr(28), chr(29), chr(30), chr(31))
+FilesizeSuffixes = ('B', 'KB', 'MB', 'GB', 'TB')
 CustomDialogParameters = (Addon.getAddonInfo('path'), "default", "1080i")
 EmbyServers = {}
 ItemSkipUpdate = []
 MinimumVersion = "9.4.0"
+EmbyServerVersionResync = "4.9.0.25"
 refreshskin = False
 device_name = "Kodi"
 xspplaylists = False
@@ -36,15 +44,15 @@ TranscodeFormatAudio = ""
 videoBitrate = 0
 audioBitrate = 0
 resumeJumpBack = 0
-displayMessage = 0
-newContentTime = 1
+displayMessage = 1000
+newContentTime = 1000
 startupDelay = 0
 curltimeouts = 2
 backupPath = ""
 enablehttp2 = False
 MinimumSetup = ""
 autoclose = 5
-maxnodeitems = "25"
+maxnodeitems = 25
 deviceName = "Kodi"
 useDirectPaths = False
 menuOptions = False
@@ -54,12 +62,14 @@ connectMsg = False
 enableDeleteByKodiEvent = False
 addUsersHidden = False
 enableContextDelete = False
+enableContextSettingsOptions = False
 enableContextRemoteOptions = True
 enableContextDownloadOptions = True
 enableContextFavouriteOptions = True
 enableContextSpecialsOptions = True
 enableContextRecordingOptions = True
 enableContextRefreshOptions = True
+enableContextGotoOptions = True
 verifyFreeSpace = True
 SyncLiveTvOnEvents = False
 transcode_h264 = False
@@ -83,6 +93,15 @@ transcode_pcm_s24le = False
 transcode_vorbis = False
 transcode_wmav2 = False
 transcode_ac4 = False
+transcode_msmpeg4v2 = False
+transcode_vc1 = False
+transcode_prores = False
+transcode_pcm_s16le = False
+transcode_aac_latm = False
+transcode_dtshd_hra = False
+transcode_dtshd_ma = False
+transcode_truehd = False
+transcode_opus = False
 transcode_livetv_video = False
 transcode_livetv_audio = False
 transcode_select_audiostream = False
@@ -113,9 +132,10 @@ artworkcacheenable = True
 syncdate = ""
 synctime = ""
 syncduringplayback = False
-usekodiworkaroundswidget = False
 usepathsubstitution = False
 busyMsg = True
+offlineMsg = True
+imdbrating = True
 websocketenabled = True
 remotecontrol_force_clients = True
 remotecontrol_client_control = True
@@ -137,9 +157,9 @@ ArtworkLimitationLogo = 30
 ArtworkLimitationThumb = 40
 ArtworkLimitationBackdrop = 100
 ArtworkLimitationChapter = 20
-DownloadPath = "special://profile/addon_data/plugin.video.emby-next-gen/"
-FolderAddonUserdata = "special://profile/addon_data/plugin.video.emby-next-gen/"
-FolderEmbyTemp = "special://profile/addon_data/plugin.video.emby-next-gen/temp/"
+DownloadPath = "special://profile/addon_data/plugin.service.emby-next-gen/"
+FolderAddonUserdata = "special://profile/addon_data/plugin.service.emby-next-gen/"
+FolderEmbyTemp = "special://profile/addon_data/plugin.service.emby-next-gen/temp/"
 FolderUserdataThumbnails = "special://profile/Thumbnails/"
 PlaylistPath = "special://profile/playlists/mixed/"
 KodiFavFile = "special://profile/favourites.xml"
@@ -182,33 +202,40 @@ StudioPaging = 20000
 AllPaging = 5000
 FolderPaging = 100000
 PersonPaging = 100000
+MaxURILength = 1500
 
 def refresh_widgets(isVideo):
     xbmc.log("EMBY.helper.utils: Refresh widgets initialized", 1) # LOGINFO
 
     if isVideo and not WidgetRefresh['video']:
-        xbmc.log("EMBY.helper.utils: Refresh widgets video started", 1) # LOGINFO
         globals()["WidgetRefresh"]['video'] = True
-        SendJson('{"jsonrpc":"2.0","method":"VideoLibrary.Scan","params":{"showdialogs":false,"directory":"EMBY_widget_refresh_trigger"},"id":1}')
+        xbmc.log("EMBY.helper.utils: Refresh widgets video started", 1) # LOGINFO
+
+        if not SendJson('{"jsonrpc":"2.0","method":"VideoLibrary.Scan","params":{"showdialogs":false,"directory":"EMBY_widget_refresh_trigger"},"id":1}', True):
+            globals()["WidgetRefresh"]['video'] = False
 
     if not isVideo and not WidgetRefresh['music']:
-        xbmc.log("EMBY.helper.utils: Refresh widgets music started", 1) # LOGINFO
         globals()["WidgetRefresh"]['music'] = True
-        SendJson('{"jsonrpc":"2.0","method":"AudioLibrary.Scan","params":{"showdialogs":false,"directory":"EMBY_widget_refresh_trigger"},"id":1}')
+        xbmc.log("EMBY.helper.utils: Refresh widgets music started", 1) # LOGINFO
+
+        if not SendJson('{"jsonrpc":"2.0","method":"AudioLibrary.Scan","params":{"showdialogs":false,"directory":"EMBY_widget_refresh_trigger"},"id":1}', True):
+            globals()["WidgetRefresh"]['music'] = False
 
 def SendJson(JsonString, ForceBreak=False):
     LogSend = False
     Ret = {}
 
-    for Index in range(70): # retry -> timout 25 seconds
+    for Index in range(55): # retry -> timeout 10 seconds
         Ret = xbmc.executeJSONRPC(JsonString)
 
         if not Ret: # Valid but not correct Kodi return value -> Kodi bug
+            xbmc.log(f"Emby.helper.utils: Json no response: {JsonString}", 2) # LOGWARNING
             return True
 
         Ret = json.loads(Ret)
 
         if not Ret.get("error", False):
+            xbmc.log(f"Emby.helper.utils: Json response: {JsonString} / {Ret}", 0) # LOGDEBUG
             return Ret
 
         if ForceBreak:
@@ -244,24 +271,42 @@ def image_overlay(ImageTag, ServerId, EmbyID, ImageType, ImageIndex, OverlayText
     if not ImageOverlay:
         return BinaryData, ContentType
 
-    img = Image.open(io.BytesIO(BinaryData))
+    try:
+        img = Image.open(io.BytesIO(BinaryData))
+        draw = ImageDraw.Draw(img, "RGBA")
+        font = ImageFont.truetype(FontPath, 1)
+    except Exception as Error:
+        xbmc.log(f"EMBY.helper.utils: Pillow issue: {Error}", 3) # LOGERROR
+        return BinaryData, ContentType
+
     ImageWidth, ImageHeight = img.size
-    draw = ImageDraw.Draw(img, "RGBA")
     BorderSize = int(ImageHeight * 0.01)  # 1% of image height is box border size
     BoxTop = int(ImageHeight * 0.75)  # Box top position is 75% of image height
     BoxHeight = int(ImageHeight * 0.15)  # 15% of image height is box height
-    BoxWidth = int(ImageWidth - 2 * BorderSize)
+    BoxWidth = int(ImageWidth)
     fontsize = 5
-    font = ImageFont.truetype(FontPath, 1)
-    _, _, FontWidth, FontHeight = font.getbbox("Title Seauence")
+
+    try:
+        _, _, FontWidth, FontHeight = font.getbbox("Title Sequence")
+    except Exception as Error:
+        xbmc.log(f"EMBY.helper.utils: Pillow issue (getbox): {Error}", 3) # LOGERROR
+        return BinaryData, ContentType
 
     while FontHeight < BoxHeight - BorderSize * 2 and FontWidth < BoxWidth - BorderSize * 2:
         fontsize += 1
         font = ImageFont.truetype(FontPath, fontsize)
-        _, _, FontWidth, FontHeight = font.getbbox("Title Seauence")
+        _, _, FontWidth, FontHeight = font.getbbox("Title Sequence")
 
-    draw.rectangle((-BorderSize, BoxTop - BorderSize, BoxWidth + BorderSize * 2, BoxTop + BoxHeight + BorderSize * 2), fill=(0, 0, 0, 127), outline="white",  width=BorderSize)
-    draw.text(xy=(ImageWidth / 2, BoxTop + BorderSize * 2 + FontHeight / 2), text=OverlayText, fill="#FFFFFF", font=font, anchor="mm", align="center")
+    OverlayText = OverlayText.split("\n")
+    OverlayTextNewLines = len(OverlayText)
+
+    if OverlayTextNewLines > 1:
+        fontsize = round(fontsize / OverlayTextNewLines)
+        font = ImageFont.truetype(FontPath, fontsize)
+
+    OverlayText = "\n".join(OverlayText)
+    draw.rectangle((-100, BoxTop, BoxWidth + 200, BoxTop + BoxHeight), fill=(0, 0, 0, 127), outline="white",  width=BorderSize)
+    draw.text(xy=(ImageWidth / 2, BoxTop + (BoxHeight / 2)) , text=OverlayText, fill="#FFFFFF", font=font, anchor="mm", align="center")
     imgByteArr = io.BytesIO()
     img.save(imgByteArr, format=img.format)
     return imgByteArr.getvalue(), "image/jpeg"
@@ -281,7 +326,7 @@ def sleep(Seconds):
     return False
 
 # Delete objects from kodi cache
-def delFolder(path, Pattern=""):
+def delFolder(path, Pattern="", ExcludeFile=""):
     xbmc.log("EMBY.helper.utils: --[ delete folder ]", 0) # LOGDEBUG
     dirs, files = listDir(path)
     SelectedDirs = ()
@@ -296,7 +341,7 @@ def delFolder(path, Pattern=""):
     delete_recursive(path, SelectedDirs)
 
     for Filename in files:
-        if Pattern in Filename:
+        if Pattern in Filename and ExcludeFile != Filename:
             delFile(f"{path}{Filename}")
 
     if path:
@@ -328,7 +373,14 @@ def mkDir(Path):
     Path = translatePath(Path)
 
     if not os.path.isdir(Path):
-        os.mkdir(Path)
+        try:
+            os.mkdir(Path)
+            return True
+        except Exception as Error:
+            xbmc.log(f"EMBY.helper.utils: mkDir: {Error}", 3) # LOGERROR
+            return False
+
+    return True
 
 def delFile(Path):
     Path = translatePath(Path)
@@ -389,7 +441,7 @@ def writeFileString(Path, Data):
     try:
         with open(Path, "wb") as outfile:
             outfile.write(Data)
-    except Exception as Error: # permission denied
+    except Exception as Error:
         xbmc.log(f"EMBY.helper.utils: writeFileString ({Path}): {Error}", 2) # LOGWARNING
 
 def getFreeSpace(Path):
@@ -408,8 +460,11 @@ def getFreeSpace(Path):
 def writeFileBinary(Path, Data):
     Path = translatePath(Path)
 
-    with open(Path, "wb") as outfile:
-        outfile.write(Data)
+    try:
+        with open(Path, "wb") as outfile:
+            outfile.write(Data)
+    except Exception as Error:
+        xbmc.log(f"EMBY.helper.utils: writeFileBinary ({Path}): {Error}", 2) # LOGWARNING
 
 def checkFileExists(Path):
     Path = translatePath(Path)
@@ -468,14 +523,29 @@ def currenttime_kodi_format_and_unixtime():
     UnixTime = int(datetime.timestamp(Current))
     return KodiFormat, UnixTime
 
-def get_unixtime():
-    Current = datetime.now()
-    return int(datetime.timestamp(Current))
+def get_unixtime_emby_format(): # Position(ticks) in Emby format 1 tick = 10000ms
+    return datetime.timestamp(datetime.utcnow()) * 10000
 
-def unixtimeInMicroseconds():
-    Current = datetime.now()
-    UnixTime = int(datetime.timestamp(Current))
-    return UnixTime + Current.microsecond / 1000000
+def get_url_info(ConnectionString):
+    if not ConnectionString.startswith("http://") and not ConnectionString.startswith("https://"):
+        ConnectionString = f"http://{ConnectionString}"
+
+    Temp = ConnectionString.split(":")
+    Scheme = Temp[0]
+
+    if len(Temp) < 3:
+        if Scheme == "https":
+            Port = 443
+        else:
+            Port = 80
+    else:
+        Port = int(Temp[2].split("?", 1)[0].split("/", 1)[0])
+
+    Hostname = Temp[1][2:].split("?", 1)[0].split("/", 1)[0]
+    SubUrl = ConnectionString.replace(f"{Scheme}://", "").replace(f":{Port}", "").replace(Hostname, "").rsplit("/", 1)[0]
+    SubUrl = f"/{SubUrl}/".replace("//", "/")
+    xbmc.log(f"Emby.helper.utils: get_url_info: ConnectionString='{ConnectionString}' Scheme='{Scheme}' Hostname='{Hostname}' SubUrl='{SubUrl}' Port='{Port}'", 0) # LOGDEBUG
+    return Scheme, Hostname, Port, SubUrl
 
 # Remove all emby playlists
 def delete_playlists():
@@ -559,6 +629,18 @@ def Translate(Id):
     globals()['TranslationsCached'][Id] = result
     return result
 
+def valid_Filename(Filename):
+    if len(Filename) > 150:
+        Filename = Filename[:150]
+        xbmc.log(f"Emby.helper.utils: Filename too long -> cut: {Filename}", 2) # LOGWARNING
+
+    Filename = decode_XML(Filename)
+
+    for Char in ForbiddenCharecters:
+        Filename = Filename.replace(Char, "_")
+
+    return Filename
+
 def PathToFilenameReplaceSpecialCharecters(Path):
     Separator = get_Path_Seperator(Path)
     Pos = Path.rfind(Separator)
@@ -571,15 +653,14 @@ def PathToFilenameReplaceSpecialCharecters(Path):
 
     return Filename
 
-def SizeToText(size):
-    suffixes = ['B', 'KB', 'MB', 'GB', 'TB']
-    suffixIndex = 0
+def SizeToText(FileSize):
+    Index = 0
 
-    while size > 1024 and suffixIndex < 4:
-        suffixIndex += 1
-        size /= 1024.0
+    while FileSize > 1024 and Index < 4:
+        Index += 1
+        FileSize /= 1024.0
 
-    return f"1.{size}{suffixes[suffixIndex]}"
+    return f"{round(FileSize)}{FilesizeSuffixes[Index]}"
 
 # Copy folder content from one to another
 def copytree(path, dest):
@@ -623,14 +704,11 @@ def InitSettings():
     load_settings('TranscodeFormatAudio')
     load_settings('resumeJumpBack')
     load_settings('autoclose')
-    load_settings('displayMessage')
-    load_settings('newContentTime')
     load_settings('backupPath')
     load_settings('MinimumSetup')
     load_settings('deviceName')
     load_settings('syncdate')
     load_settings('synctime')
-    load_settings('maxnodeitems')
     load_settings('watchtogeter_start_delay')
     load_settings('compressArtLevel')
     load_settings('ArtworkLimitationPrimary')
@@ -642,6 +720,9 @@ def InitSettings():
     load_settings('ArtworkLimitationBackdrop')
     load_settings('ArtworkLimitationChapter')
     load_settings('DownloadPath')
+    load_settings_int('displayMessage')
+    load_settings_int('newContentTime')
+    load_settings_int('maxnodeitems')
     load_settings_int('videoBitrate')
     load_settings_int('audioBitrate')
     load_settings_int('startupDelay')
@@ -672,10 +753,10 @@ def InitSettings():
     load_settings_int('AllPaging')
     load_settings_int('FolderPaging')
     load_settings_int('PersonPaging')
+    load_settings_int('MaxURILength')
     load_settings_bool('ArtworkLimitations')
     load_settings_bool('sslverify')
     load_settings_bool('syncduringplayback')
-    load_settings_bool('usekodiworkaroundswidget')
     load_settings_bool('refreshskin')
     load_settings_bool('animateicon')
     load_settings_bool('enablehttp2')
@@ -686,12 +767,14 @@ def InitSettings():
     load_settings_bool('connectMsg')
     load_settings_bool('addUsersHidden')
     load_settings_bool('enableContextDelete')
+    load_settings_bool('enableContextSettingsOptions')
     load_settings_bool('enableContextRemoteOptions')
     load_settings_bool('enableContextDownloadOptions')
     load_settings_bool('enableContextFavouriteOptions')
     load_settings_bool('enableContextSpecialsOptions')
     load_settings_bool('enableContextRecordingOptions')
     load_settings_bool('enableContextRefreshOptions')
+    load_settings_bool('enableContextGotoOptions')
     load_settings_bool('transcode_h264')
     load_settings_bool('transcode_hevc')
     load_settings_bool('transcode_av1')
@@ -713,6 +796,15 @@ def InitSettings():
     load_settings_bool('transcode_vorbis')
     load_settings_bool('transcode_wmav2')
     load_settings_bool('transcode_ac4')
+    load_settings_bool('transcode_msmpeg4v2')
+    load_settings_bool('transcode_vc1')
+    load_settings_bool('transcode_prores')
+    load_settings_bool('transcode_pcm_s16le')
+    load_settings_bool('transcode_aac_latm')
+    load_settings_bool('transcode_dtshd_hra')
+    load_settings_bool('transcode_dtshd_ma')
+    load_settings_bool('transcode_truehd')
+    load_settings_bool('transcode_opus')
     load_settings_bool('transcode_livetv_video')
     load_settings_bool('transcode_livetv_audio')
     load_settings_bool('transcode_select_audiostream')
@@ -742,6 +834,7 @@ def InitSettings():
     load_settings_bool('askSkipCredits')
     load_settings_bool('skipintroembuarydesign')
     load_settings_bool('busyMsg')
+    load_settings_bool('offlineMsg')
     load_settings_bool('AssignEpisodePostersToTVShowPoster')
     load_settings_bool('WizardCompleted')
     load_settings_bool('verifyFreeSpace')
@@ -756,6 +849,7 @@ def InitSettings():
     load_settings_bool('BoxSetsToTags')
     load_settings_bool('SyncFavorites')
     load_settings_bool('SyncLiveTvOnEvents')
+    load_settings_bool('imdbrating')
 
     if ArtworkLimitations:
         globals()["ScreenResolution"] = (int(xbmc.getInfoLabel('System.ScreenWidth')), int(xbmc.getInfoLabel('System.ScreenHeight')))
@@ -776,25 +870,34 @@ def InitSettings():
     else:
         globals()["device_name"] = quote(device_name) # url encode
 
-    ToggleIcon = []
+    # Animated icons
+    NewIcon = ""
 
     if animateicon:
         if icon and icon != "special://home/addons/plugin.video.emby-next-gen/resources/icon-animated.gif":
-            ToggleIcon = ["resources/icon.png", "resources/icon-animated.gif"]
+            NewIcon = "animated"
 
         globals()["icon"] = "special://home/addons/plugin.video.emby-next-gen/resources/icon-animated.gif"
     else:
-        if icon and icon != "special://home/addons/plugin.video.emby-next-gen/resources/icon.png":
-            ToggleIcon = ["resources/icon-animated.gif", "resources/icon.png"]
+        if icon and icon != "special://home/addons/plugin.service.emby-next-gen/resources/icon.png":
+            NewIcon = "static"
 
-        globals()["icon"] = "special://home/addons/plugin.video.emby-next-gen/resources/icon.png"
+        globals()["icon"] = "special://home/addons/plugin.service.emby-next-gen/resources/icon.png"
 
-    if ToggleIcon:
-        xbmc.log("EMBY.helper.utils: Toggle icon", 1) # LOGINFO
-        AddonXml = readFileString("special://home/addons/plugin.video.emby-next-gen/addon.xml")
-        AddonXml = AddonXml.replace(ToggleIcon[0], ToggleIcon[1])
-        writeFileString("special://home/addons/plugin.video.emby-next-gen/addon.xml", AddonXml)
+    if NewIcon:
+        for PluginId in ("video", "image", "audio", "service"):
+            xbmc.log("EMBY.helper.utils: Toggle icon", 1) # LOGINFO
+            AddonXml = readFileString(f"special://home/addons/plugin.{PluginId}.emby-next-gen/addon.xml")
 
+            if NewIcon == "static":
+                AddonXml = AddonXml.replace("resources/icon-animated.gif", "resources/icon.png")
+            else:
+                AddonXml = AddonXml.replace("resources/icon.png", "resources/icon-animated.gif")
+
+            writeFileString(f"special://home/addons/plugin.{PluginId}.emby-next-gen/addon.xml", AddonXml)
+
+    globals()["displayMessage"] *= 1000
+    globals()["newContentTime"] *= 1000
     update_mode_settings()
     xbmcgui.Window(10000).setProperty('EmbyDelete', str(enableContextDelete))
     xbmcgui.Window(10000).setProperty('EmbyRemote', str(enableContextRemoteOptions))
@@ -803,6 +906,8 @@ def InitSettings():
     xbmcgui.Window(10000).setProperty('EmbySpecials', str(enableContextSpecialsOptions))
     xbmcgui.Window(10000).setProperty('EmbyRecording', str(enableContextRecordingOptions))
     xbmcgui.Window(10000).setProperty('EmbyRefresh', str(enableContextRefreshOptions))
+    xbmcgui.Window(10000).setProperty('EmbyGoto', str(enableContextGotoOptions))
+    xbmcgui.Window(10000).setProperty('EmbySettings', str(enableContextSettingsOptions))
 
 def update_mode_settings():
     # disable file metadata extraction
@@ -858,6 +963,8 @@ def nodesreset():
     for EmbyServer in list(EmbyServers.values()):
         EmbyServer.Views.update_nodes()
 
+    Dialog.notification(heading=addon_name, icon=icon, message=Translate(33672), sound=False, time=displayMessage)
+
 def crc8(Bytes):
     crc = 0
 
@@ -884,7 +991,6 @@ def get_Path_Seperator(Path):
     Pos = Path.rfind("/")
 
     if Pos == -1:
-        Pos = Path.rfind("\\")
         return "\\"
 
     return "/"
@@ -897,14 +1003,23 @@ def encode_XML(Data):
     Data = Data.replace("'", "&apos;")
     return Data
 
+def decode_XML(Data):
+    Data = Data.replace("&amp;", "&")
+    Data = Data.replace("&lt;", "<")
+    Data = Data.replace("&gt;", ">")
+    Data = Data.replace("&quot;", "\"")
+    Data = Data.replace("&apos;", "'")
+    return Data
+
 mkDir(FolderAddonUserdata)
 mkDir(FolderEmbyTemp)
 mkDir(FolderUserdataThumbnails)
 InitSettings()
 DatabaseFiles = {'texture': "", 'texture-version': 0, 'music': "", 'music-version': 0, 'video': "", 'video-version': 0, 'epg': "", 'epg-version': 0, 'tv': "", 'tv-version': 0}
 _, FolderDatabasefiles = listDir("special://profile/Database/")
-FontPath = translatePath("special://home/addons/plugin.video.emby-next-gen/resources/font/LiberationSans-Bold.ttf")
-noimagejpg = readFileBinary("special://home/addons/plugin.video.emby-next-gen/resources/noimage.jpg")
+FontPath = translatePath("special://home/addons/plugin.service.emby-next-gen/resources/font/LiberationSans-Bold.ttf")
+noimagejpg = readFileBinary("special://home/addons/plugin.service.emby-next-gen/resources/noimage.jpg")
+set_settings_bool('artworkcacheenable', True)
 
 for FolderDatabaseFilename in FolderDatabasefiles:
     if not FolderDatabaseFilename.endswith('-wal') and not FolderDatabaseFilename.endswith('-shm') and not FolderDatabaseFilename.endswith('db-journal'):
@@ -938,5 +1053,3 @@ for FolderDatabaseFilename in FolderDatabasefiles:
             if Version > DatabaseFiles['tv-version']:
                 DatabaseFiles['tv'] = translatePath(f"special://profile/Database/{FolderDatabaseFilename}")
                 DatabaseFiles['tv-version'] = Version
-
-set_settings_bool('artworkcacheenable', True)

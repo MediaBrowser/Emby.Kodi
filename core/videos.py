@@ -4,7 +4,7 @@ from . import common, genre, tag, studio, person, boxsets
 
 
 class Videos:
-    def __init__(self, EmbyServer, SQLs):
+    def __init__(self, EmbyServer, SQLs, Sync=True):
         self.EmbyServer = EmbyServer
         self.SQLs = SQLs
         self.GenreObject = genre.Genre(EmbyServer, self.SQLs)
@@ -12,12 +12,13 @@ class Videos:
         self.StudioObject = studio.Studio(EmbyServer, self.SQLs)
         self.PersonObject = person.Person(EmbyServer, self.SQLs)
         self.BoxSetObject = boxsets.BoxSets(EmbyServer, self.SQLs)
+        self.Sync = Sync
 
-    def change(self, Item):
+    def change(self, Item, StartSync=False):
         if not common.verify_content(Item, "video"):
             return False
 
-        xbmc.log(f"EMBY.core.videos: Process Item: {Item['Name']}", 0) # DEBUG
+        xbmc.log(f"EMBY.core.videos: Process item: {Item['Name']}", 0) # DEBUG
 
         if not common.load_ExistingItem(Item, self.EmbyServer, self.SQLs["emby"], "Video"):
             return False
@@ -29,7 +30,7 @@ class Videos:
         common.set_common(Item, self.EmbyServer.ServerData['ServerId'], False)
         common.set_chapters(Item, self.EmbyServer.ServerData['ServerId'])
 
-        if self.SQLs["video"]: # Sync content to Kodi db
+        if self.Sync: # Sync content to Kodi db
             common.get_path(Item, self.EmbyServer.ServerData['ServerId'])
             Item['TagItems'].append({"LibraryId": Item["LibraryId"], "Type": "Tag", "Id": f"999999993{Item['LibraryId']}", "Name": Item['LibraryName'], "Memo": "library"})
             common.set_MetaItems(Item, self.SQLs, self.GenreObject, self.EmbyServer, "Genre", "GenreItems")
@@ -54,36 +55,29 @@ class Videos:
             common.set_Writer_links(Item['KodiItemId'], self.SQLs, "movie", Item["WritersItems"])
             common.set_Director_links(Item['KodiItemId'], self.SQLs, "movie", Item["DirectorsItems"])
             self.SQLs["video"].set_Favorite_Tag(Item['UserData']['IsFavorite'], Item['KodiItemId'], "movie")
-            Item['Unique'] = self.SQLs["video"].add_uniqueids(Item['KodiItemId'], Item['ProviderIds'], "movie", 'imdb')
-            Item['RatingId'] = self.SQLs["video"].add_ratings(Item['KodiItemId'], "movie", "default", Item['CommunityRating'])
+            Item['KodiUniqueId'] = self.SQLs["video"].add_uniqueids(Item['KodiItemId'], Item['ProviderIds'], "movie", 'imdb')
+            Item['KodiRatingId'] = self.SQLs["video"].add_ratings(Item['KodiItemId'], "movie", "default", Item['CommunityRating'])
+            self.SQLs["video"].add_ratings(Item['KodiItemId'], "movie", "tomatometerallcritics", Item['KodiCriticRating'])
 
             if not Item['ProductionLocations']:
                 Item['ProductionLocations'].append("")
 
-            if Item['CriticRating']:
-                Item['CriticRating'] = float(Item['CriticRating'] / 10.0)
-                self.SQLs["video"].add_ratings(Item['KodiItemId'], "movie", "tomatometerallcritics", Item['CriticRating'])
-
             if Item['UpdateItem']: # new item
-                self.SQLs["video"].update_movie(Item['KodiItemId'], Item['KodiFileId'], Item['KodiName'], Item['Overview'], Item['ShortOverview'], Item['Tagline'], Item['RatingId'], Item['Writers'], Item['KodiArtwork']['poster'], Item['Unique'], Item['KodiSortName'], Item['KodiRunTimeTicks'], Item['OfficialRating'], Item['Genre'], Item['Directors'], Item['OriginalTitle'], Item['Studio'], Item['Trailer'], Item['KodiArtwork']['fanart'].get('fanart', None), Item['ProductionLocations'][0], Item['KodiPremiereDate'], Item['KodiPlayCount'], Item['KodiLastPlayedDate'], None, Item['KodiFilename'], Item['KodiStackedFilename'])
+                self.SQLs["video"].update_movie(Item['KodiItemId'], Item['KodiFileId'], Item['KodiName'], Item['Overview'], Item['ShortOverview'], Item['Tagline'], Item['KodiRatingId'], Item['Writers'], Item['KodiArtwork']['poster'], Item['KodiUniqueId'], Item['KodiSortName'], Item['KodiRunTimeTicks'], Item['OfficialRating'], Item['Genre'], Item['Directors'], Item['OriginalTitle'], Item['Studio'], Item['Trailer'], Item['KodiArtwork']['fanart'].get('fanart', None), Item['ProductionLocations'][0], Item['KodiPremiereDate'], Item['KodiPlayCount'], Item['KodiLastPlayedDate'], None, Item['KodiFilename'], Item['KodiStackedFilename'], Item['KodiDateCreated'])
                 self.SQLs["emby"].update_reference_video(Item['Id'], Item['UserData']['IsFavorite'], Item['ParentId'], Item['PresentationUniqueKey'], Item['LibraryId'])
-
-                # Update Boxset
-                for BoxSet in self.EmbyServer.API.get_Items(Item['ParentId'], ["BoxSet"], True, True, {'GroupItemsIntoCollections': True}):
-                    BoxSet['LibraryId'] = Item['LibraryId']
-                    self.BoxSetObject.change(BoxSet)
-
-                xbmc.log(f"EMBY.core.videos: UPDATE {Item['Id']}: {Item['Name']}", 1) # LOGINFO
+                xbmc.log(f"EMBY.core.videos: UPDATE {Item['Id']}: {Item['Name']}", 0) # LOGDEBUG
             else:
-                self.SQLs["video"].add_movie(Item['KodiItemId'], Item['KodiFileId'], Item['Name'], Item['Overview'], Item['ShortOverview'], Item['Tagline'], Item['RatingId'], Item['Writers'], Item['KodiArtwork']['poster'], Item['Unique'], Item['SortName'], Item['KodiRunTimeTicks'], Item['OfficialRating'], Item['Genre'], Item['Directors'], Item['OriginalTitle'], Item['Studio'], Item['Trailer'], Item['KodiArtwork']['fanart'].get('fanart', None), Item['ProductionLocations'][0], Item['KodiPath'], Item['KodiPathId'], Item['KodiPremiereDate'], Item['KodiFilename'], Item['KodiDateCreated'], Item['KodiPlayCount'], Item['KodiLastPlayedDate'], None, Item['KodiStackedFilename'])
+                self.SQLs["video"].add_movie(Item['KodiItemId'], Item['KodiFileId'], Item['Name'], Item['Overview'], Item['ShortOverview'], Item['Tagline'], Item['KodiRatingId'], Item['Writers'], Item['KodiArtwork']['poster'], Item['KodiUniqueId'], Item['SortName'], Item['KodiRunTimeTicks'], Item['OfficialRating'], Item['Genre'], Item['Directors'], Item['OriginalTitle'], Item['Studio'], Item['Trailer'], Item['KodiArtwork']['fanart'].get('fanart', None), Item['ProductionLocations'][0], Item['KodiPath'], Item['KodiPathId'], Item['KodiPremiereDate'], Item['KodiFilename'], Item['KodiDateCreated'], Item['KodiPlayCount'], Item['KodiLastPlayedDate'], None, Item['KodiStackedFilename'], Item['ChapterInfo'])
                 self.SQLs["emby"].add_reference_video(Item['Id'], Item['LibraryId'], Item['KodiItemId'], Item['UserData']['IsFavorite'], Item['KodiFileId'], Item['ParentId'], Item['PresentationUniqueKey'], Item['Path'], Item['KodiPathId'])
+                xbmc.log(f"EMBY.core.videos: ADD {Item['Id']}: {Item['Name']}", 0) # LOGDEBUG
 
-            utils.FavoriteQueue.put(((Item['KodiArtwork']['favourite'], Item['UserData']['IsFavorite'], f"{Item['KodiPath']}{Item['KodiFilename']}", Item['Name'], "media", 0),))
+            common.update_boxsets(StartSync, Item['ParentId'], Item['LibraryId'], self.SQLs, self.EmbyServer) # Update Boxset
+            utils.FavoriteQueue.put(((common.set_Favorites_Artwork_Overlay("Video", "Movies", Item['Id'], self.EmbyServer.ServerData['ServerId'], Item['KodiArtwork']['favourite']), Item['UserData']['IsFavorite'], f"{Item['KodiPath']}{Item['KodiFilename']}", Item['Name'], "media", 0),))
         else: # Unsync content to Kodi db (e.g. Emby specials)
             common.SwopMediaSources(Item)  # 3D
             self.SQLs["emby"].add_streamdata(Item['Id'], Item['Streams'])
             self.SQLs["emby"].add_reference_video(Item['Id'], Item['LibraryId'], None, Item['UserData']['IsFavorite'], None, Item['ParentId'], Item['PresentationUniqueKey'], Item['Path'], None)
-            xbmc.log(f"EMBY.core.videos: ADD {Item['Id']}: {Item['Name']}", 1) # LOGINFO
+            xbmc.log(f"EMBY.core.videos: ADD UNSYNCED {Item['Id']}: {Item['Name']}", 0) # LOGDEBUG
 
         self.SQLs["emby"].add_multiversion(Item, "Video", self.EmbyServer.API, self.SQLs)
         return not Item['UpdateItem']
@@ -95,14 +89,14 @@ class Videos:
         self.SQLs["video"].set_Favorite_Tag(Item['IsFavorite'], Item['KodiItemId'], "movie")
         self.SQLs["video"].update_bookmark_playstate(Item['KodiFileId'], Item['KodiPlayCount'], Item['KodiLastPlayedDate'], Item['KodiPlaybackPositionTicks'], Item['KodiRunTimeTicks'])
         self.SQLs["emby"].update_favourite(Item['IsFavorite'], Item['Id'], "Video")
-        self.set_favorite(Item['IsFavorite'], Item['KodiFileId'], Item['KodiItemId'])
+        self.set_favorite(Item['IsFavorite'], Item['KodiFileId'], Item['KodiItemId'], Item['Id'])
         pluginmenu.reset_querycache("Video")
         xbmc.log(f"EMBY.core.videos: New resume point {Item['Id']}: {Item['PlaybackPositionTicks']} / {Item['KodiPlaybackPositionTicks']}", 0) # LOGDEBUG
         xbmc.log(f"EMBY.core.videos: USERDATA [{Item['KodiFileId']} / {Item['KodiItemId']}] {Item['Id']}", 1) # LOGINFO
 
     def remove(self, Item):
         if common.delete_ContentItem(Item, self.SQLs, "movie", "Video"):
-            self.set_favorite(False, Item['KodiFileId'], Item['KodiItemId'])
+            self.set_favorite(False, Item['KodiFileId'], Item['KodiItemId'], Item['Id'])
             self.SQLs["video"].delete_movie(Item['KodiItemId'], Item['KodiFileId'])
             xbmc.log(f"EMBY.core.videos: DELETE [{Item['KodiItemId']} / {Item['KodiFileId']}] {Item['Id']}", 1) # LOGINFO
 
@@ -112,6 +106,6 @@ class Videos:
             LibraryName, _ = self.EmbyServer.library.WhitelistUnique[Item['LibraryId']]
             self.SQLs["video"].delete_library_links_tags(Item['KodiItemId'], "movie", LibraryName)
 
-    def set_favorite(self, IsFavorite, KodiFileId, KodiItemId):
-        FullPath, Image, Itemname = self.SQLs["video"].get_favoriteData(KodiFileId, KodiItemId, "movie")
-        utils.FavoriteQueue.put(((Image, IsFavorite, FullPath, Itemname, "media", 0),))
+    def set_favorite(self, IsFavorite, KodiFileId, KodiItemId, EmbyItemId):
+        FullPath, ImageUrl, Itemname = self.SQLs["video"].get_favoriteData(KodiFileId, KodiItemId, "movie")
+        utils.FavoriteQueue.put(((common.set_Favorites_Artwork_Overlay("Video", "Movies", EmbyItemId, self.EmbyServer.ServerData['ServerId'], ImageUrl), IsFavorite, FullPath, Itemname, "media", 0),))
