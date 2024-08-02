@@ -263,7 +263,7 @@ class Library:
 
             if UpdateData:
                 UpdateSyncData = True
-                self.updated(UpdateData, True)
+                self.updated(UpdateData, False)
 
         # Update sync update timestamp
         if UpdateSyncData:

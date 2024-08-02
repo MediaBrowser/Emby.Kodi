@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8' standalone="yes"?>
-<addon id="plugin.service.emby-next-gen" name="Emby for Kodi Next Gen" version="10.0.44" provider-name="quickmic">
+<addon id="plugin.service.emby-next-gen" name="Emby for Kodi Next Gen" version="10.0.45" provider-name="quickmic">
     <requires>
         <import addon="xbmc.python" version="3.0.1"/>
         <import addon="script.module.dateutil" version="2.8.1" />
@@ -56,7 +56,7 @@
             </item>
             <item library="service.py" args="refreshitem">
                 <label>30410</label>
-                <visible>[String.IsEqual(Window(10000).Property(EmbyRefresh),True) + !String.StartsWith(ListItem.FolderPath,"library://") + !String.StartsWith(ListItem.FolderPath,"addons://") + !String.StartsWith(ListItem.FolderPath,"plugin://") + !String.StartsWith(ListItem.FolderPath,"favourites:") + !String.IsEmpty(ListItem.Filename) + !String.IsEqual(ListItem.FileExtension,"m3u") + !String.StartsWith(ListItem.Path,"pvr://")]</visible>
+                <visible>[String.IsEqual(Window(10000).Property(EmbyRefresh),True) + !String.StartsWith(ListItem.FolderPath,"addons://") + !String.StartsWith(ListItem.FolderPath,"plugin://") + !String.StartsWith(ListItem.FolderPath,"favourites:") + !String.IsEqual(ListItem.FileExtension,"m3u") + !String.StartsWith(ListItem.Path,"pvr://")] + [!String.IsEmpty(ListItem.Filename) | [String.IsEqual(ListItem.DBTYPE,"tvshow") | String.IsEqual(ListItem.DBTYPE,"season")]]</visible>
             </item>
             <item library="service.py" args="deleteitem">
                 <label>30409</label>

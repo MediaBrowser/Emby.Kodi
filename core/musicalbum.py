@@ -31,7 +31,7 @@ class MusicAlbum:
         # Detect compilations
         Compilation = 0
 
-        if Item['AlbumArtist'].lower() in ("various artists", "various", "various items", "sountrack", "xvarious artistsx"):
+        if Item['AlbumArtist'].lower() in ("various artists", "various", "various items", "soundtrack", "xvarious artistsx"):
             Compilation = 1
             xbmc.log(f"EMBY.core.musicalbum: Compilation detected: {Item['Name']}", 0) # LOGDEBUG
 
