@@ -144,8 +144,17 @@ def browse(Handle, Id, query, ParentId, Content, ServerId, LibraryId, ContentSup
         Extras.update({"SortBy": "DatePlayed"})
         EmbyContentQuery = (ParentId, [Content], True, Extras, True, LibraryId)
     elif query == 'Recommendations':
+        Doubles = []
+
         for Item in utils.EmbyServers[ServerId].API.get_recommendations(ParentId):
+            if Item['Name'] not in Doubles:
+                Doubles.append(Item['Name'])
+            else:
+                continue
+
             ItemsListings = load_ListItem(ParentId, Item, ServerId, ItemsListings, Content, LibraryId)
+
+        del Doubles
     elif query == 'BoxSet':
         ParentId = Id
 
