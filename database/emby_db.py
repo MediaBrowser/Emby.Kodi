@@ -461,7 +461,7 @@ class EmbyDatabase:
     # Mapping
     def get_embypresentationkey_by_id_embytype(self, EmbyId, Tables):
         for Table in Tables:
-            self.cursor.execute(f"SELECT  EmbyPresentationKey FROM {Table} WHERE EmbyId = ?", (EmbyId,))
+            self.cursor.execute(f"SELECT EmbyPresentationKey FROM {Table} WHERE EmbyId = ?", (EmbyId,))
             Data = self.cursor.fetchone()
 
             if Data:
@@ -884,11 +884,14 @@ class EmbyDatabase:
         self.cursor.execute(f"UPDATE {EmbyType} SET KodiId = ?, LibraryIds = ? WHERE EmbyId = ?", (KodiId, LibraryIds, EmbyId))
 
     def get_KodiId_by_EmbyPresentationKey(self, EmbyType, EmbyPresentationKey):
-        self.cursor.execute(f"SELECT KodiId FROM {EmbyType} WHERE EmbyPresentationKey = ?", (EmbyPresentationKey,))
-        Data = self.cursor.fetchone()
+        if EmbyPresentationKey:
+            self.cursor.execute(f"SELECT KodiId FROM {EmbyType} WHERE EmbyPresentationKey = ?", (EmbyPresentationKey,))
+            KodiIds = self.cursor.fetchall()
 
-        if Data:
-            return Data[0]
+            if KodiIds:
+                for KodiId in KodiIds:
+                    if KodiId[0]:
+                        return KodiId[0]
 
         return None
 

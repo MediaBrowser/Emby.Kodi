@@ -193,7 +193,7 @@ class HTTP:
                     if StatusCodeSocket:
                         return StatusCodeSocket
 
-                if str(error) == "timed out": # workaround when TimeoutError not raised
+                if str(error).find("timed out") != -1: # workaround when TimeoutError not raised
                     if RetryCounter <= 10:
                         continue
 
@@ -312,7 +312,7 @@ class HTTP:
                 StatusCode = 605
                 break
             except Exception as error:
-                if str(error) == "timed out": # workaround when TimeoutError not raised
+                if str(error).find("timed out") != -1: # workaround when TimeoutError not raised
                     if not Timeout or (ConnectionId != "MAIN" and self.SocketBusy["MAIN"].locked()): # Websocket or binary -> wait longer for e.g. images. MAIN queries could block IO
                         continue
 
