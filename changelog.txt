@@ -1,3 +1,9 @@
+10.0.47
+=============
+skip retries on async requests
+
+
+
 10.0.46
 =============
 fix multiversion content assinged to collection
