@@ -884,10 +884,14 @@ class HTTP:
                         xbmc.log(f"EMBY.emby.emby: THREAD: ---<[ Async {self.EmbyServer.ServerData['ServerId']} ] shutdown 2", 0) # LOGDEBUG
                         return
 
-                    if StatusCode in (600, 602, 603, 604, 605, 612):
+                    if StatusCode in (600, 604, 605, 612):
                         xbmc.log(f"EMBY.emby.http: Async retry {StatusCode}", 2) # LOGWARNING
                         self.socket_close("ASYNC")
                         continue
+
+                    if StatusCode in (602, 603):
+                        xbmc.log(f"EMBY.emby.http: Async timeout {StatusCode}", 2) # LOGWARNING -> Emby server is sometimes not responsive, as no response is expected, skip it
+                        self.socket_close("ASYNC")
 
                     break
 
