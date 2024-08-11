@@ -193,7 +193,7 @@ class HTTP:
                     if StatusCodeSocket:
                         return StatusCodeSocket
 
-                if str(error) == "timed out": # workaround when TimeoutError not raised
+                if str(error).find("timed out") != -1: # workaround when TimeoutError not raised
                     if RetryCounter <= 10:
                         continue
 
@@ -312,7 +312,7 @@ class HTTP:
                 StatusCode = 605
                 break
             except Exception as error:
-                if str(error) == "timed out": # workaround when TimeoutError not raised
+                if str(error).find("timed out") != -1: # workaround when TimeoutError not raised
                     if not Timeout or (ConnectionId != "MAIN" and self.SocketBusy["MAIN"].locked()): # Websocket or binary -> wait longer for e.g. images. MAIN queries could block IO
                         continue
 
@@ -884,10 +884,14 @@ class HTTP:
                         xbmc.log(f"EMBY.emby.emby: THREAD: ---<[ Async {self.EmbyServer.ServerData['ServerId']} ] shutdown 2", 0) # LOGDEBUG
                         return
 
-                    if StatusCode in (600, 602, 603, 604, 605, 612):
+                    if StatusCode in (600, 604, 605, 612):
                         xbmc.log(f"EMBY.emby.http: Async retry {StatusCode}", 2) # LOGWARNING
                         self.socket_close("ASYNC")
                         continue
+
+                    if StatusCode in (602, 603):
+                        xbmc.log(f"EMBY.emby.http: Async timeout {StatusCode}", 2) # LOGWARNING -> Emby server is sometimes not responsive, as no response is expected, skip it
+                        self.socket_close("ASYNC")
 
                     break
 

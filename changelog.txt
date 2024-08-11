@@ -1,3 +1,27 @@
+10.0.47
+=============
+skip retries on async requests
+
+
+
+10.0.46
+=============
+fix multiversion content assinged to collection
+fix Windows specific connection issues
+
+
+
+10.0.45
+=============
+fix dynamic node recommended (double items)
+fix upcoming dynamic node when not item name is reported
+fix soundtrack tagged as compilation
+add context menu refresh option for seasons and series
+add config redirect from helper plugin
+fix boxset/collection updates
+
+
+
 10.0.44
 =============
 fix init sync for records when recording in progress

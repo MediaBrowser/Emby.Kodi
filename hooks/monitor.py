@@ -165,6 +165,7 @@ def monitor_EventQueue(): # Threaded / queued
             elif Event[0] == "managelibsselection":
                 start_new_thread(pluginmenu.select_managelibs, ())
             elif Event[0] == "opensettings":
+                xbmc.executebuiltin('Dialog.Close(all,true)')
                 xbmc.executebuiltin('Addon.OpenSettings(plugin.service.emby-next-gen)')
             elif Event[0] == "backup":
                 start_new_thread(Backup, ())

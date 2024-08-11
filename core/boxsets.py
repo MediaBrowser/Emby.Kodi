@@ -19,7 +19,7 @@ class BoxSets:
         # Query assigned content for collections
         ContentsAssignedToBoxset = []
 
-        for ContentAssignedToBoxset in self.EmbyServer.API.get_Items(Item['Id'], ["All"], True, True, {'GroupItemsIntoCollections': True}, "", False):
+        for ContentAssignedToBoxset in self.EmbyServer.API.get_Items(Item['Id'], ["All"], True, True, {'GroupItemsIntoCollections': True, "Fields": "PresentationUniqueKey"}, "", False):
             ContentsAssignedToBoxset.append(ContentAssignedToBoxset)
 
         # Add new collection tag
@@ -47,7 +47,8 @@ class BoxSets:
                 continue
 
             ContentAssignedToBoxset.update({'KodiItemId': Item['KodiItemId']})
-            ContentItemKodiId = self.SQLs["emby"].get_KodiId_by_EmbyId_EmbyType(ContentAssignedToBoxset['Id'], ContentAssignedToBoxset['Type'])
+            common.set_PresentationUniqueKey(ContentAssignedToBoxset)
+            ContentItemKodiId = self.SQLs["emby"].get_KodiId_by_EmbyPresentationKey(ContentAssignedToBoxset['Type'], ContentAssignedToBoxset['PresentationUniqueKey'])
 
             if ContentAssignedToBoxset['Type'] in ("Movie", "Video") and ContentItemKodiId:
                 if str(ContentItemKodiId) in CurrentBoxSetContent:
