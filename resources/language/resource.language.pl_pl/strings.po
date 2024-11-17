@@ -2874,3 +2874,139 @@ msgstr "Nieprawidłowy argument"
 msgctxt "#33680"
 msgid "Download path not found"
 msgstr "Nie znaleziono ścieżki pobierania"
+
+msgctxt "#33681"
+msgid "Add movie links to tvshows"
+msgstr "Dodaj linki do filmów do programów telewizyjnych"
+
+msgctxt "#33682"
+msgid "Movies assigned to tvshows listed in Kodi's tvshow views. Assignment done by Emby collections."
+msgstr "Filmy przypisane do programów telewizyjnych wymienione w widokach programów telewizyjnych Kodi. "
+
+msgctxt "#33683"
+msgid "Enable start sync"
+msgstr "Włącz synchronizację startową"
+
+msgctxt "#33684"
+msgid "If disabled, Emby content will not be synced while Kodi start"
+msgstr "Jeśli wyłączone, zawartość Emby nie będzie synchronizowana podczas uruchamiania Kodi"
+
+msgctxt "#33685"
+msgid "Use classic selection"
+msgstr "Użyj klasycznego zaznaczenia"
+
+msgctxt "#33686"
+msgid "Selection menu is shown when multicontent is available"
+msgstr "Menu wyboru jest wyświetlane, gdy dostępna jest wielozawartość"
+
+msgctxt "#33687"
+msgid "Multicontent"
+msgstr "Wiele treści"
+
+msgctxt "#33688"
+msgid "Deduplicate content"
+msgstr "Deduplikuj zawartość"
+
+msgctxt "#33689"
+msgid "Removes similar content on multiple Emby server libraries"
+msgstr "Usuwa podobną zawartość z wielu bibliotek serwera Emby"
+
+msgctxt "#33690"
+msgid "Set highest video resolution as default"
+msgstr "Ustaw najwyższą rozdzielczość wideo jako domyślną"
+
+msgctxt "#33691"
+msgid "This option applies to Kodi's multiversion selection and requires library re-sync on toggle."
+msgstr "Ta opcja dotyczy wyboru wielu wersji Kodi i wymaga ponownej synchronizacji biblioteki po przełączeniu."
+
+msgctxt "#33692"
+msgid "Auto select highest resolution"
+msgstr "Automatyczny wybór najwyższej rozdzielczości"
+
+msgctxt "#33693"
+msgid "Applies to classic multiselect option"
+msgstr "Dotyczy klasycznej opcji wielokrotnego wyboru"
+
+msgctxt "#33694"
+msgid "Enable Kodi API notification"
+msgstr "Włącz powiadamianie Kodi API"
+
+msgctxt "#33695"
+msgid "Report events via Kodi's API for external usage"
+msgstr "Raportuj zdarzenia za pośrednictwem API Kodi do użytku zewnętrznego"
+
+msgctxt "#33696"
+msgid "Access denied"
+msgstr "Odmowa dostępu"
+
+msgctxt "#33697"
+msgid "Albums by year"
+msgstr "Albumy według roku"
+
+msgctxt "#33698"
+msgid "Singles by year"
+msgstr "Single według roku"
+
+msgctxt "#33699"
+msgid "Singles"
+msgstr "Single"
+
+msgctxt "#33700"
+msgid "Recently added singles"
+msgstr "Ostatnio dodane single"
+
+msgctxt "#33701"
+msgid "Random singles"
+msgstr "Losowe single"
+
+msgctxt "#33702"
+msgid "None"
+msgstr "Żadne"
+
+msgctxt "#33703"
+msgid "No path info available, be careful what you do!"
+msgstr "Brak dostępnych informacji o ścieżce. Uważaj, co robisz!"
+
+msgctxt "#33704"
+msgid "TVShow"
+msgstr "Program telewizyjny"
+
+msgctxt "#33705"
+msgid "Select primary library"
+msgstr "Wybierz bibliotekę główną"
+
+msgctxt "#33706"
+msgid "Refresh LiveTv"
+msgstr "Odśwież telewizję na żywo"
+
+msgctxt "#33707"
+msgid "Refresh Themes"
+msgstr "Odśwież motywy"
+
+msgctxt "#33708"
+msgid "Disable LiveTv"
+msgstr "Wyłącz telewizję na żywo"
+
+msgctxt "#33709"
+msgid "Enable LiveTv"
+msgstr "Włącz telewizję na żywo"
+
+msgctxt "#33710"
+msgid "Disable Themes"
+msgstr "Wyłącz motywy"
+
+msgctxt "#33711"
+msgid "Enable Themes"
+msgstr "Włącz motywy"
+
+msgctxt "#33712"
+msgid "Follow http"
+msgstr "Śledź http"
+
+msgctxt "#33713"
+msgid "External http content will be directly accessed and not piped through Emby server. This option can fix Emby server playback issues."
+msgstr "Dostęp do zewnętrznej zawartości http będzie możliwy bezpośrednio i nie będzie przesyłany przez serwer Emby. "
+
+msgctxt "#33714"
+msgid "Follow http timeout"
+msgstr "Przekroczono limit czasu protokołu http"

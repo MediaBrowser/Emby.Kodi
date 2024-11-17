@@ -1,7 +1,7 @@
 from _thread import start_new_thread
 import xbmc
 import xbmcgui
-from helper import utils, queue
+from helper import utils, queue, pluginmenu
 from database import dbio
 from emby import listitem
 from core import common
@@ -89,7 +89,7 @@ def GetPlaylistSize(PlaylistId):
     return 0
 
 def GetActivePlayer():
-    Result = utils.SendJson('{"jsonrpc":"2.0","method":"Player.GetActivePlayers","id":1}', True).get("result", {})
+    Result = utils.SendJson('{"jsonrpc":"2.0","method":"Player.GetActivePlayers","id":1}', {}).get("result", {})
 
     if Result:
         xbmc.log(f"EMBY.helper.playerops: [ GetActivePlayer ] {Result}", 1) # LOGINFO
@@ -103,7 +103,7 @@ def PlayPlaylistItem(PlaylistId, Index):
     globals()['PlayerId'] = PlaylistId
 
 def AddSubtitle(Path):
-    utils.SendJson(f'{{"jsonrpc":"2.0", "method":"Player.AddSubtitle", "params":{{"playerid": 1, "subtitle":"{Path}"}}, "id": 1}}')
+    utils.SendJson(f'{{"jsonrpc":"2.0", "method":"Player.AddSubtitle", "params":{{"playerid": 1, "subtitle":"{Path}"}}, "id": 1}}', True)
 
 def SetSubtitle(Enable):
     if Enable:
@@ -343,19 +343,24 @@ def PlayEmby(ItemIds, PlayCommand, StartIndex, StartPositionTicks, EmbyServer, T
             return
 
         ListItem = listitem.set_ListItem(Item, EmbyServer.ServerData['ServerId'])
-        Path, ShortType = common.get_path_type_from_item(EmbyServer.ServerData['ServerId'], Item)
+        common.set_path_filename(Item, EmbyServer.ServerData['ServerId'], None, True)
 
         if "UserData" in Item and "PlaybackPositionTicks" in Item["UserData"] and Item["UserData"]["PlaybackPositionTicks"]:
-            PlaylistItems[StartIndex] = (Item['Id'], ShortType, None, None, ListItem, Path, Item["UserData"]["PlaybackPositionTicks"])
+            PlaylistItems[StartIndex] = (Item['Id'], Item['Type'], None, None, ListItem, Item['KodiFullPath'], Item["UserData"]["PlaybackPositionTicks"])
         else:
-            PlaylistItems[StartIndex] = (Item['Id'], ShortType, None, None, ListItem, Path, 0)
+            PlaylistItems[StartIndex] = (Item['Id'], Item['Type'], None, None, ListItem, Item['KodiFullPath'], 0)
+
+        if Item['Type'] not in pluginmenu.QueryCache:
+            pluginmenu.QueryCache[Item['Type']] = {}
+
+        pluginmenu.QueryCache[Item['Type']]["remoteplayback"] = [True, ((Item['KodiFullPath'], ListItem, False), )]
 
     globals()["EmbyIdPlaying"] = int(PlaylistItems[StartIndex][0])
 
-    if PlaylistItems[StartIndex][1] == "a" or PlaylistItems[StartIndex][2] == "song": # audio
+    if PlaylistItems[StartIndex][1] == "Audio":
         PlayerIdPlaylistId = 0
         globals()['PlayerId'] = 0
-    elif PlaylistItems[StartIndex][1] == "p": # pictures
+    elif PlaylistItems[StartIndex][1] == "Photo":
         PlayerIdPlaylistId = 2
     else: # video
         PlayerIdPlaylistId = 1
@@ -380,8 +385,8 @@ def PlayEmby(ItemIds, PlayCommand, StartIndex, StartPositionTicks, EmbyServer, T
         else:
             utils.Playlists[PlayerIdPlaylistId].add(PlaylistItems[StartIndex][5], PlaylistItems[StartIndex][4], index=KodiPlaylistIndexStartitem) # Path, ListItem, Index
     else: # picture
-        globals()["Pictures"].append((Path, ListItem))
-        utils.SendJson(f'{{"jsonrpc":"2.0","id":1,"method":"Playlist.Add","params":{{"playlistid":2,"item":{{"file":"{Path}"}}}}}}')
+        globals()["Pictures"].append((Item['KodiFullPath'], ListItem))
+        utils.SendJson(f'{{"jsonrpc":"2.0","id":1,"method":"Playlist.Add","params":{{"playlistid":2,"item":{{"file":"{Item["KodiFullPath"]}"}}}}}}')
 
     if PlayerIdPlaylistId == 2: # picture
         globals()["Pictures"][KodiPlaylistIndexStartitem][1].select(True)
@@ -389,9 +394,7 @@ def PlayEmby(ItemIds, PlayCommand, StartIndex, StartPositionTicks, EmbyServer, T
         xbmc.executebuiltin('Action(Back)')
         ClearPlaylist(2)
     else:
-#        if isRemote:
         globals()['RemoteCommandActive'][4] += 1
-
         globals().update({"AVStarted": False, "PlayerPause": False})
         StartPositionTicks = int(StartPositionTicks)
 
@@ -430,15 +433,19 @@ def PlayEmby(ItemIds, PlayCommand, StartIndex, StartPositionTicks, EmbyServer, T
         if DelayedQueryEmbyIds:
             for Item in EmbyServer.API.get_Items_Ids(DelayedQueryEmbyIds, ["Episode", "Movie", "Trailer", "MusicVideo", "Audio", "Video", "Photo"], True, False, "", None, {}):
                 ListItem = listitem.set_ListItem(Item, EmbyServer.ServerData['ServerId'])
-                Path, ShortType = common.get_path_type_from_item(EmbyServer.ServerData['ServerId'], Item)
+                common.set_path_filename(Item, EmbyServer.ServerData['ServerId'], None, True)
 
                 for Index, PlaylistItem in enumerate(PlaylistItems):
                     if str(Item['Id']) == str(PlaylistItem[0]):
                         if "UserData" in Item and "PlaybackPositionTicks" in Item["UserData"] and Item["UserData"]["PlaybackPositionTicks"]:
-                            PlaylistItems[Index] = (Item['Id'], ShortType, None, None, ListItem, Path, Item["UserData"]["PlaybackPositionTicks"])
+                            PlaylistItems[Index] = (Item['Id'], Item['Type'], None, None, ListItem, Item['KodiFullPath'], Item["UserData"]["PlaybackPositionTicks"])
                         else:
-                            PlaylistItems[Index] = (Item['Id'], ShortType, None, None, ListItem, Path, 0)
+                            PlaylistItems[Index] = (Item['Id'], Item['Type'], None, None, ListItem, Item['KodiFullPath'], 0)
 
+                        if Item['Type'] not in pluginmenu.QueryCache:
+                            pluginmenu.QueryCache[Item['Type']] = {}
+
+                        pluginmenu.QueryCache[Item['Type']]["remoteplayback"] = [True, ((Item['KodiFullPath'], ListItem, False), )]
                         continue
 
         for Index, PlaylistItem in enumerate(PlaylistItems):
@@ -561,7 +568,7 @@ def disable_RemoteClients(ServerId):
         init_RemoteClient(ServerId)
         globals().update({"RemoteMode": False, "WatchTogether": False, "RemoteControl": False, "RemoteCommandActive": [0, 0, 0, 0, 0]})
 
-        if not utils.EmbyServers[ServerId].library.KodiStartSyncRunning:
+        if not utils.EmbyServers[ServerId].library.LockKodiStartSync.locked():
             start_new_thread(utils.EmbyServers[ServerId].library.KodiStartSync, (False,))
 
 def send_RemoteClients(ServerId, SendSessionIds, Force):

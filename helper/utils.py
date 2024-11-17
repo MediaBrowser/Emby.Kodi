@@ -3,7 +3,7 @@ import os
 import shutil
 import json
 from urllib.parse import quote
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from dateutil import tz, parser
 
 try:
@@ -24,16 +24,16 @@ except Exception as error:
     sys.exit(0)
 
 EmbyTypeMapping = {"Person": "actor", "Video": "movie", "Movie": "movie", "Series": "tvshow", "Season": "season", "Episode": "episode", "Audio": "song", "MusicAlbum": "album", "MusicArtist": "artist", "Genre": "genre", "MusicGenre": "genre", "Tag": "tag" , "Studio": "studio" , "BoxSet": "set", "Folder": None, "MusicVideo": "musicvideo", "Playlist": "Playlist"}
-KodiTypeMapping = {"actor": "Person", "tvshow": "Series", "season": "Season", "episode": "Episode", "song": "Audio", "album": "MusicAlbum", "artist": "MusicArtist", "genre": "Genre", "tag": "Tag", "studio": "Studio" , "set": "BoxSet", "musicvideo": "MusicVideo", "playlist": "Playlist", "movie": "Movie"}
+KodiTypeMapping = {"actor": "Person", "tvshow": "Series", "season": "Season", "episode": "Episode", "song": "Audio", "album": "MusicAlbum", "artist": "MusicArtist", "genre": "Genre", "tag": "Tag", "studio": "Studio" , "set": "BoxSet", "musicvideo": "MusicVideo", "playlist": "Playlist", "movie": "Movie", "videoversion": "Video"}
 addon_version = Addon.getAddonInfo('version')
 addon_name = Addon.getAddonInfo('name')
 icon = ""
-ForbiddenCharecters = ("/", "<", ">", ":", '"', "\\", "|", "?", "*", " ", chr(0), chr(1), chr(2), chr(3), chr(4), chr(5), chr(6), chr(7), chr(8), chr(9), chr(10), chr(11), chr(12), chr(13), chr(14), chr(15), chr(16), chr(17), chr(18), chr(19), chr(20), chr(21), chr(22), chr(23), chr(24), chr(25), chr(26), chr(27), chr(28), chr(29), chr(30), chr(31))
+ForbiddenCharecters = ("/", "<", ">", ":", '"', "\\", "|", "?", "*", " ", "&", chr(0), chr(1), chr(2), chr(3), chr(4), chr(5), chr(6), chr(7), chr(8), chr(9), chr(10), chr(11), chr(12), chr(13), chr(14), chr(15), chr(16), chr(17), chr(18), chr(19), chr(20), chr(21), chr(22), chr(23), chr(24), chr(25), chr(26), chr(27), chr(28), chr(29), chr(30), chr(31))
 FilesizeSuffixes = ('B', 'KB', 'MB', 'GB', 'TB')
 CustomDialogParameters = (Addon.getAddonInfo('path'), "default", "1080i")
 EmbyServers = {}
 ItemSkipUpdate = []
-MinimumVersion = "9.4.0"
+MinimumVersion = "11.1.0"
 EmbyServerVersionResync = "4.9.0.25"
 refreshskin = False
 device_name = "Kodi"
@@ -137,6 +137,7 @@ busyMsg = True
 offlineMsg = True
 imdbrating = True
 websocketenabled = True
+startsyncenabled = True
 remotecontrol_force_clients = True
 remotecontrol_client_control = True
 remotecontrol_sync_clients = True
@@ -162,15 +163,17 @@ FolderAddonUserdata = "special://profile/addon_data/plugin.service.emby-next-gen
 FolderEmbyTemp = "special://profile/addon_data/plugin.service.emby-next-gen/temp/"
 FolderUserdataThumbnails = "special://profile/Thumbnails/"
 PlaylistPath = "special://profile/playlists/mixed/"
-KodiFavFile = "special://profile/favourites.xml"
 SystemShutdown = False
 SyncPause = {}  # keys: playing, kodi_sleep, embyserverID, , kodi_rw, priority (thread with higher priorit needs access)
 WidgetRefresh = {"video": False, "music": False}
 BoxSetsToTags = False
+MovieToSeries = True
 SyncFavorites = False
 Dialog = xbmcgui.Dialog()
 XbmcPlayer = xbmc.Player()  # Init Player
 WizardCompleted = True
+LiveTVEnabled = False
+ThemesEnabled = False
 AssignEpisodePostersToTVShowPoster = False
 sslverify = False
 AddonModePath = "http://127.0.0.1:57342/"
@@ -203,6 +206,11 @@ AllPaging = 5000
 FolderPaging = 100000
 PersonPaging = 100000
 MaxURILength = 1500
+SyncHighestResolutionAsDefault = True
+AutoSelectHighestResolution = False
+NotifyEvents = False
+followhttp = False
+followhttptimeout = 5
 
 def refresh_widgets(isVideo):
     xbmc.log("EMBY.helper.utils: Refresh widgets initialized", 1) # LOGINFO
@@ -224,13 +232,14 @@ def refresh_widgets(isVideo):
 def SendJson(JsonString, ForceBreak=False):
     LogSend = False
     Ret = {}
+    JsonString = JsonString.replace("\\", "\\\\") # escape backslashes
 
     for Index in range(55): # retry -> timeout 10 seconds
         Ret = xbmc.executeJSONRPC(JsonString)
 
         if not Ret: # Valid but not correct Kodi return value -> Kodi bug
             xbmc.log(f"Emby.helper.utils: Json no response: {JsonString}", 2) # LOGWARNING
-            return True
+            return {}
 
         Ret = json.loads(Ret)
 
@@ -239,7 +248,7 @@ def SendJson(JsonString, ForceBreak=False):
             return Ret
 
         if ForceBreak:
-            return False
+            return {}
 
         if not LogSend:
             xbmc.log(f"Emby.helper.utils: Json error, retry: {JsonString}", 2) # LOGWARNING
@@ -326,7 +335,7 @@ def sleep(Seconds):
     return False
 
 # Delete objects from kodi cache
-def delFolder(path, Pattern="", ExcludeFile=""):
+def delFolder(path, Pattern=""):
     xbmc.log("EMBY.helper.utils: --[ delete folder ]", 0) # LOGDEBUG
     dirs, files = listDir(path)
     SelectedDirs = ()
@@ -341,7 +350,7 @@ def delFolder(path, Pattern="", ExcludeFile=""):
     delete_recursive(path, SelectedDirs)
 
     for Filename in files:
-        if Pattern in Filename and ExcludeFile != Filename:
+        if Pattern in Filename:
             delFile(f"{path}{Filename}")
 
     if path:
@@ -512,7 +521,7 @@ def translatePath(Data):
     return Path
 
 def currenttime():
-    return datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
+    return datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
 
 def currenttime_kodi_format():
     return datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -523,8 +532,8 @@ def currenttime_kodi_format_and_unixtime():
     UnixTime = int(datetime.timestamp(Current))
     return KodiFormat, UnixTime
 
-def get_unixtime_emby_format(): # Position(ticks) in Emby format 1 tick = 10000ms
-    return datetime.timestamp(datetime.utcnow()) * 10000
+def get_unixtime_emby_format(): # Position(ticks) in Emby format 1 sec = 10000
+    return datetime.timestamp(datetime.now(timezone.utc)) * 10000
 
 def get_url_info(ConnectionString):
     if not ConnectionString.startswith("http://") and not ConnectionString.startswith("https://"):
@@ -641,15 +650,13 @@ def valid_Filename(Filename):
 
     return Filename
 
-def PathToFilenameReplaceSpecialCharecters(Path):
+def get_Filename(Path, NativeMode):
     Separator = get_Path_Seperator(Path)
     Pos = Path.rfind(Separator)
-    Path = Path[Pos + 1:]
-    Filename = quote(Path)
+    Filename = Path[Pos + 1:]
 
-    while Filename.find("%") != -1:
-        Pos = Filename.find("%")
-        Filename = Filename.replace(Filename[Pos:Pos + 3], "_")
+    if not NativeMode and not usepathsubstitution:
+        Filename = quote(Filename)
 
     return Filename
 
@@ -754,6 +761,7 @@ def InitSettings():
     load_settings_int('FolderPaging')
     load_settings_int('PersonPaging')
     load_settings_int('MaxURILength')
+    load_settings_int('followhttptimeout')
     load_settings_bool('ArtworkLimitations')
     load_settings_bool('sslverify')
     load_settings_bool('syncduringplayback')
@@ -837,6 +845,8 @@ def InitSettings():
     load_settings_bool('offlineMsg')
     load_settings_bool('AssignEpisodePostersToTVShowPoster')
     load_settings_bool('WizardCompleted')
+    load_settings_bool('LiveTVEnabled')
+    load_settings_bool('ThemesEnabled')
     load_settings_bool('verifyFreeSpace')
     load_settings_bool('usepathsubstitution')
     load_settings_bool('remotecontrol_force_clients')
@@ -846,10 +856,16 @@ def InitSettings():
     load_settings_bool('remotecontrol_resync_clients')
     load_settings_bool('remotecontrol_keep_clients')
     load_settings_bool('websocketenabled')
+    load_settings_bool('startsyncenabled')
     load_settings_bool('BoxSetsToTags')
+    load_settings_bool('MovieToSeries')
     load_settings_bool('SyncFavorites')
     load_settings_bool('SyncLiveTvOnEvents')
     load_settings_bool('imdbrating')
+    load_settings_bool('SyncHighestResolutionAsDefault')
+    load_settings_bool('AutoSelectHighestResolution')
+    load_settings_bool('NotifyEvents')
+    load_settings_bool('followhttp')
 
     if ArtworkLimitations:
         globals()["ScreenResolution"] = (int(xbmc.getInfoLabel('System.ScreenWidth')), int(xbmc.getInfoLabel('System.ScreenHeight')))
@@ -924,10 +940,11 @@ def update_mode_settings():
             SendJson('{"jsonrpc":"2.0", "id":1, "method":"Settings.SetSettingValue", "params": {"setting":"myvideos.extractchapterthumbs","value":false}}', True)
 
 def set_syncdate(TimeStampConvert):
-    LocalTime = convert_to_local(TimeStampConvert, False, False)
-    TimeStamp = parser.parse(LocalTime.encode('utf-8'))
-    set_settings("syncdate", TimeStamp.strftime('%Y-%m-%d'))
-    set_settings("synctime", TimeStamp.strftime('%H:%M'))
+    if TimeStampConvert:
+        LocalTime = convert_to_local(TimeStampConvert, False, False)
+        TimeStamp = parser.parse(LocalTime.encode('utf-8'))
+        set_settings("syncdate", TimeStamp.strftime('%Y-%m-%d'))
+        set_settings("synctime", TimeStamp.strftime('%H:%M'))
 
 def load_settings_bool(setting):
     value = Addon.getSetting(setting)
@@ -1010,6 +1027,26 @@ def decode_XML(Data):
     Data = Data.replace("&quot;", "\"")
     Data = Data.replace("&apos;", "'")
     return Data
+
+def check_iptvsimple():
+    if not SendJson('{"jsonrpc":"2.0","id":1,"method":"Addons.GetAddonDetails","params":{"addonid":"pvr.iptvsimple", "properties": ["version"]}}', True):
+        xbmc.log("EMBY.helper.utils: iptv simple not found", 2) # LOGWARNING
+        set_settings_bool("LiveTVEnabled", False)
+        return False
+
+    return True
+
+def check_tvtunes():
+    if not SendJson('{"jsonrpc":"2.0","id":1,"method":"Addons.GetAddonDetails","params":{"addonid":"service.tvtunes", "properties": ["version"]}}', True):
+        xbmc.log("EMBY.helper.utils: iptv simple not found", 2) # LOGWARNING
+        set_settings_bool("ThemesEnabled", False)
+        return False
+
+    return True
+
+def notify_event(Message, Data, SendOption):
+    if NotifyEvents and SendOption:
+        SendJson(f'{{"jsonrpc":"2.0", "method":"JSONRPC.NotifyAll", "params":{{"sender": "emby-next-gen", "message": "{Message}", "data": {json.dumps(Data)}}}, "id": 1}}', True)
 
 mkDir(FolderAddonUserdata)
 mkDir(FolderEmbyTemp)

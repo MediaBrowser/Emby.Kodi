@@ -162,7 +162,7 @@ def set_ListItem(item, ServerId, Path=None, KodiId=None):
         listitem = xbmcgui.ListItem(label=Name, offscreen=True)
 
     listitem.setContentLookup(False)
-    Properties = {}
+    Properties = {'embyserverid': str(ServerId), 'embyid': str(item.get('Id', ""))}
     InfoTags = None
     HasStreams = False
     IsVideo = False
@@ -170,7 +170,7 @@ def set_ListItem(item, ServerId, Path=None, KodiId=None):
     if item['Type'] == 'Folder' or item.get('NodesMenu', False):
         common.set_KodiArtwork(item, ServerId, True)
         common.set_overview(item)
-        Properties = {'IsFolder': 'true', 'IsPlayable': 'false'}
+        Properties.update({'IsFolder': 'true', 'IsPlayable': 'false'})
     elif item['Type'] == "TvChannel":
         common.load_tvchannel(item, ServerId)
         InfoTags = listitem.getVideoInfoTag()
@@ -194,11 +194,9 @@ def set_ListItem(item, ServerId, Path=None, KodiId=None):
         elif 'Id' in item:
             InfoTags.setDbId(1000000000 + int(item['Id']))
 
-        Properties = {'IsFolder': 'false', 'IsPlayable': 'true'}
+        Properties.update({'IsFolder': 'false', 'IsPlayable': 'true'})
     elif item['Type'] in ("Movie", "Trailer"):
-        common.SwopMediaSources(item)  # 3D
         common.set_RunTimeTicks(item)
-        common.get_streams(item)
         common.set_common(item, ServerId, True)
         InfoTags = listitem.getVideoInfoTag()
         IsVideo = True
@@ -237,7 +235,7 @@ def set_ListItem(item, ServerId, Path=None, KodiId=None):
             common.set_trailer(item, utils.EmbyServers[ServerId])
             InfoTags.setTrailer(item['Trailer'])
 
-        Properties = {'embyserverid': str(ServerId), 'embyid': str(item['Id']), 'IsFolder': 'false', 'IsPlayable': 'true', "KodiType": "movie"}
+        Properties.update({'IsFolder': 'false', 'IsPlayable': 'true', "KodiType": "movie"})
     elif item['Type'] == "Series":
         item['SeriesName'] = Name
         common.set_RunTimeTicks(item)
@@ -276,7 +274,7 @@ def set_ListItem(item, ServerId, Path=None, KodiId=None):
         elif 'Id' in item:
             InfoTags.setDbId(1000000000 + int(item['Id']))
 
-        Properties = {'embyserverid': str(ServerId), 'embyid': str(item['Id']), 'TotalEpisodes': item.get('RecursiveItemCount', 0), 'WatchedEpisodes': int(item.get('RecursiveItemCount', 0)) - int(item['UserData']['UnplayedItemCount']), 'UnWatchedEpisodes': item['UserData']['UnplayedItemCount'], 'IsFolder': 'true', 'IsPlayable': 'true'}
+        Properties.update({'TotalEpisodes': item.get('RecursiveItemCount', 0), 'WatchedEpisodes': int(item.get('RecursiveItemCount', 0)) - int(item['UserData']['UnplayedItemCount']), 'UnWatchedEpisodes': item['UserData']['UnplayedItemCount'], 'IsFolder': 'true', 'IsPlayable': 'true'})
     elif item['Type'] == "Season":
         common.set_common(item, ServerId, True)
         InfoTags = listitem.getVideoInfoTag()
@@ -309,11 +307,9 @@ def set_ListItem(item, ServerId, Path=None, KodiId=None):
         elif 'Id' in item:
             InfoTags.setDbId(1000000000 + int(item['Id']))
 
-        Properties = {'embyserverid': str(ServerId), 'embyid': str(item['Id']), 'NumEpisodes': item.get('RecursiveItemCount', 0), 'WatchedEpisodes': int(item.get('RecursiveItemCount', 0)) - int(item['UserData']['UnplayedItemCount']), 'UnWatchedEpisodes': item['UserData']['UnplayedItemCount'], 'IsFolder': 'true', 'IsPlayable': 'true'}
+        Properties.update({'NumEpisodes': item.get('RecursiveItemCount', 0), 'WatchedEpisodes': int(item.get('RecursiveItemCount', 0)) - int(item['UserData']['UnplayedItemCount']), 'UnWatchedEpisodes': item['UserData']['UnplayedItemCount'], 'IsFolder': 'true', 'IsPlayable': 'true'})
     elif item['Type'] == "Episode":
-        common.SwopMediaSources(item)  # 3D
         common.set_RunTimeTicks(item)
-        common.get_streams(item)
         common.set_common(item, ServerId, True)
         InfoTags = listitem.getVideoInfoTag()
         IsVideo = True
@@ -352,18 +348,14 @@ def set_ListItem(item, ServerId, Path=None, KodiId=None):
             InfoTags.setDbId(1000000000 + int(item['Id']))
 
         set_ResumePoint(item, InfoTags)
-        Properties = {'IsFolder': 'false', 'IsPlayable': 'true', "KodiType": "episode"}
+        Properties.update({'IsFolder': 'false', 'IsPlayable': 'true', "KodiType": "episode"})
 
         # Virtual content e.g. Upcoming
         if 'Id' not in item:
             Properties['IsPlayable'] = 'false'
             item['NoLink'] = True
-        else:
-            Properties['embyid'] = str(item['Id'])
     elif item['Type'] == "MusicVideo":
-        common.SwopMediaSources(item)  # 3D
         common.set_RunTimeTicks(item)
-        common.get_streams(item)
         common.set_MusicVideoTracks(item)
         common.set_common(item, ServerId, True)
         InfoTags = listitem.getVideoInfoTag()
@@ -401,11 +393,9 @@ def set_ListItem(item, ServerId, Path=None, KodiId=None):
             InfoTags.setDbId(1000000000 + int(item['Id']))
 
         set_ResumePoint(item, InfoTags)
-        Properties = {'embyserverid': str(ServerId), 'embyid': str(item['Id']), 'IsFolder': 'false', 'IsPlayable': 'true', "KodiType": "musicvideo"}
+        Properties.update({'IsFolder': 'false', 'IsPlayable': 'true', "KodiType": "musicvideo"})
     elif item['Type'] == "Video":
-        common.SwopMediaSources(item)  # 3D
         common.set_RunTimeTicks(item)
-        common.get_streams(item)
         common.set_common(item, ServerId, True)
         InfoTags = listitem.getVideoInfoTag()
         IsVideo = True
@@ -433,7 +423,7 @@ def set_ListItem(item, ServerId, Path=None, KodiId=None):
             InfoTags.setDbId(1000000000 + int(item['Id']))
 
         set_ResumePoint(item, InfoTags)
-        Properties = {'embyserverid': str(ServerId), 'embyid': str(item['Id']), 'IsFolder': 'false', 'IsPlayable': 'true', "KodiType": "movie"}
+        Properties.update({'IsFolder': 'false', 'IsPlayable': 'true', "KodiType": "movie"})
     elif item['Type'] == "MusicArtist":
         item['KodiLastScraped'] = utils.currenttime_kodi_format()
         common.set_common(item, ServerId, True)
@@ -445,7 +435,7 @@ def set_ListItem(item, ServerId, Path=None, KodiId=None):
         InfoTags.setDbId(1000000000 + int(item['Id']), "artist")
         set_MusicBrainzArtistID(item, InfoTags)
         set_Comment(item, InfoTags)
-        Properties = {'embyserverid': str(ServerId), 'embyid': str(item['Id']), 'IsFolder': 'true', 'IsPlayable': 'true'}
+        Properties.update({'IsFolder': 'true', 'IsPlayable': 'true'})
     elif item['Type'] == "MusicAlbum":
         common.set_common(item, ServerId, True)
         item['KodiLastScraped'] = utils.currenttime_kodi_format()
@@ -463,12 +453,11 @@ def set_ListItem(item, ServerId, Path=None, KodiId=None):
         set_MusicBrainzAlbumID(item, InfoTags)
         set_MusicBrainzAlbumArtistID(item, InfoTags)
         set_Comment(item, InfoTags)
-        Properties = {'embyserverid': str(ServerId), 'embyid': str(item['Id']), 'IsFolder': 'true', 'IsPlayable': 'true'}
+        Properties.update({'IsFolder': 'true', 'IsPlayable': 'true'})
     elif item['Type'] == "Audio":
         common.set_common(item, ServerId, True)
         item['IndexNumber'] = item.get('IndexNumber', None)
         common.set_RunTimeTicks(item)
-        common.get_streams(item)
         InfoTags = listitem.getMusicInfoTag()
         InfoTags.setArtist(" / ".join(item['Artists']))
         set_Album(item, InfoTags)
@@ -487,7 +476,7 @@ def set_ListItem(item, ServerId, Path=None, KodiId=None):
         set_Comment(item, InfoTags)
         set_Disc(item, InfoTags)
         set_Track(item, InfoTags)
-        Properties = {'embyserverid': str(ServerId), 'embyid': str(item['Id']), 'IsFolder': 'false', 'IsPlayable': 'true',  "KodiType": "song"}
+        Properties.update({'IsFolder': 'false', 'IsPlayable': 'true',  "KodiType": "song"})
     elif item['Type'] == "BoxSet":
         common.set_RunTimeTicks(item)
         common.set_common(item, ServerId, True)
@@ -519,13 +508,13 @@ def set_ListItem(item, ServerId, Path=None, KodiId=None):
         elif 'Id' in item:
             InfoTags.setDbId(1000000000 + int(item['Id']))
 
-        Properties = {'embyserverid': str(ServerId), 'embyid': str(item['Id']), 'IsFolder': 'true', 'IsPlayable': 'true'}
+        Properties.update({'IsFolder': 'true', 'IsPlayable': 'true'})
     elif item['Type'] == 'Playlist':
         InfoTags = listitem.getVideoInfoTag()
         InfoTags.setTitle(Name)
         common.set_KodiArtwork(item, ServerId, True)
         common.set_overview(item)
-        Properties = {'embyserverid': str(ServerId), 'embyid': str(item['Id']), 'IsFolder': 'true', 'IsPlayable': 'false'}
+        Properties.update({'IsFolder': 'true', 'IsPlayable': 'false'})
     elif item['Type'] == "Photo":
         common.set_KodiArtwork(item, ServerId, True)
         item['Width'] = int(item.get('Width', 0))
@@ -537,17 +526,25 @@ def set_ListItem(item, ServerId, Path=None, KodiId=None):
         if item['Height'] > 0:
             PictureInfoTags.setResolution(int(item['Width']), int(item['Height']))
 
-        Properties = {'embyserverid': str(ServerId), 'embyid': str(item['Id']), 'IsFolder': 'false', 'IsPlayable': 'true'}
+        Properties.update({'IsFolder': 'false', 'IsPlayable': 'true'})
     elif item['Type'] == "PhotoAlbum":
         common.set_KodiArtwork(item, ServerId, True)
         common.set_Dates(item)
         PictureInfoTags = listitem.getPictureInfoTag()
         PictureInfoTags.setDateTimeTaken(get_shortdate(item['KodiPremiereDate']))
-        Properties = {'embyserverid': str(ServerId), 'embyid': str(item['Id']), 'IsFolder': 'true', 'IsPlayable': 'true'}
+        Properties.update({'IsFolder': 'true', 'IsPlayable': 'true'})
     else: # Letter, Tag, Genre, MusicGenre,  etc
         InfoTags = listitem.getVideoInfoTag()
         InfoTags.setTitle(Name)
         common.set_KodiArtwork(item, ServerId, True)
+
+    if 'MediaSources' in item:
+        common.set_streams(item)
+        common.set_chapters(item, ServerId)
+        Properties['mediasourcescount'] = len(item['MediaSources'])
+
+        for Index, MediaSource in enumerate(item['MediaSources']):
+            Properties.update({f"embyintrostartposticks{Index}": MediaSource['IntroStartPositionTicks'], f"embyintroendpositionticks{Index}": MediaSource['IntroEndPositionTicks'], f"embycreditspositionticks{Index}": MediaSource['CreditsPositionTicks'], f"embymediacourcename{Index}": MediaSource['Name'], f"embymediacourcesize{Index}": MediaSource['Size'], f"embymediacourcepath{Index}": MediaSource['Path'], f"embymediacourceid{Index}": MediaSource['Id']})
 
     if HasStreams:
         if 'Streams' in item and item['Streams']:
@@ -591,13 +588,12 @@ def set_ListItem(item, ServerId, Path=None, KodiId=None):
                 for KodiArtworkIdFanart, ArtworkValueFanart in list(ArtworkValue.items()):
                     ArtworkData[KodiArtworkIdFanart] = ArtworkValueFanart
             else:
-                ArtworkData[KodiArtworkId] = ArtworkValue
+                if ArtworkValue:
+                    ArtworkData[KodiArtworkId] = ArtworkValue
 
         listitem.setArt(ArtworkData)
 
-    if Properties:
-        listitem.setProperties(Properties)
-
+    listitem.setProperties(Properties)
     return listitem
 
 def set_TvShowStatus(Item, InfoTags):

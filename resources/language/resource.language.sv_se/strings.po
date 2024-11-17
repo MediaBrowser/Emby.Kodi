@@ -2874,3 +2874,139 @@ msgstr "Ogiltigt argument"
 msgctxt "#33680"
 msgid "Download path not found"
 msgstr "Nedladdningssökväg hittades inte"
+
+msgctxt "#33681"
+msgid "Add movie links to tvshows"
+msgstr "Lägg till filmlänkar till tv-program"
+
+msgctxt "#33682"
+msgid "Movies assigned to tvshows listed in Kodi's tvshow views. Assignment done by Emby collections."
+msgstr "Filmer tilldelade tv-program listade i Kodis tv-programvyer. "
+
+msgctxt "#33683"
+msgid "Enable start sync"
+msgstr "Aktivera startsynkronisering"
+
+msgctxt "#33684"
+msgid "If disabled, Emby content will not be synced while Kodi start"
+msgstr "Om inaktiverat kommer Emby-innehåll inte att synkroniseras medan Kodi startar"
+
+msgctxt "#33685"
+msgid "Use classic selection"
+msgstr "Använd klassiskt urval"
+
+msgctxt "#33686"
+msgid "Selection menu is shown when multicontent is available"
+msgstr "Valmenyn visas när multicontent är tillgängligt"
+
+msgctxt "#33687"
+msgid "Multicontent"
+msgstr ""
+
+msgctxt "#33688"
+msgid "Deduplicate content"
+msgstr "Deduplicerat innehåll"
+
+msgctxt "#33689"
+msgid "Removes similar content on multiple Emby server libraries"
+msgstr "Tar bort liknande innehåll på flera Emby-serverbibliotek"
+
+msgctxt "#33690"
+msgid "Set highest video resolution as default"
+msgstr "Ställ in högsta videoupplösning som standard"
+
+msgctxt "#33691"
+msgid "This option applies to Kodi's multiversion selection and requires library re-sync on toggle."
+msgstr "Det här alternativet gäller för Kodis multiversionsval och kräver omsynkronisering av biblioteket vid växling."
+
+msgctxt "#33692"
+msgid "Auto select highest resolution"
+msgstr "Välj högsta upplösning automatiskt"
+
+msgctxt "#33693"
+msgid "Applies to classic multiselect option"
+msgstr "Gäller klassiskt flervalsalternativ"
+
+msgctxt "#33694"
+msgid "Enable Kodi API notification"
+msgstr "Aktivera Kodi API-avisering"
+
+msgctxt "#33695"
+msgid "Report events via Kodi's API for external usage"
+msgstr "Rapportera händelser via Kodis API för extern användning"
+
+msgctxt "#33696"
+msgid "Access denied"
+msgstr "Åtkomst nekad"
+
+msgctxt "#33697"
+msgid "Albums by year"
+msgstr "Album efter år"
+
+msgctxt "#33698"
+msgid "Singles by year"
+msgstr "Singlar efter år"
+
+msgctxt "#33699"
+msgid "Singles"
+msgstr "Singlar"
+
+msgctxt "#33700"
+msgid "Recently added singles"
+msgstr "Nyligen tillagda singlar"
+
+msgctxt "#33701"
+msgid "Random singles"
+msgstr "Slumpmässiga singlar"
+
+msgctxt "#33702"
+msgid "None"
+msgstr "Inga"
+
+msgctxt "#33703"
+msgid "No path info available, be careful what you do!"
+msgstr "Ingen väginformation tillgänglig, var försiktig med vad du gör!"
+
+msgctxt "#33704"
+msgid "TVShow"
+msgstr "TV-program"
+
+msgctxt "#33705"
+msgid "Select primary library"
+msgstr "Välj primärt bibliotek"
+
+msgctxt "#33706"
+msgid "Refresh LiveTv"
+msgstr ""
+
+msgctxt "#33707"
+msgid "Refresh Themes"
+msgstr "Uppdatera teman"
+
+msgctxt "#33708"
+msgid "Disable LiveTv"
+msgstr "Inaktivera LiveTv"
+
+msgctxt "#33709"
+msgid "Enable LiveTv"
+msgstr "Aktivera LiveTv"
+
+msgctxt "#33710"
+msgid "Disable Themes"
+msgstr "Inaktivera teman"
+
+msgctxt "#33711"
+msgid "Enable Themes"
+msgstr "Aktivera teman"
+
+msgctxt "#33712"
+msgid "Follow http"
+msgstr "Följ http"
+
+msgctxt "#33713"
+msgid "External http content will be directly accessed and not piped through Emby server. This option can fix Emby server playback issues."
+msgstr "Externt http-innehåll kommer att nås direkt och skickas inte via Emby-servern. "
+
+msgctxt "#33714"
+msgid "Follow http timeout"
+msgstr "Följ http timeout"

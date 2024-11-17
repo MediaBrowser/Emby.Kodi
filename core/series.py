@@ -13,23 +13,26 @@ class Series:
         self.PersonObject = person.Person(EmbyServer, self.SQLs)
         self.BoxSetObject = boxsets.BoxSets(EmbyServer, self.SQLs)
 
-    def change(self, Item, StartSync=False):
+    def change(self, Item, IncrementalSync):
         if 'Name' not in Item or 'Path' not in Item:
             xbmc.log(f"EMBY.core.series: Name or Path not found: {Item}", 3) # LOGERROR
             return False
 
         xbmc.log(f"EMBY.core.series: Process item: {Item['Name']}", 0) # DEBUG
-        common.load_ExistingItem(Item, self.EmbyServer, self.SQLs["emby"], "Series")
-        common.get_path(Item, self.EmbyServer.ServerData['ServerId'])
+
+        if not common.load_ExistingItem(Item, self.EmbyServer, self.SQLs["emby"], "Series"):
+            return False
+
+        common.set_path_filename(Item, self.EmbyServer.ServerData['ServerId'], {}, False)
         IsFavorite = common.set_Favorite(Item)
         common.set_RunTimeTicks(Item)
         common.set_trailer(Item, self.EmbyServer)
-        common.set_people(Item, self.SQLs, self.PersonObject, self.EmbyServer)
+        common.set_people(Item, self.SQLs, self.PersonObject, self.EmbyServer, IncrementalSync)
         common.set_common(Item, self.EmbyServer.ServerData['ServerId'], False)
         Item['TagItems'].append({"LibraryId": Item["LibraryId"], "Type": "Tag", "Id": f"999999993{Item['LibraryId']}", "Name": Item['LibraryName'], "Memo": "library"})
-        common.set_MetaItems(Item, self.SQLs, self.GenreObject, self.EmbyServer, "Genre", "GenreItems")
-        common.set_MetaItems(Item, self.SQLs, self.StudioObject, self.EmbyServer, "Studio", "Studios")
-        common.set_MetaItems(Item, self.SQLs, self.TagObject, self.EmbyServer, "Tag", 'TagItems')
+        common.set_MetaItems(Item, self.SQLs, self.GenreObject, self.EmbyServer, "Genre", "GenreItems", None, -1, IncrementalSync)
+        common.set_MetaItems(Item, self.SQLs, self.StudioObject, self.EmbyServer, "Studio", "Studios", None, -1, IncrementalSync)
+        common.set_MetaItems(Item, self.SQLs, self.TagObject, self.EmbyServer, "Tag", 'TagItems', None, -1, IncrementalSync)
 
         if not Item['UpdateItem']:
             xbmc.log(f"EMBY.core.series: KodiItemId {Item['Id']} not found", 0) # LOGDEBUG
@@ -40,7 +43,7 @@ class Series:
             if StackedKodiId:
                 Item['KodiItemId'] = StackedKodiId
                 self.SQLs["emby"].add_reference_series(Item['Id'], Item['LibraryId'], Item['KodiItemId'], IsFavorite, Item['PresentationUniqueKey'], Item['KodiPathId'])
-                xbmc.log(f"EMBY.core.series: ADD STACKED [{Item['KodiPathId']} / {Item['KodiItemId']}] {Item['Id']}: {Item['Name']}", 0) # LOGDEBUG
+                xbmc.log(f"EMBY.core.series: ADD STACKED [{Item['KodiPathId']} / {Item['KodiItemId']}] {Item['Id']}: {Item['Name']}", 1) # LOGINFO
                 utils.FavoriteQueue.put(((Item['KodiArtwork']['favourite'], IsFavorite, f"videodb://tvshows/titles/{Item['KodiItemId']}/", Item['Name'], "window", 10025),))
                 return False
 
@@ -74,16 +77,18 @@ class Series:
         Item['KodiRatingId'] = self.SQLs["video"].add_ratings(Item['KodiItemId'], "tvshow", "default", Item['CommunityRating'])
 
         if Item['UpdateItem']:
-            self.SQLs["video"].update_tvshow(Item['Name'], Item['Overview'], Item['Status'], Item['KodiRatingId'], Item['KodiPremiereDate'], Item['KodiArtwork']['poster'], Item['Genre'], Item['OriginalTitle'], Item['KodiArtwork']['fanart'].get('fanart', None), Item['KodiUniqueId'], Item['OfficialRating'], Item['Studio'], Item['SortName'], Item['KodiRunTimeTicks'], Item['KodiItemId'], Item['Trailer'])
+            self.SQLs["video"].update_tvshow(Item['Name'], Item['Overview'], Item['Status'], Item['KodiRatingId'], Item['KodiPremiereDate'], Item['KodiArtwork']['poster'], Item['Genre'], Item['OriginalTitle'], Item['KodiArtwork']['fanart'].get('fanart', None), Item['KodiUniqueId'], Item['OfficialRating'], Item['Studio'], Item['SortName'], Item['KodiRunTimeTicks'], Item['KodiItemId'], Item['Trailer'], Item['KodiPathId'], Item['KodiPath'])
             self.SQLs["emby"].update_reference_generic(IsFavorite, Item['Id'], "Series", Item['LibraryId'])
-            xbmc.log(f"EMBY.core.series: UPDATE [{Item['KodiPathId']} / {Item['KodiItemId']}] {Item['Id']}: {Item['Name']}", 0) # LOGDEBUG
+            xbmc.log(f"EMBY.core.series: UPDATE [{Item['KodiPathId']} / {Item['KodiItemId']}] {Item['Id']}: {Item['Name']}", int(IncrementalSync)) # LOG
+            utils.notify_event("content_update", {"EmbyId": f"{Item['Id']}", "KodiId": f"{Item['KodiItemId']}", "KodiType": "tvshow"}, IncrementalSync)
         else:
             self.SQLs["video"].add_tvshow(Item['KodiItemId'], Item['Name'], Item['Overview'], Item['Status'], Item['KodiRatingId'], Item['KodiPremiereDate'], Item['KodiArtwork']['poster'], Item['Genre'], Item['OriginalTitle'], Item['KodiArtwork']['fanart'].get('fanart', None), Item['KodiUniqueId'], Item['OfficialRating'], Item['Studio'], Item['SortName'], Item['KodiRunTimeTicks'], Item['Trailer'])
             self.SQLs["emby"].add_reference_series(Item['Id'], Item['LibraryId'], Item['KodiItemId'], IsFavorite, Item['PresentationUniqueKey'], Item['KodiPathId'])
             self.SQLs["video"].add_link_tvshow(Item['KodiItemId'], Item['KodiPathId'])
-            xbmc.log(f"EMBY.core.series: ADD [{Item['KodiPathId']} / {Item['KodiItemId']}] {Item['Id']}: {Item['Name']}", 0) # LOGDEBUG
+            xbmc.log(f"EMBY.core.series: ADD [{Item['KodiPathId']} / {Item['KodiItemId']}] {Item['Id']}: {Item['Name']}", int(IncrementalSync)) # LOG
+            utils.notify_event("content_add", {"EmbyId": f"{Item['Id']}", "KodiId": f"{Item['KodiItemId']}", "KodiType": "tvshow"}, IncrementalSync)
 
-        common.update_boxsets(StartSync, Item['ParentId'], Item['LibraryId'], self.SQLs, self.EmbyServer) # Update Boxset
+        common.update_boxsets(IncrementalSync, Item['ParentId'], Item['LibraryId'], self.SQLs, self.EmbyServer) # Update Boxset
         utils.FavoriteQueue.put(((common.set_Favorites_Artwork_Overlay("Series", "TV Shows", Item['Id'], self.EmbyServer.ServerData['ServerId'], Item['KodiArtwork']['favourite']), IsFavorite, f"videodb://tvshows/titles/{Item['KodiItemId']}/", Item['Name'], "window", 10025),))
         return not Item['UpdateItem']
 
@@ -94,21 +99,23 @@ class Series:
         self.SQLs["emby"].update_favourite(Item['IsFavorite'], Item['Id'], "Series")
         pluginmenu.reset_querycache("Series")
         xbmc.log(f"EMBY.core.series: USERDATA [{Item['KodiFileId']} / {Item['KodiItemId']}] {Item['Id']}", 1) # LOGINFO
+        utils.notify_event("content_changed", {"EmbyId": f"{Item['Id']}", "KodiId": f"{Item['KodiItemId']}", "KodiType": "series"}, True)
 
     # Remove showid, fileid, pathid, emby reference.
     # There's no episodes left, delete show and any possible remaining seasons
-    def remove(self, Item):
+    def remove(self, Item, IncrementalSync):
         if self.SQLs["emby"].remove_item(Item['Id'], "Series", Item['LibraryId']):
             self.set_favorite(False, Item['KodiItemId'], Item['Id'])
-            SubcontentKodiIds = self.SQLs["video"].delete_tvshow(Item['KodiItemId'], self.EmbyServer.ServerData['ServerId'], Item['Id'])
+            SubcontentKodiIds = self.SQLs["video"].delete_tvshow(Item['KodiItemId'], Item['KodiPathId'])
 
             for KodiId, EmbyType in SubcontentKodiIds:
                 self.SQLs["emby"].remove_item_by_KodiId(KodiId, EmbyType, Item['LibraryId'])
+                utils.notify_event("content_remove", {"EmbyId": f"{Item['Id']}", "KodiId": f"{KodiId}", "KodiType": "series"}, IncrementalSync)
 
-            xbmc.log(f"EMBY.core.series: DELETE {Item['Id']}", 1) # LOGINFO
+            xbmc.log(f"EMBY.core.series: DELETE {Item['Id']}", int(IncrementalSync)) # LOG
         else:
-            LibraryName, _ = self.EmbyServer.library.WhitelistUnique[Item['LibraryId']]
-            self.SQLs["video"].delete_library_links_tags(Item['KodiItemId'], "tvshow", LibraryName)
+            LibrarySyncedName = self.EmbyServer.library.LibrarySyncedNames[Item['LibraryId']]
+            self.SQLs["video"].delete_library_links_tags(Item['KodiItemId'], "tvshow", LibrarySyncedName)
 
     def set_favorite(self, IsFavorite, KodiItemId, EmbyItemId):
         ImageUrl, Itemname, _ = self.SQLs["video"].get_FavoriteSubcontent(KodiItemId, "tvshow")

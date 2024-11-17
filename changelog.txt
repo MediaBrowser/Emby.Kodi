@@ -1,3 +1,165 @@
+11.1.3
+=============
+fix websocket close-connection issue
+improve offline-mode notifications
+increase http timeouts from 1 to 3 seconds
+add music content synced-nodes for singles
+add translations
+fix websocket-reconnect issue (edge case)
+fix minor webservice issue when Kodi queries jpeg pictures
+improve strm files playback with embedded http streams
+fix progress updates when using dynamic nodes in native mode
+add follow-http option for remote content e.g. strm and livetv default off -> do not pipe external http links through Emby server. This fixes some edge case playback issues
+fix cinnema mode in native mode
+fix remote playback progress updates when dynamic content remotely played in native mode
+some minor playback performance improvements
+change datetime datetime.utcnow api call, as it's deprecated
+
+
+
+
+11.1.2
+=============
+minor logging changes
+add SeriesPrimary artwork as fallback for episode thumb artwork
+hold upcoming episode cache for 1 day
+
+
+
+11.1.1
+=============
+fix server remove
+
+
+
+11.1.0
+=============
+change playerbusy threading
+increase aysnc conmmands timeouts to 3 seconds
+set highest resolution for multiversions by Kodi (as an option, default is on)
+autoselect best quality multiversion for episodes etc. (classic multiversions selection) (as an option, default is off)
+improve tvshows deduplication
+notifyall on content add/content updated/content remove/content userdata changed/library add/library remove (option)
+fix delete season/tvshow
+support multiversion content delete
+fix server remove when server is offline
+improve http error messages
+fix edge case http communication issues
+fix sync stalled when plugin content update in progress and Emby server restarted
+
+
+
+11.0.9
+=============
+improve TVShow deduplication
+fix minor http request queue issue
+fix special charecter & issue in nodes
+
+
+
+11.0.8
+=============
+keep plugin settings on forced database resets
+keep Kodi native favorites
+favorites toggle option syncs
+fix dynamic node issue when "dynamic libraries" configuration options set to off
+add de-duplicate function
+
+
+
+11.0.7
+=============
+fix player crash when item was removed from Kodi playlist
+Rename GusetStart to Guest Star
+
+
+
+11.0.6
+=============
+fix guest stars
+fix audio playback
+
+
+
+11.0.5
+=============
+fix database vaccum function
+fix episode remove bug
+
+
+
+11.0.4
+=============
+fix delete after watched
+
+
+
+11.0.3
+=============
+fix folder startup sync issue
+fix removal of abandoned MusicAlbums and MusicArtists
+fix library remove issue
+fix playsession
+fix minor subtitle issue
+fix when no pathsubstitution used
+
+
+
+
+11.0.2
+=============
+fix invalid music album disc numbers
+add fallback for chapters using Emby server 4.8.X
+fix runtime for multiversion content
+fix content ungrouping (mutiversion) sync issue
+
+
+
+11.0.1
+=============
+fix http connection issues
+fix subtitle issue
+
+
+
+11.0.0
+=============
+add movie-tvshowlink support
+option to disable startup sync
+chapters assigned to mediasources (accurate chapter markers for multiversion content)
+support skip credits in native mode
+add Creditstart into database
+change logging modes
+add support Kodi 21 multiversion
+add support Kodi 21 specials
+improve livetv sync menu
+improve themes sync menu
+use original filenames in addon mode (improves Kodi subtitle download)
+support native mode for dynamic nodes
+fix non youtube trailers
+support skipintro for dynamic nodes
+support multiversion selection for dynamic nodes
+filter MusicAlbum update on song play (realtime updates) -> skip double updates (performance)
+rename helper addons
+improve threading priorities (performance)
+fix xml encoding in addon.xml
+improve http connection -> use less tcp sessions (performance)
+support specials in continue last played node (modification by user seashell, thanks)
+improve sync performance for multiversion content
+improve boxset sync (performance)
+improve folder sync (performance)
+improve database priorities (reliability)
+remove Kodi workarounds for bookmarks (Kodi 21.1 seems fixed the issues)
+remove settings migration from 9.X
+reconnect when emby server is down on Kodi start
+fix repeat mode status updates and support repeat remove command
+add support shuffle mode remote commands
+add support remote audio stream selection
+improve player events
+increase default curl timeouts
+
+
+
 10.0.47
 =============
 skip retries on async requests
