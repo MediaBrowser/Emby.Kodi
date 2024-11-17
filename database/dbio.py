@@ -1,5 +1,5 @@
 import sqlite3
-from _thread import get_ident
+from _thread import get_ident, allocate_lock
 import xbmc
 import xbmcgui
 from helper import utils
@@ -23,12 +23,11 @@ def DBVacuum():
 
         xbmc.log(f"EMBY.database.dbio: ---> DBVacuum: {DBID}", 0) # LOGDEBUG
 
-        if DBID in DBConnectionsRW:
-            while DBConnectionsRW[DBID][2]:  #Wait for db unlock
-                xbmc.log(f"EMBY.database.dbio: DBOpenRW: Waiting Vacuum {DBID}", 1) # LOGINFO
-                utils.sleep(1)
+        if DBID not in DBConnectionsRW:
+            globals()["DBConnectionsRW"][DBID] = [None, None, None]
+            globals()["DBConnectionsRW"][DBID][2] = allocate_lock()
 
-        globals()["DBConnectionsRW"][DBID] = [None, None, True]
+        globals()["DBConnectionsRW"][DBID][2].acquire()
         globals()["DBConnectionsRW"][DBID][0] = sqlite3.connect(DBFile, timeout=999999)
         globals()["DBConnectionsRW"][DBID][1] = DBConnectionsRW[DBID][0].cursor()
 
@@ -39,7 +38,9 @@ def DBVacuum():
 
         DBConnectionsRW[DBID][0].execute("VACUUM")
         DBConnectionsRW[DBID][0].close()
-        globals()["DBConnectionsRW"][DBID][2] = False
+        globals()["DBConnectionsRW"][DBID][0] = None
+        globals()["DBConnectionsRW"][DBID][1] = None
+        globals()["DBConnectionsRW"][DBID][2].release()
         xbmc.log(f"EMBY.database.dbio: ---< DBVacuum: {DBID}", 0) # LOGDEBUG
         Index += 1
 
@@ -84,14 +85,13 @@ def DBOpenRW(Databases, TaskId, SQLs):
         if DBID == "none":
             continue
 
-        if DBID in DBConnectionsRW:
-            while DBConnectionsRW[DBID][2]:  #Wait for db unlock
-                xbmc.log(f"EMBY.database.dbio: DBOpenRW: Waiting {DBID} / {TaskId}", 1) # LOGINFO
-                utils.sleep(1)
+        if DBID not in DBConnectionsRW:
+            globals()["DBConnectionsRW"][DBID] = [None, None, None]
+            globals()["DBConnectionsRW"][DBID][2] = allocate_lock()
 
-        xbmc.log(f"EMBY.database.dbio: ---> DBRW: {DBID}/{TaskId}", 0) # LOGDEBUG
-        globals()["DBConnectionsRW"][DBID] = [None, None, True]
-        globals()["DBConnectionsRW"][DBID][0] = sqlite3.connect(utils.DatabaseFiles[DBID].decode('utf-8'), timeout=999999)
+        xbmc.log(f"EMBY.database.dbio: ---> DBRW: {DBID}/{TaskId}/{DBConnectionsRW[DBID][2].locked()}", 0) # LOGDEBUG
+        globals()["DBConnectionsRW"][DBID][2].acquire()
+        globals()["DBConnectionsRW"][DBID][0] = sqlite3.connect(utils.DatabaseFiles[DBID].decode('utf-8'), timeout=999999, check_same_thread=False)
         globals()["DBConnectionsRW"][DBID][1] = DBConnectionsRW[DBID][0].cursor()
         DBConnectionsRW[DBID][0].execute("PRAGMA journal_mode=WAL")
         DBConnectionsRW[DBID][0].execute("PRAGMA secure_delete=false")
@@ -113,7 +113,7 @@ def DBOpenRW(Databases, TaskId, SQLs):
         else:
             SQLs["emby"] = emby_db.EmbyDatabase(DBConnectionsRW[DBID][1])
 
-    return SQLs
+        xbmc.log(f"EMBY.database.dbio: ---> DBRW: {DBID}", 0) # LOGDEBUG
 
 def DBCloseRW(Databases, TaskId, SQLs):
     DBIDs = Databases.split(",")
@@ -129,13 +129,13 @@ def DBCloseRW(Databases, TaskId, SQLs):
             DBConnectionsRW[DBID][0].commit()
 
         DBConnectionsRW[DBID][0].close() # db close
-        globals()["DBConnectionsRW"][DBID] = [None, None, False]
 
         if DBID in ('video', 'music', 'texture', 'epg', 'tv'):
             SQLs[DBID] = None
         else:
             SQLs["emby"] = None
 
+        globals()["DBConnectionsRW"][DBID][0] = None
+        globals()["DBConnectionsRW"][DBID][1] = None
+        globals()["DBConnectionsRW"][DBID][2].release()
         xbmc.log(f"EMBY.database.dbio: ---< DBRW: {DBID} / {changes} / {TaskId} rows updated on db close", 0) # LOGDEBUG
-
-    return SQLs

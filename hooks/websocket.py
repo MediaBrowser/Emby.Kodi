@@ -14,17 +14,20 @@ class WebSocket:
         self.RefreshProgressRunning = False
         self.RefreshProgressInit = False
         self.EPGRefresh = False
+        self.Running = False
         self.ProgressBar = {}
         self.MessageQueue = queue.Queue()
         xbmc.log("EMBY.hooks.websocket: WSClient initializing...", 0) # LOGDEBUG
 
     def Message(self):  # threaded
         xbmc.log("EMBY.hooks.websocket: THREAD: --->[ message ]", 0) # LOGDEBUG
+        self.Running = True
 
         while True:
             IncomingData = self.MessageQueue.get()
 
             if IncomingData == "QUIT":
+                self.Running = False
                 xbmc.log("EMBY.hooks.websocket: Queue closed", 1) # LOGINFO
                 break
 
@@ -69,13 +72,20 @@ class WebSocket:
                 elif IncomingData['Data']['Name'] == 'SetCurrentPlaylistItem':
                     playerops.PlayPlaylistItem(playerops.PlayerId, IncomingData['Data']['Arguments']['PlaylistItemId'])
                 elif IncomingData['Data']['Name'] == 'RemoveFromPlaylist':
-                    playerops.RemovePlaylistItem(playerops.PlayerId, IncomingData['Data']['Arguments']['PlaylistItemIds'])
+                    PlaylistItemIds = IncomingData['Data']['Arguments']['PlaylistItemIds'].split(",")
+
+                    for PlaylistItemId in PlaylistItemIds:
+                        playerops.RemovePlaylistItem(playerops.PlayerId, PlaylistItemId)
                 elif IncomingData['Data']['Name'] in ('Mute', 'Unmute'):
                     xbmc.executebuiltin('Mute')
                 elif IncomingData['Data']['Name'] == 'SetVolume':
                     xbmc.executebuiltin(f"SetVolume({IncomingData['Data']['Arguments']['Volume']}[,showvolumebar])")
                 elif IncomingData['Data']['Name'] == 'SetRepeatMode':
-                    xbmc.executebuiltin("PlayerControl({IncomingData['Data']['Arguments']['RepeatMode']})")
+                    utils.SendJson(f'{{"jsonrpc": "2.0", "id": 1, "method": "Player.SetRepeat", "params": {{"playerid": {playerops.PlayerId}, "repeat": "{IncomingData["Data"]["Arguments"]["RepeatMode"].lower().replace("repeat", "")}"}}}}', True)
+                elif IncomingData['Data']['Name'] == 'SetShuffle':
+                    utils.SendJson(f'{{"jsonrpc": "2.0", "id": 1, "method": "Player.SetShuffle", "params": {{"playerid": {playerops.PlayerId}, "shuffle": {IncomingData["Data"]["Arguments"]["Shuffle"].lower()}}}}}', True)
+                elif IncomingData['Data']['Name'] == 'SetAudioStreamIndex':
+                    utils.SendJson(f'{{"jsonrpc": "2.0", "id": 1, "method": "Player.SetAudioStream", "params": {{"playerid": {playerops.PlayerId}, "stream": {int(IncomingData["Data"]["Arguments"]["Index"]) - 1}}}}}', True)
                 elif IncomingData['Data']['Name'] == 'GoHome':
                     utils.SendJson('{"jsonrpc": "2.0", "id": 1, "method": "GUI.ActivateWindow", "params": {"window": "home"}}')
                 elif IncomingData['Data']['Name'] == 'Guide':
@@ -191,6 +201,7 @@ class WebSocket:
                 embydb = dbio.DBOpenRO(self.EmbyServer.ServerData['ServerId'], "UserDataChanged")
                 ItemSkipUpdateUniqueIds = set()
                 ItemSkipUpdateEmbyPresentationKeys = ()
+                ItemSkipUpdateAlbumIds = ()
 
                 # Create unique array
                 for ItemSkipId in utils.ItemSkipUpdate:
@@ -202,15 +213,23 @@ class WebSocket:
 
                     if Data:
                         ItemSkipUpdateEmbyPresentationKeys += (Data,)
+                    else:
+                        AlbumId = embydb.get_albumid_by_id(ItemSkipUpdateUniqueId)
+
+                        if AlbumId:
+                            ItemSkipUpdateAlbumIds += (AlbumId,)
 
                 for ItemData in IncomingData['Data']['UserDataList']:
-                    EpisodeEmbyPresentationKey = embydb.get_embypresentationkey_by_id_embytype(ItemData['ItemId'], ("Season", "Series")).split("_")[0]
-
                     if ItemData['ItemId'] not in utils.ItemSkipUpdate:  # Filter skipped items
-                        if EpisodeEmbyPresentationKey not in ItemSkipUpdateEmbyPresentationKeys:
-                            UpdateData += (ItemData,)
+                        if ItemData['ItemId'] in ItemSkipUpdateAlbumIds:
+                            xbmc.log(f"EMBY.hooks.websocket: UserDataChanged skip by ItemSkipUpdate ancestors (AlbumId) / Id: {ItemData['ItemId']} / ItemSkipUpdate: {utils.ItemSkipUpdate}", 1) # LOGINFO
                         else:
-                            xbmc.log(f"EMBY.hooks.websocket: UserDataChanged skip by ItemSkipUpdate ancestors / Id: {ItemData['ItemId']} / ItemSkipUpdate: {utils.ItemSkipUpdate}", 1) # LOGINFO
+                            EpisodeEmbyPresentationKey = embydb.get_embypresentationkey_by_id_embytype(ItemData['ItemId'], ("Season", "Series")).split("_")[0]
+
+                            if EpisodeEmbyPresentationKey in ItemSkipUpdateEmbyPresentationKeys:
+                                xbmc.log(f"EMBY.hooks.websocket: UserDataChanged skip by ItemSkipUpdate ancestors (PresentationKey) / Id: {ItemData['ItemId']} / ItemSkipUpdate: {utils.ItemSkipUpdate}", 1) # LOGINFO
+                            else:
+                                UpdateData += (ItemData,)
                     else:
                         xbmc.log(f"EMBY.hooks.websocket: UserDataChanged skip by ItemSkipUpdate / Id: {ItemData['ItemId']} / ItemSkipUpdate: {utils.ItemSkipUpdate}", 1) # LOGINFO
                         RemoveSkippedItems += (ItemData['ItemId'],)
@@ -221,7 +240,7 @@ class WebSocket:
                     utils.ItemSkipUpdate.remove(RemoveSkippedItem)
 
                 if UpdateData:
-                    self.EmbyServer.library.userdata(UpdateData)
+                    start_new_thread(self.EmbyServer.library.userdata, (UpdateData,))
             elif IncomingData['MessageType'] == 'LibraryChanged':
                 xbmc.log(f"EMBY.hooks.websocket: [ LibraryChanged ] {IncomingData['Data']}", 1) # LOGINFO
 
@@ -229,7 +248,7 @@ class WebSocket:
                     xbmc.log("EMBY.hooks.websocket: LibraryChanged skip by RemoteMode", 1) # LOGINFO
                     continue
 
-                self.EmbyServer.library.removed(IncomingData['Data']['ItemsRemoved'])
+                start_new_thread(self.EmbyServer.library.removed, (IncomingData['Data']['ItemsRemoved'], True))
                 ItemsUpdated = IncomingData['Data']['ItemsUpdated'] + IncomingData['Data']['ItemsAdded']
                 UpdateItemIds = len(ItemsUpdated) * [None] # preallocate memory
 
@@ -237,12 +256,12 @@ class WebSocket:
                     UpdateItemIds[Index] = (ItemId, "unknown", "unknown")
 
                 UpdateItemIds = list(dict.fromkeys(UpdateItemIds)) # filter duplicates
-                self.EmbyServer.library.updated(UpdateItemIds)
+                start_new_thread(self.EmbyServer.library.updated, (UpdateItemIds, True))
 
                 if self.EmbyServerSyncCheckRunning:
                     xbmc.log("EMBY.hooks.websocket: Emby server sync in progress, delay updates", 1) # LOGINFO
                 else:
-                    self.EmbyServer.library.RunJobs()
+                    start_new_thread(self.EmbyServer.library.RunJobs, (True,))
             elif IncomingData['MessageType'] == 'ServerRestarting':
                 xbmc.log("EMBY.hooks.websocket: [ ServerRestarting ]", 1) # LOGINFO
                 self.close_EmbyServerBusy()
@@ -289,7 +308,7 @@ class WebSocket:
         utils.SyncPause[f"server_busy_{self.EmbyServer.ServerData['ServerId']}"] = True
         Compare = [False] * len(self.Tasks)
 
-        while self.RefreshProgressRunning or Compare != list(self.Tasks.values()):
+        while self.Running and (self.RefreshProgressRunning or Compare != list(self.Tasks.values())):
             self.RefreshProgressRunning = False
 
             if utils.sleep(5): # every 5 seconds a "RefreshProgress" is expected. If not, sync was canceled
@@ -298,7 +317,7 @@ class WebSocket:
             Compare = [False] * len(self.Tasks)
 
         self.close_EmbyServerBusy()
-        self.EmbyServer.library.RunJobs()
+        start_new_thread(self.EmbyServer.library.RunJobs, (True,))
 
         if self.EPGRefresh:
             self.EmbyServer.library.SyncLiveTVEPG()

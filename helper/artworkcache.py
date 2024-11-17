@@ -89,13 +89,14 @@ def CacheAllEntries(urls, ProgressBar):
     add_textures(ArtworkCacheItems)
 
 def add_textures(ArtworkCacheItems):
-    SQLs = dbio.DBOpenRW("texture", "artwork_cache", {})
+    SQLs = {}
+    dbio.DBOpenRW("texture", "artwork_cache", SQLs)
 
     for ArtworkCacheItem in ArtworkCacheItems:
         if ArtworkCacheItem:
             SQLs['texture'].add_texture(ArtworkCacheItem["Url"], ArtworkCacheItem["cachedUrl"], ArtworkCacheItem["ImageHash"], "1", ArtworkCacheItem["Width"], ArtworkCacheItem["Height"], "")
 
-    dbio.DBCloseRW("texture", "artwork_cache", {})
+    dbio.DBCloseRW("texture", "artwork_cache", SQLs)
 
 def get_image_metadata(ImageBinaryData, Hash):
     height = 0

@@ -2874,3 +2874,139 @@ msgstr "无效参数"
 msgctxt "#33680"
 msgid "Download path not found"
 msgstr "找不到下载路径"
+
+msgctxt "#33681"
+msgid "Add movie links to tvshows"
+msgstr "将电影链接添加到电视节目"
+
+msgctxt "#33682"
+msgid "Movies assigned to tvshows listed in Kodi's tvshow views. Assignment done by Emby collections."
+msgstr "分配给 Kodi 电视节目视图中列出的电视节目的电影。"
+
+msgctxt "#33683"
+msgid "Enable start sync"
+msgstr "启用开始同步"
+
+msgctxt "#33684"
+msgid "If disabled, Emby content will not be synced while Kodi start"
+msgstr "如果禁用，Kodi 启动时 Emby 内容将不会同步"
+
+msgctxt "#33685"
+msgid "Use classic selection"
+msgstr "使用经典选择"
+
+msgctxt "#33686"
+msgid "Selection menu is shown when multicontent is available"
+msgstr "多内容可用时显示选择菜单"
+
+msgctxt "#33687"
+msgid "Multicontent"
+msgstr "多内容"
+
+msgctxt "#33688"
+msgid "Deduplicate content"
+msgstr "删除重复内容"
+
+msgctxt "#33689"
+msgid "Removes similar content on multiple Emby server libraries"
+msgstr "删除多个 Emby 服务器库上的类似内容"
+
+msgctxt "#33690"
+msgid "Set highest video resolution as default"
+msgstr "将最高视频分辨率设置为默认"
+
+msgctxt "#33691"
+msgid "This option applies to Kodi's multiversion selection and requires library re-sync on toggle."
+msgstr "此选项适用于 Kodi 的多版本选择，并且需要在切换时重新同步库。"
+
+msgctxt "#33692"
+msgid "Auto select highest resolution"
+msgstr "自动选择最高分辨率"
+
+msgctxt "#33693"
+msgid "Applies to classic multiselect option"
+msgstr "适用于经典多选选项"
+
+msgctxt "#33694"
+msgid "Enable Kodi API notification"
+msgstr "启用Kodi API通知"
+
+msgctxt "#33695"
+msgid "Report events via Kodi's API for external usage"
+msgstr "通过Kodi的API报告事件供外部使用"
+
+msgctxt "#33696"
+msgid "Access denied"
+msgstr "访问被拒绝"
+
+msgctxt "#33697"
+msgid "Albums by year"
+msgstr "按年份列出的专辑"
+
+msgctxt "#33698"
+msgid "Singles by year"
+msgstr "按年份划分的单曲"
+
+msgctxt "#33699"
+msgid "Singles"
+msgstr "单打"
+
+msgctxt "#33700"
+msgid "Recently added singles"
+msgstr "最近添加的单曲"
+
+msgctxt "#33701"
+msgid "Random singles"
+msgstr "随机单曲"
+
+msgctxt "#33702"
+msgid "None"
+msgstr "无"
+
+msgctxt "#33703"
+msgid "No path info available, be careful what you do!"
+msgstr "没有可用的路径信息，小心你的行为！"
+
+msgctxt "#33704"
+msgid "TVShow"
+msgstr "电视节目"
+
+msgctxt "#33705"
+msgid "Select primary library"
+msgstr "选择主库"
+
+msgctxt "#33706"
+msgid "Refresh LiveTv"
+msgstr "刷新直播电视"
+
+msgctxt "#33707"
+msgid "Refresh Themes"
+msgstr "刷新主题"
+
+msgctxt "#33708"
+msgid "Disable LiveTv"
+msgstr "禁用直播电视"
+
+msgctxt "#33709"
+msgid "Enable LiveTv"
+msgstr "启用直播电视"
+
+msgctxt "#33710"
+msgid "Disable Themes"
+msgstr "禁用主题"
+
+msgctxt "#33711"
+msgid "Enable Themes"
+msgstr "启用主题"
+
+msgctxt "#33712"
+msgid "Follow http"
+msgstr "关注http"
+
+msgctxt "#33713"
+msgid "External http content will be directly accessed and not piped through Emby server. This option can fix Emby server playback issues."
+msgstr "外部http内容将直接访问，而不是通过Emby服务器传输。"
+
+msgctxt "#33714"
+msgid "Follow http timeout"
+msgstr "遵循http超时"

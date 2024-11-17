@@ -5,30 +5,30 @@ from database import dbio
 from . import listitem
 
 EmbyFields = {
-    "musicartist": ("Genres", "SortName", "ProductionYear", "DateCreated", "ProviderIds", "Overview", "Path", "PresentationUniqueKey", "UserDataPlayCount", "UserDataLastPlayedDate"),
-    "musicalbum": ("Genres", "SortName", "ProductionYear", "DateCreated", "ProviderIds", "Overview", "Path", "Studios", "PremiereDate", "UserDataPlayCount", "UserDataLastPlayedDate"),
-    "audio": ("Genres", "SortName", "ProductionYear", "DateCreated", "MediaStreams", "ProviderIds", "Overview", "Path", "PremiereDate", "UserDataPlayCount", "UserDataLastPlayedDate"),
-    "movie": ("Path", "Genres", "SortName", "Studios", "Writer", "Taglines", "LocalTrailerCount", "Video3DFormat", "OfficialRating", "PremiereDate", "ProductionYear", "DateCreated", "People", "Overview", "CommunityRating", "CriticRating", "ShortOverview", "ProductionLocations", "ProviderIds", "ParentId", "RemoteTrailers", "MediaSources", "PresentationUniqueKey", "OriginalTitle", "AlternateMediaSources", "PartCount", "SpecialFeatureCount", "Chapters", "Tags", "UserDataPlayCount", "UserDataLastPlayedDate"),
-    "trailer": ("Path", "Genres", "SortName", "Studios", "Writer", "Taglines", "Video3DFormat", "OfficialRating", "PremiereDate", "ProductionYear", "DateCreated", "People", "Overview", "CommunityRating", "CriticRating", "ShortOverview", "ProductionLocations", "ProviderIds", "ParentId", "MediaSources", "PresentationUniqueKey", "OriginalTitle", "AlternateMediaSources", "Chapters", "Tags"),
-    "boxset": ("Overview", "SortName", "DateCreated", "UserDataPlayCount", "UserDataLastPlayedDate"),
-    "series": ("Path", "Genres", "SortName", "Studios", "Writer", "Taglines", "OfficialRating", "PremiereDate", "ProductionYear", "DateCreated", "People", "Overview", "CommunityRating", "CriticRating", "ShortOverview", "ProviderIds", "ParentId", "Status", "PresentationUniqueKey", "OriginalTitle", "Tags", "LocalTrailerCount", "RemoteTrailers", "UserDataPlayCount", "UserDataLastPlayedDate"),
-    "season": ("PresentationUniqueKey", "SortName", "Tags", "DateCreated", "UserDataPlayCount", "UserDataLastPlayedDate"),
-    "episode": ("SpecialEpisodeNumbers", "ParentId", "Path", "Genres", "SortName", "Studios", "Writer", "Taglines", "LocalTrailerCount", "Video3DFormat", "OfficialRating", "PremiereDate", "ProductionYear", "DateCreated", "People", "Overview", "CommunityRating", "CriticRating", "ShortOverview", "Tags", "ProviderIds", "RemoteTrailers", "MediaSources", "PresentationUniqueKey", "OriginalTitle", "AlternateMediaSources", "PartCount", "SpecialFeatureCount", "Chapters", "UserDataPlayCount", "UserDataLastPlayedDate"),
-    "musicvideo": ("Path", "Genres", "SortName", "Studios", "Writer", "Taglines", "Video3DFormat", "OfficialRating", "PremiereDate", "ProductionYear", "DateCreated", "People", "Overview", "CommunityRating", "CriticRating", "ShortOverview", "Tags", "ProviderIds", "ParentId", "MediaSources", "PresentationUniqueKey", "OriginalTitle", "AlternateMediaSources", "PartCount", "Chapters", "UserDataPlayCount", "UserDataLastPlayedDate"),
-    "video": ("Path", "Genres", "SortName", "Studios", "Writer", "Taglines", "Video3DFormat", "OfficialRating", "PremiereDate", "ProductionYear", "DateCreated", "People", "Overview", "CommunityRating", "CriticRating", "ShortOverview", "ProductionLocations", "ProviderIds", "ParentId", "MediaSources", "PresentationUniqueKey", "OriginalTitle", "AlternateMediaSources", "Chapters", "Tags", "UserDataPlayCount", "UserDataLastPlayedDate"),
-    "photo": ("Path", "SortName", "ProductionYear", "ParentId", "PremiereDate", "Width", "Height", "Tags", "DateCreated", "UserDataPlayCount", "UserDataLastPlayedDate"),
-    "photoalbum": ("Path", "SortName", "Taglines", "DateCreated", "ShortOverview", "ProductionLocations", "Tags", "ParentId", "OriginalTitle", "UserDataPlayCount", "UserDataLastPlayedDate"),
-    "tvchannel": ("Genres", "SortName", "Taglines", "DateCreated", "Overview", "MediaSources", "Tags", "MediaStreams", "UserDataPlayCount", "UserDataLastPlayedDate"),
-    "folder": ("Path",),
-    "playlist": ("SortName", "Overview", "Path"),
-    "genre": (),
-    "musicgenre": (),
-    "person": (),
-    "tag": (),
-    "channel": (),
-    "collectionfolder": (),
-    "studio": (),
-    "all": ("Path", "Genres", "SortName", "Studios", "Writer", "Taglines", "Video3DFormat", "OfficialRating", "PremiereDate", "ProductionYear", "DateCreated", "People", "Overview", "CommunityRating", "CriticRating", "ShortOverview", "ProductionLocations", "ProviderIds", "ParentId", "MediaSources", "PresentationUniqueKey", "OriginalTitle", "AlternateMediaSources", "Chapters", "Tags", "UserDataPlayCount", "UserDataLastPlayedDate")
+    "musicartist": ["Genres", "SortName", "ProductionYear", "DateCreated", "ProviderIds", "Overview", "Path", "PresentationUniqueKey", "UserDataPlayCount", "UserDataLastPlayedDate"],
+    "musicalbum": ["Genres", "SortName", "ProductionYear", "DateCreated", "ProviderIds", "Overview", "Path", "Studios", "PremiereDate", "UserDataPlayCount", "UserDataLastPlayedDate"],
+    "audio": ["Genres", "SortName", "ProductionYear", "DateCreated", "MediaStreams", "ProviderIds", "Overview", "Path", "PremiereDate", "UserDataPlayCount", "UserDataLastPlayedDate"],
+    "movie": ["Path", "Genres", "SortName", "Studios", "Writer", "Taglines", "LocalTrailerCount", "Video3DFormat", "OfficialRating", "PremiereDate", "ProductionYear", "DateCreated", "People", "Overview", "CommunityRating", "CriticRating", "ShortOverview", "ProductionLocations", "ProviderIds", "ParentId", "RemoteTrailers", "MediaSources", "PresentationUniqueKey", "OriginalTitle", "AlternateMediaSources", "PartCount", "SpecialFeatureCount", "Chapters", "Tags", "UserDataPlayCount", "UserDataLastPlayedDate"],
+    "trailer": ["Path", "Genres", "SortName", "Studios", "Writer", "Taglines", "Video3DFormat", "OfficialRating", "PremiereDate", "ProductionYear", "DateCreated", "People", "Overview", "CommunityRating", "CriticRating", "ShortOverview", "ProductionLocations", "ProviderIds", "ParentId", "MediaSources", "PresentationUniqueKey", "OriginalTitle", "AlternateMediaSources", "Chapters", "Tags"],
+    "boxset": ["Overview", "SortName", "DateCreated", "UserDataPlayCount", "UserDataLastPlayedDate"],
+    "series": ["Path", "Genres", "SortName", "Studios", "Writer", "Taglines", "OfficialRating", "PremiereDate", "ProductionYear", "DateCreated", "People", "Overview", "CommunityRating", "CriticRating", "ShortOverview", "ProviderIds", "ParentId", "Status", "PresentationUniqueKey", "OriginalTitle", "Tags", "LocalTrailerCount", "RemoteTrailers", "UserDataPlayCount", "UserDataLastPlayedDate"],
+    "season": ["PresentationUniqueKey", "SortName", "Tags", "DateCreated", "UserDataPlayCount", "UserDataLastPlayedDate"],
+    "episode": ["SpecialEpisodeNumbers", "ParentId", "Path", "Genres", "SortName", "Studios", "Writer", "Taglines", "LocalTrailerCount", "Video3DFormat", "OfficialRating", "PremiereDate", "ProductionYear", "DateCreated", "People", "Overview", "CommunityRating", "CriticRating", "ShortOverview", "Tags", "ProviderIds", "RemoteTrailers", "MediaSources", "PresentationUniqueKey", "OriginalTitle", "AlternateMediaSources", "PartCount", "SpecialFeatureCount", "Chapters", "UserDataPlayCount", "UserDataLastPlayedDate"],
+    "musicvideo": ["Path", "Genres", "SortName", "Studios", "Writer", "Taglines", "Video3DFormat", "OfficialRating", "PremiereDate", "ProductionYear", "DateCreated", "People", "Overview", "CommunityRating", "CriticRating", "ShortOverview", "Tags", "ProviderIds", "ParentId", "MediaSources", "PresentationUniqueKey", "OriginalTitle", "AlternateMediaSources", "PartCount", "Chapters", "UserDataPlayCount", "UserDataLastPlayedDate"],
+    "video": ["Path", "Genres", "SortName", "Studios", "Writer", "Taglines", "Video3DFormat", "OfficialRating", "PremiereDate", "ProductionYear", "DateCreated", "People", "Overview", "CommunityRating", "CriticRating", "ShortOverview", "ProductionLocations", "ProviderIds", "ParentId", "MediaSources", "PresentationUniqueKey", "OriginalTitle", "AlternateMediaSources", "Chapters", "Tags", "UserDataPlayCount", "UserDataLastPlayedDate"],
+    "photo": ["Path", "SortName", "ProductionYear", "ParentId", "PremiereDate", "Width", "Height", "Tags", "DateCreated", "UserDataPlayCount", "UserDataLastPlayedDate"],
+    "photoalbum": ["Path", "SortName", "Taglines", "DateCreated", "ShortOverview", "ProductionLocations", "Tags", "ParentId", "OriginalTitle", "UserDataPlayCount", "UserDataLastPlayedDate"],
+    "tvchannel": ["Genres", "SortName", "Taglines", "DateCreated", "Overview", "MediaSources", "Tags", "MediaStreams", "UserDataPlayCount", "UserDataLastPlayedDate"],
+    "folder": ["Path",],
+    "playlist": ["SortName", "Overview", "Path"],
+    "genre": [],
+    "musicgenre": [],
+    "person": [],
+    "tag": [],
+    "channel": [],
+    "collectionfolder": [],
+    "studio": [],
+    "all": ["Path", "Genres", "SortName", "Studios", "Writer", "Taglines", "Video3DFormat", "OfficialRating", "PremiereDate", "ProductionYear", "DateCreated", "People", "Overview", "CommunityRating", "CriticRating", "ShortOverview", "ProductionLocations", "ProviderIds", "ParentId", "MediaSources", "PresentationUniqueKey", "OriginalTitle", "AlternateMediaSources", "Chapters", "Tags", "UserDataPlayCount", "UserDataLastPlayedDate"]
 }
 
 
@@ -70,12 +70,14 @@ class API:
             MediaSourceId = Payload['MediaSources'][0]['Id']
             LiveStreamId = Payload['MediaSources'][0].get('LiveStreamId', None)
             Container = Payload['MediaSources'][0].get('Container', "")
+            PlaySessionId = Payload['PlaySessionId']
         else:
             MediaSourceId = None
             LiveStreamId = None
             Container = None
+            PlaySessionId = None
 
-        return MediaSourceId, LiveStreamId, Payload['PlaySessionId'], Container
+        return MediaSourceId, LiveStreamId, PlaySessionId, Container
 
     def get_Items_dynamic(self, ParentId, MediaTypes, Recursive, Extra, Resume, LibraryId):
         CustomLimit = False
@@ -106,7 +108,7 @@ class API:
             embydb = None
             videodb = None
             musicdb = None
-            start_new_thread(self.async_get_Items, (Request, ItemsQueue, Params, "", CustomLimit))
+            start_new_thread(self.async_get_Items, (Request, ItemsQueue, Params, "", CustomLimit, None))
 
             for BasicItem in ItemsQueue.getall():
                 if BasicItem == "QUIT":
@@ -193,9 +195,7 @@ class API:
                     for Item in ItemData:
                         yield Item[1]
 
-                del ItemData
-
-    def get_Items_Ids(self, Ids, MediaTypes, Dynamic, Basic, ProcessProgressId, LibraryId, Extra):
+    def get_Items_Ids(self, Ids, MediaTypes, Dynamic, Basic, ProcessProgressId, LibraryId, Extra, BusyFunction=None):
         ItemsQueue = queue.Queue()
 
         for MediaType in MediaTypes:
@@ -205,7 +205,7 @@ class API:
                 #Dynamic list query, remove fields to improve performance
                 if Dynamic:
                     if MediaType in ("Series", "Season"):
-                        Fields += ("RecursiveItemCount", "ChildCount")
+                        Fields += ["RecursiveItemCount", "ChildCount"]
 
                     for DynamicListsRemoveField in self.DynamicListsRemoveFields:
                         if DynamicListsRemoveField in Fields:
@@ -223,7 +223,7 @@ class API:
             if 'SortBy' not in Params:
                 Params['SortBy'] = "None"
 
-            start_new_thread(self.async_get_Items_Ids, (f"Users/{self.EmbyServer.ServerData['UserId']}/Items", ItemsQueue, Params, Ids, Dynamic, ProcessProgressId, LibraryId))
+            start_new_thread(self.async_get_Items_Ids, (f"Users/{self.EmbyServer.ServerData['UserId']}/Items", ItemsQueue, Params, Ids, Dynamic, ProcessProgressId, LibraryId, BusyFunction))
 
             while True:
                 Items = ItemsQueue.getall()
@@ -239,7 +239,7 @@ class API:
                 yield from Items
                 del Items
 
-    def async_get_Items_Ids(self, Request, ItemsQueue, Params, Ids, Dynamic, ProcessProgressId, LibraryId):
+    def async_get_Items_Ids(self, Request, ItemsQueue, Params, Ids, Dynamic, ProcessProgressId, LibraryId, BusyFunction=None):
         xbmc.log("EMBY.emby.api: THREAD: --->[ load Item by Ids ]", 0) # LOGDEBUG
         Index = 0
         Payload = ()
@@ -256,7 +256,7 @@ class API:
             Ids = Ids[IdsIndex:]
 
             # Query content
-            if not Dynamic and LibraryId and LibraryId != "unknown": # Kodi start updates
+            if not Dynamic and LibraryId and LibraryId.lower() != "unknown": # Kodi start updates
                 Found = False
 
                 if Params['IncludeItemTypes'] in ("BoxSet", "MusicArtist", "MusicAlbum", "Genre", "MusicGenre", "Tag", "Person", "Studio"): # workaround for Emby 4.X version
@@ -266,7 +266,7 @@ class API:
                 else:
                     Params.update({'Recursive': True, 'ParentId': LibraryId})
 
-                _, _, Payload = self.EmbyServer.http.request("GET", Request, Params, {}, False, "", False)
+                _, _, Payload = self.EmbyServer.http.request("GET", Request, Params, {}, False, "", False, BusyFunction)
 
                 if 'Items' in Payload:
                     for Item in Payload['Items']:
@@ -281,13 +281,13 @@ class API:
                     xbmc.log("EMBY.emby.api: THREAD: ---<[ load Item by Ids ] no items found or shutdown (regular query)", 0) # LOGDEBUG
                     return
             elif not Dynamic: # realtime updates via websocket
-                for WhitelistLibraryId in self.EmbyServer.library.WhitelistUnique:
-                    Params.update({'Recursive': True, 'ParentId': WhitelistLibraryId})
-                    _, _, Payload = self.EmbyServer.http.request("GET", Request, Params, {}, False, "", False)
+                for LibrarySyncedId in self.EmbyServer.library.LibrarySyncedNames:
+                    Params.update({'Recursive': True, 'ParentId': LibrarySyncedId})
+                    _, _, Payload = self.EmbyServer.http.request("GET", Request, Params, {}, False, "", False, BusyFunction)
 
                     if 'Items' in Payload:
                         for Item in Payload['Items']:
-                            Item['LibraryId'] = WhitelistLibraryId
+                            Item['LibraryId'] = LibrarySyncedId
                             ItemsQueue.put(Item)
                             Index += 1
 
@@ -333,7 +333,7 @@ class API:
 
         return True
 
-    def get_Items(self, ParentId, MediaTypes, Basic, Recursive, Extra, ProcessProgressId, UserData):
+    def get_Items(self, ParentId, MediaTypes, Basic, Recursive, Extra, ProcessProgressId, UserData, BusyFunction):
         CustomLimit = False
         ItemsQueue = queue.Queue()
 
@@ -359,16 +359,10 @@ class API:
             if 'SortBy' not in Params:
                 Params['SortBy'] = "None"
 
-            start_new_thread(self.async_get_Items, (f"Users/{self.EmbyServer.ServerData['UserId']}/Items", ItemsQueue, Params, ProcessProgressId, CustomLimit)) # Userdata must always queried, otherwise ParentId parameter is not respected by Emby server. -> Server issue
-
-#            if UserData and MediaType != "Folder":
-#                start_new_thread(self.async_get_Items, (f"Users/{self.EmbyServer.ServerData['UserId']}/Items", ItemsQueue, Params, ProcessProgressId, CustomLimit))
-#            else: # Skip userdata query
-#                if "MinDateLastSavedForUser" in Params:
-#                    Params["MinDateLastSaved"] = Params["MinDateLastSavedForUser"]
-#                    del Params["MinDateLastSavedForUser"]
-
-#                start_new_thread(self.async_get_Items, ("Items", ItemsQueue, Params, ProcessProgressId, CustomLimit))
+            if UserData and MediaType != "Folder":
+                start_new_thread(self.async_get_Items, (f"Users/{self.EmbyServer.ServerData['UserId']}/Items", ItemsQueue, Params, ProcessProgressId, CustomLimit, BusyFunction))
+            else:
+                start_new_thread(self.async_get_Items, ("Items", ItemsQueue, Params, ProcessProgressId, CustomLimit, BusyFunction))
 
             while True:
                 Items = ItemsQueue.getall()
@@ -391,7 +385,7 @@ class API:
         Limit = get_Limit("livetv")
         Params = {'UserId': self.EmbyServer.ServerData['UserId'], 'Fields': "Overview", 'EnableTotalRecordCount': False, 'Limit': Limit}
         ItemsQueue = queue.Queue()
-        start_new_thread(self.async_get_Items, ("LiveTv/Programs", ItemsQueue, Params, "", False))
+        start_new_thread(self.async_get_Items, ("LiveTv/Programs", ItemsQueue, Params, "", False, None))
 
         while True:
             Items = ItemsQueue.getall()
@@ -420,7 +414,7 @@ class API:
 
         return Items
 
-    def async_get_Items(self, Request, ItemsQueue, Params, ProcessProgressId, CustomLimit):
+    def async_get_Items(self, Request, ItemsQueue, Params, ProcessProgressId, CustomLimit, BusyFunction=None):
         xbmc.log("EMBY.emby.api: THREAD: --->[ load Items ]", 0) # LOGDEBUG
         Index = 0
         ItemCounter = 0
@@ -428,7 +422,7 @@ class API:
 
         while True:
             Params['StartIndex'] = Index
-            _, _, Payload = self.EmbyServer.http.request("GET", Request, Params, {}, False, "", False)
+            _, _, Payload = self.EmbyServer.http.request("GET", Request, Params, {}, False, "", False, BusyFunction)
             DirectItems = Request.lower().find("latest") != -1
 
             if DirectItems:
@@ -470,8 +464,6 @@ class API:
                 return
 
             Index += Limit
-
-        xbmc.log("EMBY.emby.api: THREAD: ---<[ load Items ]", 0) # LOGDEBUG
 
     def get_Item(self, Ids, MediaTypes, Dynamic, Basic, Specials=False):
         for MediaType in MediaTypes:
@@ -650,12 +642,20 @@ class API:
 
         return []
 
+    def get_PlaybackInfo(self, Id):
+        _, _, Payload = self.EmbyServer.http.request("POST", f"Items/{Id}/PlaybackInfo", {'UserId': self.EmbyServer.ServerData['UserId']}, {}, False, "", False)
+
+        if 'MediaSources' in Payload and Payload['MediaSources']:
+            return Payload['MediaSources']
+
+        return []
+
     def get_specialfeatures(self, Id):
-        _, _, Payload = self.EmbyServer.http.request("GET", f"Users/{self.EmbyServer.ServerData['UserId']}/Items/{Id}/SpecialFeatures", {'Fields': "Path,MediaSources,PresentationUniqueKey", 'EnableTotalRecordCount': False, 'LocationTypes': "FileSystem,Remote,Offline"}, {}, False, "", False)
+        _, _, Payload = self.EmbyServer.http.request("GET", f"Users/{self.EmbyServer.ServerData['UserId']}/Items/{Id}/SpecialFeatures", {'Fields': "Path,MediaSources,PresentationUniqueKey,ParentId,DateCreated,UserDataPlayCount", 'EnableTotalRecordCount': False, 'LocationTypes': "FileSystem,Remote,Offline"}, {}, False, "", False)
         return Payload
 
     def get_intros(self, Id):
-        _, _, Payload = self.EmbyServer.http.request("GET", f"Users/{self.EmbyServer.ServerData['UserId']}/Items/{Id}/Intros", {'Fields': ",".join(EmbyFields["trailer"]), 'EnableTotalRecordCount': False}, {}, False, "", False)
+        _, _, Payload = self.EmbyServer.http.request("GET", f"Users/{self.EmbyServer.ServerData['UserId']}/Items/{Id}/Intros", {'Fields': ",".join(EmbyFields["trailer"]), 'EnableTotalRecordCount': False, "EnableUserData": False}, {}, False, "", False)
         return Payload
 
     def get_additional_parts(self, Id):
@@ -663,7 +663,7 @@ class API:
         return Payload
 
     def get_local_trailers(self, Id):
-        _, _, Payload = self.EmbyServer.http.request("GET", f"Users/{self.EmbyServer.ServerData['UserId']}/Items/{Id}/LocalTrailers", {'Fields': ",".join(EmbyFields["trailer"]), 'EnableTotalRecordCount': False, 'LocationTypes': "FileSystem,Remote,Offline"}, {}, False, "", False)
+        _, _, Payload = self.EmbyServer.http.request("GET", f"Users/{self.EmbyServer.ServerData['UserId']}/Items/{Id}/LocalTrailers", {'Fields': ",".join(EmbyFields["trailer"]), 'EnableTotalRecordCount': False, 'LocationTypes': "FileSystem,Remote,Offline", "EnableUserData": False}, {}, False, "", False)
         return Payload
 
     def get_themes(self, Id, Songs, Videos):
@@ -705,7 +705,7 @@ class API:
             self.EmbyServer.http.Queues["ASYNC"].put((("DELETE", f"Users/{self.EmbyServer.ServerData['UserId']}/FavoriteItems/{Id}", {}, False),))
 
     def post_capabilities(self):
-        self.EmbyServer.http.request("POST", "Sessions/Capabilities/Full", {'Id': self.EmbyServer.EmbySession[0]['Id'], 'SupportsRemoteControl': True, 'PlayableMediaTypes': ["Audio", "Video", "Photo"], 'SupportsMediaControl': True, 'SupportsSync': True, 'SupportedCommands': ["MoveUp", "MoveDown", "MoveLeft", "MoveRight", "Select", "Back", "ToggleContextMenu", "ToggleFullscreen", "ToggleOsdMenu", "GoHome", "PageUp", "NextLetter", "GoToSearch", "GoToSettings", "PageDown", "PreviousLetter", "TakeScreenshot", "VolumeUp", "VolumeDown", "ToggleMute", "SendString", "DisplayMessage", "SetAudioStreamIndex", "SetSubtitleStreamIndex", "SetRepeatMode", "Mute", "Unmute", "SetVolume", "Pause", "Unpause", "Play", "Playstate", "PlayNext", "PlayMediaSource"], 'IconUrl': "https://raw.githubusercontent.com/MediaBrowser/plugin.video.emby/master/kodi_icon.png"}, {}, False, "", False)
+        self.EmbyServer.http.request("POST", "Sessions/Capabilities/Full", {'Id': self.EmbyServer.EmbySession[0]['Id'], 'SupportsRemoteControl': True, 'PlayableMediaTypes': ["Audio", "Video", "Photo"], 'SupportsMediaControl': True, 'SupportsSync': True, 'SupportedCommands': ["MoveUp", "MoveDown", "MoveLeft", "MoveRight", "Select", "Back", "ToggleContextMenu", "ToggleFullscreen", "ToggleOsdMenu", "GoHome", "PageUp", "NextLetter", "GoToSearch", "GoToSettings", "PageDown", "PreviousLetter", "TakeScreenshot", "VolumeUp", "VolumeDown", "ToggleMute", "SendString", "DisplayMessage", "SetAudioStreamIndex", "SetSubtitleStreamIndex", "SetRepeatMode", "SetShuffle", "PlaybackRate", "Mute", "Unmute", "SetVolume", "MovePlaylistItem", "RemoveFromPlaylist", "SetCurrentPlaylistItem", "ToggleStats", "PlayTrailers", "Pause", "Unpause", "Play", "Playstate", "PlayNext", "PlayMediaSource", "ChannelDown", "ChannelUp", "DisplayContent"], 'IconUrl': "https://raw.githubusercontent.com/MediaBrowser/plugin.video.emby/master/kodi_icon.png"}, {}, False, "", False)
 
     def session_add_user(self, session_id, user_id, option):
         if option:
@@ -713,16 +713,20 @@ class API:
         else:
             self.EmbyServer.http.Queues["ASYNC"].put((("DELETE", f"Sessions/{session_id}/Users/{user_id}", {}, False),))
 
-    def session_playing(self, PlayingItem):
-        self.EmbyServer.http.Queues["ASYNC"].put((("POST", "Sessions/Playing", session_filter_data(PlayingItem), False),))
+    def session_playing(self, EmbySessionInfo, PlaylistKodi, PlaylistEmby):
+        EmbySessionInfoLocal, PlaylistEmby = update_sessioninfo(EmbySessionInfo, "", PlaylistKodi, PlaylistEmby)
+        self.EmbyServer.http.Queues["ASYNC"].put((("POST", "Sessions/Playing", EmbySessionInfoLocal, False),))
+        return PlaylistEmby
 
-    def session_progress(self, PlayingItem, EventName):
-        PlayingItemEvent = {"EventName": EventName}
-        PlayingItemEvent.update(PlayingItem)
-        self.EmbyServer.http.Queues["ASYNC"].put((("POST", "Sessions/Playing/Progress", session_filter_data(PlayingItemEvent), False),))
+    def session_progress(self, EmbySessionInfo, EventName, PlaylistKodi, PlaylistEmby):
+        EmbySessionInfoLocal, PlaylistEmby = update_sessioninfo(EmbySessionInfo, EventName, PlaylistKodi, PlaylistEmby)
+        self.EmbyServer.http.Queues["ASYNC"].put((("POST", "Sessions/Playing/Progress", EmbySessionInfoLocal, False),))
+        return PlaylistEmby
 
-    def session_stop(self, PlayingItem):
-        self.EmbyServer.http.Queues["ASYNC"].put((("POST", "Sessions/Playing/Stopped", session_filter_data(PlayingItem), False),))
+    def session_stop(self, EmbySessionInfo, PlaylistKodi, PlaylistEmby):
+        EmbySessionInfoLocal, PlaylistEmby = update_sessioninfo(EmbySessionInfo, "", PlaylistKodi, PlaylistEmby)
+        self.EmbyServer.http.Queues["ASYNC"].put((("POST", "Sessions/Playing/Stopped", EmbySessionInfoLocal, False),))
+        return PlaylistEmby
 
     def session_logout(self):
         self.EmbyServer.http.request("POST", "Sessions/Logout", {}, {}, False, "", False)
@@ -742,12 +746,12 @@ class API:
         _, _, Payload = self.EmbyServer.http.request("POST", "Users/AuthenticateByName", {'username': Username, 'pw': Password or ""}, {}, False, "", False)
         return Payload
 
-    def get_stream_statuscode(self, Id, MediasourceID):
-        StatusCode, _, _ = self.EmbyServer.http.request("HEAD", f"videos/{Id}/stream", {'static': True, 'MediaSourceId': MediasourceID, 'DeviceId': self.EmbyServer.ServerData['DeviceId']}, {}, False, "", False)
+    def get_stream_statuscode(self, Id, MediaSourceId):
+        StatusCode, _, _ = self.EmbyServer.http.request("HEAD", f"videos/{Id}/stream", {'static': True, 'MediaSourceId': MediaSourceId, 'DeviceId': self.EmbyServer.ServerData['DeviceId']}, {}, False, "", False)
         return StatusCode
 
-    def get_Subtitle_Binary(self, Id, MediasourceID, SubtitleId, SubtitleFormat):
-        _, _, Payload = self.EmbyServer.http.request("GET", f"videos/{Id}/{MediasourceID}/Subtitles/{SubtitleId}/stream.{SubtitleFormat}", {}, {}, True, "", False)
+    def get_Subtitle_Binary(self, Id, MediaSourceId, SubtitleIndex, SubtitleFormat):
+        _, _, Payload = self.EmbyServer.http.request("GET", f"videos/{Id}/{MediaSourceId}/Subtitles/{SubtitleIndex}/stream.{SubtitleFormat}", {}, {}, True, "", False)
         return Payload
 
     def get_embyconnect_authenticate(self, Username, Password):
@@ -765,7 +769,7 @@ class API:
             #Dynamic list query, remove fields to improve performance
             if Dynamic:
                 if MediaType in ("Series", "Season"):
-                    Fields += ("RecursiveItemCount", "ChildCount")
+                    Fields += ["RecursiveItemCount", "ChildCount"]
 
                 for DynamicListsRemoveField in self.DynamicListsRemoveFields:
                     if DynamicListsRemoveField in Fields:
@@ -868,13 +872,49 @@ def get_Limit(MediaType):
     xbmc.log(f"EMBY.emby.api: Invalid content: {MediaType}", 3) # LOGERROR
     return 5000
 
-def session_filter_data(PlayingItem):
-    PlayingItemLocal = PlayingItem.copy()
+def update_sessioninfo(EmbySessionInfo, EventName, PlaylistKodi, PlaylistEmby):
+    # Build PlayingQueue
+    PlaylistKodiLen = len(PlaylistKodi)
+    PlaylistEmbyLen = len(PlaylistEmby)
 
-    if 'MediaSourceId' in PlayingItemLocal and not PlayingItemLocal['MediaSourceId']:
-        del PlayingItemLocal['MediaSourceId']
+    if EventName and PlaylistKodiLen > PlaylistEmbyLen:
+        EventName = "PlaylistItemAdd"
 
-    if 'PlaylistPosition' in PlayingItemLocal and PlayingItemLocal['PlaylistPosition'] == -1:
-        del PlayingItemLocal['PlaylistPosition']
+    if PlaylistKodiLen != PlaylistEmbyLen:
+        PlaylistEmby = PlaylistKodiLen * [{}] # allocate memory
+        Complete = True
 
-    return PlayingItemLocal
+        for ServerId in utils.EmbyServers:
+            embydb = dbio.DBOpenRO(ServerId, "Playlist_Add")
+
+            for PlaylistIndex, PlaylistKodiItem in enumerate(PlaylistKodi):
+                if PlaylistKodiItem["KodiId"] > 1000000000: # Update dynamic item
+                    EmbyId = PlaylistKodiItem["KodiId"] - 1000000000
+                else:
+                    EmbyId = embydb.get_EmbyId_by_KodiId_KodiType(PlaylistKodiItem["KodiId"], PlaylistKodiItem["KodiType"])
+
+                if not EmbyId:
+                    Complete = False
+                    EmbyId = -1
+
+                PlaylistEmby[PlaylistIndex] = {"Id": int(EmbyId), "PlaylistItemId": str(PlaylistIndex)}
+
+            dbio.DBCloseRO(ServerId, "Playlist_Add")
+
+            if Complete:
+                break
+
+    # Update info
+    EmbySessionInfoLocal = EmbySessionInfo.copy()
+    EmbySessionInfoLocal.update({"PlaylistLength": PlaylistEmbyLen, "NowPlayingQueue": PlaylistEmby})
+
+    if EventName:
+        EmbySessionInfoLocal["EventName"] = EventName
+
+    if 'MediaSourceId' in EmbySessionInfoLocal and not EmbySessionInfoLocal['MediaSourceId']:
+        del EmbySessionInfoLocal['MediaSourceId']
+
+    if 'PlaylistPosition' in EmbySessionInfoLocal and EmbySessionInfoLocal['PlaylistPosition'] == -1:
+        del EmbySessionInfoLocal['PlaylistPosition']
+
+    return EmbySessionInfoLocal, PlaylistEmby

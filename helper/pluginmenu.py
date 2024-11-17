@@ -1,3 +1,4 @@
+from _thread import start_new_thread
 from urllib.parse import urlencode
 import xbmc
 import xbmcgui
@@ -8,13 +9,14 @@ from core import common
 from . import utils, playerops, xmls, artworkcache
 
 SearchTerm = ""
+UpcomingLastQueryTicks = 0
 QueryCache = {}
 MappingStaggered = {"Series": "Season", "Season": "Episode", "PhotoAlbum": "HomeVideos", "MusicAlbum": "Audio"} # additional stagged content parameter written in the code, based on conditions
 letters = ("0-9", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z")
 MappingContentKodi = {"movies": "movies", "Video": "videos", "Season": "tvshows", "Episode": "episodes", "Series": "tvshows", "Movie": "movies", "Photo": "images", "PhotoAlbum": "images", "MusicVideo": "musicvideos", "MusicArtist": "artists", "MusicAlbum": "albums", "Audio": "songs", "TvChannel": "videos", "musicvideos": "musicvideos", "VideoMusicArtist": "musicvideos", "tvshows": "tvshows", "Folder": "files", "All": "files", "homevideos": "files", "Playlist": "files", "Trailer": "videos", "Person": "videos", "videos": "videos", "music": "songs"}
 Subcontent = {"tvshows": ("Series", "Season", "Episode", "Genre", "BoxSet"), "movies": ("Movie", "Genre", "BoxSet"), "music": ("MusicArtist", "MusicAlbum", "MusicGenre", "BoxSet", "Audio"), "musicvideos": ("MusicArtist", "MusicGenre", "BoxSet"), "homevideos": ("Photo", "PhotoAlbum", "Video"), "videos": ("Series", "Season", "Episode", "Genre", "BoxSet", "Movie", "Video", "Person")}
 IconMapping = {"MusicArtist": "DefaultMusicArtists.png", "MusicAlbum": "DefaultMusicAlbums.png", "Audio": "DefaultMusicSongs.png", "Movie": "DefaultMovies.png", "Trailer": "DefaultAddonVideo.png", "BoxSet": "DefaultSets.png", "Series": "DefaultTVShows.png", "Season": "DefaultTVShowTitle.png", "Episode": "DefaultAddonVideo.png", "MusicVideo": "DefaultMusicVideos.png", "Video": "DefaultAddonVideo.png", "Photo": "DefaultPicture.png.png", "PhotoAlbum": "DefaultAddonPicture.png", "TvChannel": "DefaultAddonPVRClient.png", "Folder": "DefaultFolder.png", "Playlist": "DefaultPlaylist.png", "Genre": "DefaultGenre.png", "MusicGenre": "DefaultMusicGenres.png", "Person": "DefaultActor.png", "Tag": "DefaultTags.png", "Channel": "DefaultFolder.png", "CollectionFolder": "DefaultFolder.png", "Studio": "DefaultStudios.png"}
-
+LibraryMenu = {"LibraryAdd": utils.Translate(33154), "LibraryRemove": utils.Translate(33184), "LibraryUpdate": utils.Translate(33139), "LibraryRepair": utils.Translate(33140), "RefreshBoxsets": utils.Translate(33098), "ToggleLiveTv": "", "RefreshLiveTv": utils.Translate(33706), "ToggleThemes": "", "RefreshThemes": utils.Translate(33707)}
 
 # Build plugin menu
 def listing(Handle, ContentSupported):
@@ -530,8 +532,8 @@ def load_ListItem(ParentId, Item, ServerId, ItemsListings, Content, LibraryId):
             params = {'id': Item['Id'], 'mode': "browse", 'query': StaggeredQuery, 'server': ServerId, 'parentid': ParentId, 'content': Content, 'libraryid': LibraryId}
             ItemsListings += ((f"plugin://plugin.service.emby-next-gen/?{urlencode(params)}", ListItem, True),)
         else:
-            path, _ = common.get_path_type_from_item(ServerId, Item)
-            ItemsListings += ((path, ListItem, False),)
+            common.set_path_filename(Item, ServerId, None, True)
+            ItemsListings += ((Item['KodiFullPath'], ListItem, False),)
 
     return ItemsListings
 
@@ -576,18 +578,21 @@ def manage_servers(ServerConnect):  # threaded by caller
         Selection = utils.Dialog.select(utils.Translate(33431), ServerItems)
 
         if Selection > -1:
+            utils.EmbyServers[ServerIds[Selection]].ServerData['ServerRemoved'] = True
             xbmc.executebuiltin('Dialog.Close(addoninformation)')
             utils.Dialog.notification(heading=utils.addon_name, message=f"{utils.Translate(33448)}: {utils.EmbyServers[ServerIds[Selection]].ServerData['ServerName']}", icon=utils.icon, time=utils.displayMessage, sound=False)
-            SQLs = dbio.DBOpenRW(ServerIds[Selection], "remove_emby_server", {})
+            SQLs = {}
+            dbio.DBOpenRW(ServerIds[Selection], "remove_emby_server", SQLs)
 
-            for LibraryId in utils.EmbyServers[ServerIds[Selection]].library.WhitelistUnique:
-                SQLs["emby"].remove_library_items(LibraryId)
-                SQLs["emby"].add_RemoveItem("library", LibraryId)
+            for LibrarySyncedId in utils.EmbyServers[ServerIds[Selection]].library.LibrarySyncedNames:
+                SQLs["emby"].add_remove_library_items(LibrarySyncedId)
+                SQLs["emby"].add_RemoveItem("library", LibrarySyncedId)
 
             SQLs["emby"].add_RemoveItem("library", "999999999")
-            SQLs["emby"].remove_library_items_person()
+            SQLs["emby"].add_remove_library_items_person()
             dbio.DBCloseRW(ServerIds[Selection], "remove_emby_server", SQLs)
-            utils.EmbyServers[ServerIds[Selection]].library.RunJobs()
+            utils.SyncPause[f"database_init_{utils.EmbyServers[ServerIds[Selection]].ServerData['ServerId']}"] = False
+            utils.EmbyServers[ServerIds[Selection]].library.RunJobs(False)
 
             for LibraryId in utils.EmbyServers[ServerIds[Selection]].Views.ViewItems:
                 utils.EmbyServers[ServerIds[Selection]].Views.delete_node_by_id(LibraryId, True)
@@ -602,24 +607,74 @@ def manage_servers(ServerConnect):  # threaded by caller
             AddUser(utils.EmbyServers[ServerIds[Selection]])
 
 def manage_libraries(ServerSelection):  # threaded by caller
-    Selection = utils.Dialog.select(utils.Translate(33194), [utils.Translate(33098), utils.Translate(33154), utils.Translate(33140), utils.Translate(33184), utils.Translate(33139), utils.Translate(33234), utils.Translate(33060)]) # Manage libraries
     ServerIds = list(utils.EmbyServers)
     EmbyServerId = ServerIds[ServerSelection]
 
-    if Selection == 0:
-        utils.EmbyServers[EmbyServerId].library.refresh_boxsets()
-    elif Selection == 1:
-        utils.EmbyServers[EmbyServerId].library.select_libraries("AddLibrarySelection")
-    elif Selection == 2:
-        utils.EmbyServers[EmbyServerId].library.select_libraries("RepairLibrarySelection")
-    elif Selection == 3:
-        utils.EmbyServers[EmbyServerId].library.select_libraries("RemoveLibrarySelection")
-    elif Selection == 4:
-        utils.EmbyServers[EmbyServerId].library.select_libraries("UpdateLibrarySelection")
-    elif Selection == 5:
-        utils.EmbyServers[EmbyServerId].library.SyncLiveTV()
-    elif Selection == 6:
-        utils.EmbyServers[EmbyServerId].library.SyncThemes()
+    while True:
+        SelectionMenu = ([], [])
+
+        for Id, Text in list(LibraryMenu.items()):
+            if Id == "ToggleLiveTv":
+                if utils.LiveTVEnabled:
+                    Text = utils.Translate(33708)
+                else:
+                    Text = utils.Translate(33709)
+            elif Id == "ToggleThemes":
+                if utils.ThemesEnabled:
+                    Text = utils.Translate(33710)
+                else:
+                    Text = utils.Translate(33711)
+            elif Id == "RefreshLiveTv":
+                if not utils.LiveTVEnabled:
+                    continue
+            elif Id == "RefreshThemes":
+                if not utils.ThemesEnabled:
+                    continue
+
+            SelectionMenu[0].append(Id)
+            SelectionMenu[1].append(Text)
+
+        Selection = utils.Dialog.select(utils.Translate(33194), SelectionMenu[1]) # Manage libraries
+
+        if Selection == -1:
+            return
+
+        if SelectionMenu[0][Selection] == "LibraryAdd":
+            utils.EmbyServers[EmbyServerId].library.select_libraries("AddLibrarySelection")
+        elif SelectionMenu[0][Selection] == "LibraryRemove":
+            utils.EmbyServers[EmbyServerId].library.select_libraries("RemoveLibrarySelection")
+        elif SelectionMenu[0][Selection] == "LibraryUpdate":
+            utils.EmbyServers[EmbyServerId].library.select_libraries("UpdateLibrarySelection")
+        elif SelectionMenu[0][Selection] == "LibraryRepair":
+            utils.EmbyServers[EmbyServerId].library.select_libraries("RepairLibrarySelection")
+        elif SelectionMenu[0][Selection] == "RefreshBoxsets":
+            utils.EmbyServers[EmbyServerId].library.refresh_boxsets()
+        elif SelectionMenu[0][Selection] == "ToggleLiveTv":
+            if not utils.check_iptvsimple():
+                continue
+
+            utils.set_settings_bool("LiveTVEnabled", not utils.LiveTVEnabled)
+
+            if utils.LiveTVEnabled:
+                start_new_thread(utils.EmbyServers[EmbyServerId].library.SyncLiveTV, ())
+            else:
+                utils.delFile(f"{utils.FolderEmbyTemp}{EmbyServerId}-livetv.m3u")
+                utils.delFile(f"{utils.FolderEmbyTemp}{EmbyServerId}-livetvepg.xml")
+        elif SelectionMenu[0][Selection] == "ToggleThemes":
+            if not utils.check_tvtunes():
+                utils.Dialog.ok(heading=utils.addon_name, message=utils.Translate(33152))
+                continue
+
+            utils.set_settings_bool("ThemesEnabled", not utils.ThemesEnabled)
+
+            if utils.ThemesEnabled:
+                utils.EmbyServers[EmbyServerId].library.SyncThemes()
+            else:
+                utils.delFolder(utils.PathAddTrailing(f"{utils.DownloadPath}EMBY-themes"))
+        elif SelectionMenu[0][Selection] == "RefreshLiveTv":
+            start_new_thread(utils.EmbyServers[EmbyServerId].library.SyncLiveTV, ())
+        elif SelectionMenu[0][Selection] == "RefreshThemes":
+            utils.EmbyServers[EmbyServerId].library.SyncThemes()
 
 # Special favorite synced node
 def favepisodes(Handle):
@@ -772,9 +827,9 @@ def cache_textures_generator(selection):
                 TempUrls = TotalRecords * [()]
                 ItemCounter = 0
 
-                for Item in EmbyServer.API.get_Items(None, ["PhotoAlbum"], True, True, {}, "", False):
-                    path, _ = common.get_path_type_from_item(ServerId, Item)
-                    TempUrls[ItemCounter] = (path,)
+                for Item in EmbyServer.API.get_Items(None, ["PhotoAlbum"], True, True, {}, "", True, None):
+                    common.set_path_filename(Item, ServerId, None, True)
+                    TempUrls[ItemCounter] = (Item['KodiFullPath'],)
                     ItemCounter += 1
 
                 yield TempUrls
@@ -784,9 +839,9 @@ def cache_textures_generator(selection):
                 TempUrls = TotalRecords * [()]
                 ItemCounter = 0
 
-                for Item in EmbyServer.API.get_Items(None, ["Photo"], True, True, {}, "", False):
-                    path, _ = common.get_path_type_from_item(ServerId, Item)
-                    TempUrls[ItemCounter] = (path,)
+                for Item in EmbyServer.API.get_Items(None, ["Photo"], True, True, {}, "", True, None):
+                    common.set_path_filename(Item, ServerId, None, True)
+                    TempUrls[ItemCounter] = (Item['KodiFullPath'],)
                     ItemCounter += 1
 
                 yield TempUrls
@@ -851,7 +906,17 @@ def reset_querycache(Content):
                     CachedContentItemsLen = len(CachedContentItems)
 
                     if CachedContentItemsLen == 8 and CachedContentItems[7] != "0" or CachedContentItemsLen != 8: # CachedItems[7] = LibraryId -> LibraryId = 0 means search content -> skip
-                        CachedContentItems[0] = False
+                        if CachedContentItemsLen == 8 and CachedContentItems[4] == "Upcoming": # skip refresh when last query is < 1 day
+                            CurrentTicks = utils.get_unixtime_emby_format()
+
+                            if UpcomingLastQueryTicks != 0:
+                                if CurrentTicks - 864000000 > UpcomingLastQueryTicks:
+                                    CachedContentItems[0] = False
+                                    globals()["UpcomingLastQueryTicks"] = CurrentTicks
+                            else:
+                                globals()["UpcomingLastQueryTicks"] = CurrentTicks
+                        else:
+                            CachedContentItems[0] = False
 
 def get_next_episodes(Handle, libraryname):
     if "Episode" not in QueryCache:
@@ -888,7 +953,6 @@ def get_next_episodes(Handle, libraryname):
     xbmcplugin.endOfDirectory(Handle, cacheToDisc=False)
 
 def get_next_episodes_played(Handle, libraryname):
-
     if "Episode" not in QueryCache:
         globals()["QueryCache"]["Episode"] = {}
 
@@ -974,11 +1038,12 @@ def downloadreset(Path=""):
             DownloadPath = utils.DownloadPath
 
         utils.delFolder(utils.PathAddTrailing(f"{DownloadPath}EMBY-offline-content"))
-        SQLs = dbio.DBOpenRW("video", "downloadreset", {})
+        SQLs = {}
+        dbio.DBOpenRW("video", "downloadreset", SQLs)
         Artworks = ()
 
         for ServerId in utils.EmbyServers:
-            SQLs = dbio.DBOpenRW(ServerId, "downloadreset", SQLs)
+            dbio.DBOpenRW(ServerId, "downloadreset", SQLs)
 
             for Item in SQLs['emby'].get_DownloadItem():
                 SQLs['video'].replace_PathId(Item[2], Item[1])
@@ -991,16 +1056,16 @@ def downloadreset(Path=""):
                         SQLs['video'].update_artwork(ArtworkData[0], UrlMod)
                         Artworks += ((UrlMod,),)
 
-            SQLs = dbio.DBCloseRW(ServerId, "downloadreset", SQLs)
+            dbio.DBCloseRW(ServerId, "downloadreset", SQLs)
 
-        dbio.DBCloseRW("video", "downloadreset", {})
+        dbio.DBCloseRW("video", "downloadreset", SQLs)
         artworkcache.CacheAllEntries(Artworks, None)
         utils.refresh_widgets(True)
 
     xbmc.log("EMBY.helper.pluginmenu: --<[ reset download ]", 1) # LOGINFO
 
 # Factory reset. wipes all db records etc.
-def factoryreset(Forced=False, KeepServerConfig=False):
+def factoryreset(KeepServerConfig, favoritesObj):
     xbmc.log("EMBY.helper.pluginmenu: [ factory reset ]", 2) # LOGWARNING
 
     if KeepServerConfig or utils.Dialog.yesno(heading=utils.addon_name, message=utils.Translate(33074)):
@@ -1015,35 +1080,48 @@ def factoryreset(Forced=False, KeepServerConfig=False):
                 EmbyServer.ServerDisconnect()
                 EmbyServer.stop()
 
-            if not Forced:
-                utils.delFolder(utils.FolderAddonUserdata, "", "")
-                DeleteThumbnails()
-                Filepath = 'special://profile/favourites.xml'
-
-                if utils.checkFileExists(Filepath):
-                    utils.delFile(Filepath)
-            else:
-                utils.delFolder(utils.FolderAddonUserdata, "", "settings.xml")
-                utils.set_settings('MinimumSetup', "")
-                utils.set_settings_bool('WizardCompleted', False)
-
+            utils.delFolder(utils.FolderAddonUserdata, "")
             utils.delete_playlists()
             utils.delete_nodes()
+
+        # remove favorites
+        favoritesObj.set_Favorites(False)
 
         # delete downloaded content
         utils.delFolder(utils.PathAddTrailing(f"{utils.DownloadPath}EMBY-offline-content"))
         utils.delFolder(utils.PathAddTrailing(f"{utils.DownloadPath}EMBY-themes"))
 
+        # Get EmbyServerIds based on config files
+        EmbyServerIds = []
+        _, files = utils.listDir(utils.FolderAddonUserdata)
+
+        for Filename in files:
+            if Filename.startswith('server'):
+                EmbyServerIds.append(Filename.replace('servers_', "").replace('.json', ""))
+
         # delete databases
         delete_database('emby')
-        SQLs = dbio.DBOpenRW("video", "factoryreset", {})
+        SQLs = {}
+        dbio.DBOpenRW("video", "factoryreset", SQLs)
         SQLs["video"].common_db.delete_tables("Video")
-        dbio.DBCloseRW("video", "factoryreset", {})
-        SQLs = dbio.DBOpenRW("music", "factoryreset", {})
+        dbio.DBCloseRW("video", "factoryreset", SQLs)
+        dbio.DBOpenRW("music", "factoryreset", SQLs)
         SQLs["music"].common_db.delete_tables("Music")
-        dbio.DBCloseRW("music", "factoryreset", {})
-        dbio.DBVacuum()
+        dbio.DBCloseRW("music", "factoryreset", SQLs)
         xbmc.log("EMBY.helper.pluginmenu: [ complete reset ]", 1) # LOGINFO
+
+        # Re-Init emby databases
+        for EmbyServerId in EmbyServerIds:
+            utils.DatabaseFiles[EmbyServerId] = utils.translatePath(f"special://profile/Database/emby_{EmbyServerId}.db")
+            SQLs = {}
+            dbio.DBOpenRW(EmbyServerId, "factoryreset", SQLs)
+            SQLs["emby"].init_EmbyDB()
+            dbio.DBCloseRW(EmbyServerId, "factoryreset", SQLs)
+
+        # Set configuration as last (Kodi timing issue)
+        if KeepServerConfig:
+            utils.set_settings('MinimumSetup', "OPENLIBRARY")
+
         utils.restart_kodi()
 
 def delete_database(Database):
@@ -1054,7 +1132,7 @@ def delete_database(Database):
             utils.delFile(f"special://profile/Database/{Filename}")
 
 # Reset both the emby database and the kodi database.
-def databasereset():
+def databasereset(favoritesObj):
     if not utils.Dialog.yesno(heading=utils.addon_name, message=utils.Translate(33074)):
         return
 
@@ -1063,12 +1141,14 @@ def databasereset():
     DelArtwork = utils.Dialog.yesno(heading=utils.addon_name, message=utils.Translate(33086))
     DeleteSettings = utils.Dialog.yesno(heading=utils.addon_name, message=utils.Translate(33087))
     xbmc.executebuiltin('Dialog.Close(addoninformation)')
-    SQLs = dbio.DBOpenRW("video", "databasereset", {})
+    favoritesObj.set_Favorites(False)
+    SQLs = {}
+    dbio.DBOpenRW("video", "databasereset", SQLs)
     SQLs["video"].common_db.delete_tables("Video")
-    dbio.DBCloseRW("video", "databasereset", {})
-    SQLs = dbio.DBOpenRW("music", "databasereset", {})
+    dbio.DBCloseRW("video", "databasereset", SQLs)
+    dbio.DBOpenRW("music", "databasereset", SQLs)
     SQLs["music"].common_db.delete_tables("Music")
-    dbio.DBCloseRW("music", "databasereset", {})
+    dbio.DBCloseRW("music", "databasereset", SQLs)
 
     if DelArtwork:
         DeleteThumbnails()
@@ -1083,11 +1163,6 @@ def databasereset():
         for Filename in files:
             if Filename.startswith('sync_'):
                 utils.delFile(f"{utils.FolderAddonUserdata}{Filename}")
-    # remove favourites
-    Filepath = 'special://profile/favourites.xml'
-
-    if utils.checkFileExists(Filepath):
-        utils.delFile(Filepath)
 
     delete_database('emby')
     utils.delete_playlists()
@@ -1113,9 +1188,10 @@ def DeleteThumbnails():
             xbmc.log(f"EMBY.helper.pluginmenu: DELETE thumbnail {File}", 0) # LOGDEBUG
             utils.delFile(f"special://thumbnails/{Folder}{File}")
 
-    SQLs = dbio.DBOpenRW("texture", "cache_textures", {})
+    SQLs = {}
+    dbio.DBOpenRW("texture", "cache_textures", SQLs)
     SQLs["texture"].common_db.delete_tables("Texture")
-    dbio.DBCloseRW("texture", "cache_textures", {})
+    dbio.DBCloseRW("texture", "cache_textures", SQLs)
     ProgressBar.close()
     del ProgressBar
     xbmc.log("EMBY.helper.pluginmenu: --<[ reset artwork ]", 1) # LOGINFO
@@ -1125,7 +1201,7 @@ def add_ViewItems(Handle, QueryContent, Content, ItemsListings, Unsorted):
 
     if not xbmcplugin.addDirectoryItems(Handle, ItemsListings, len(ItemsListings)):
         xbmc.log("EMBY.helper.pluginmenu: Dynamic nodes: addDirectoryItems FAIL", 3) # LOGERROR
-        xbmc.executebuiltin('ReloadSkin()')
+#        xbmc.executebuiltin('ReloadSkin()')
         return
 
     # Set Sorting
