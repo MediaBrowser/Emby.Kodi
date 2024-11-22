@@ -717,20 +717,21 @@ def set_chapters(Item, ServerId):
         if MediaSourcesChapters:
             if 'Chapters' in MediaSource: # Chapters by mediasource
                 for Index, Chapter in enumerate(MediaSource['Chapters']):
-                    load_chapter(MediaSource, Chapter, Index, ServerId)
+                    load_chapter(MediaSource, Chapter, Index, ServerId, Item['Id'])
         else:
             if 'Chapters' in Item and MediaSourceIndex == 0: # load chapters by item
                 for Index, Chapter in enumerate(Item['Chapters']):
-                    load_chapter(MediaSource, Chapter, Index, ServerId)
+                    load_chapter(MediaSource, Chapter, Index, ServerId, Item['Id'])
             else: # copy global KodiChapters to all MediaSources
                 MediaSource['KodiChapters'] = Item['MediaSources'][0]['KodiChapters']
                 MediaSource['IntroStartPositionTicks'] = Item['MediaSources'][0]['IntroStartPositionTicks']
                 MediaSource['IntroEndPositionTicks'] = Item['MediaSources'][0]['IntroEndPositionTicks']
                 MediaSource['CreditsPositionTicks'] = Item['MediaSources'][0]['CreditsPositionTicks']
 
-def load_chapter(MediaSource, Chapter, Index, ServerId):
+def load_chapter(MediaSource, Chapter, Index, ServerId, ItemId):
     MarkerLabel = ""
     Chapter["StartPositionTicks"] = round(float(Chapter.get("StartPositionTicks", 0) / 10000000))
+    Id = MediaSource.get('ItemId', ItemId)
 
     if "MarkerType" in Chapter and (Chapter['MarkerType'] == "IntroStart" or Chapter['MarkerType'] == "IntroEnd" or Chapter['MarkerType'] == "CreditsStart"):
         if Chapter['MarkerType'] == "IntroStart":
@@ -743,9 +744,9 @@ def load_chapter(MediaSource, Chapter, Index, ServerId):
         MarkerLabel = quote(MarkerTypeMapping[Chapter['MarkerType']])
 
         if "ImageTag" in Chapter:
-            ChapterImage = f"http://127.0.0.1:57342/picture/{ServerId}/p-{MediaSource['ItemId']}-{Index}-c-{Chapter['ImageTag']}-{MarkerLabel}|redirect-limit=1000"
+            ChapterImage = f"http://127.0.0.1:57342/picture/{ServerId}/p-{Id}-{Index}-c-{Chapter['ImageTag']}-{MarkerLabel}|redirect-limit=1000"
         else: # inject blank image, otherwise not possible to use text overlay (webservice.py)
-            ChapterImage = f"http://127.0.0.1:57342/picture/{ServerId}/p-{MediaSource['ItemId']}-{Index}-c-noimage-{MarkerLabel}|redirect-limit=1000"
+            ChapterImage = f"http://127.0.0.1:57342/picture/{ServerId}/p-{Id}-{Index}-c-noimage-{MarkerLabel}|redirect-limit=1000"
     else:
         if "Name" in Chapter:
             Chapter['Name'] = Chapter['Name'].replace("-", " ")
@@ -765,9 +766,9 @@ def load_chapter(MediaSource, Chapter, Index, ServerId):
             Chapter["Name"] = "unknown"
 
         if "ImageTag" in Chapter:
-            ChapterImage = f"http://127.0.0.1:57342/picture/{ServerId}/p-{MediaSource['ItemId']}-{Index}-c-{Chapter['ImageTag']}-{quote(Chapter['Name'])}|redirect-limit=1000"
+            ChapterImage = f"http://127.0.0.1:57342/picture/{ServerId}/p-{Id}-{Index}-c-{Chapter['ImageTag']}-{quote(Chapter['Name'])}|redirect-limit=1000"
         else:
-            ChapterImage = f"http://127.0.0.1:57342/picture/{ServerId}/p-{MediaSource['ItemId']}-{Index}-c-noimage-{quote(Chapter['Name'])}|redirect-limit=1000"
+            ChapterImage = f"http://127.0.0.1:57342/picture/{ServerId}/p-{Id}-{Index}-c-noimage-{quote(Chapter['Name'])}|redirect-limit=1000"
 
     if Chapter["StartPositionTicks"] not in MediaSource['KodiChapters']:
         MediaSource['KodiChapters'][Chapter["StartPositionTicks"]] = ChapterImage

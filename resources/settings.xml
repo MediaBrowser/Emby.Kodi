@@ -389,11 +389,11 @@
                 </setting>
                 <setting id="LiveTVPaging" type="integer" label="33593" help="33175">
                     <level>3</level>
-                    <default>1000</default>
+                    <default>20000</default>
                     <constraints>
-                        <minimum>100</minimum>
-                        <step>100</step>
-                        <maximum>2000</maximum>
+                        <minimum>1000</minimum>
+                        <step>1000</step>
+                        <maximum>50000</maximum>
                     </constraints>
                     <control type="slider" format="integer">
                         <popup>false</popup>

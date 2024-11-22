@@ -145,6 +145,9 @@ class EmbyServer:
             EmbyConnectServers = self.API.get_embyconnect_servers()
 
             if EmbyConnectServers:
+                if not isinstance(EmbyConnectServers, dict):
+                    EmbyConnectServers = json.loads(EmbyConnectServers)
+
                 for EmbyConnectServer in EmbyConnectServers:
                     if EmbyConnectServer['SystemId'] == self.ServerData['ServerId']:
                         if self.ServerData['RemoteAddress'] != EmbyConnectServer['Url'] or self.ServerData['LocalAddress'] != EmbyConnectServer['LocalAddress']: # update server settings
@@ -362,9 +365,15 @@ class EmbyServer:
         if not Data:  # Failed to login
             return
 
+        if not isinstance(Data, dict):
+            Data = json.loads(Data)
+
         self.ServerData.update({'EmbyConnectUserId': Data['User']['Id'], 'EmbyConnectUserName': Data['User']['Name'], 'EmbyConnectAccessToken': Data['AccessToken']})
         xbmc.log("EMBY.emby.emby: Begin getConnectServers", 0) # LOGDEBUG
         EmbyConnectServers = self.API.get_embyconnect_servers()
+
+        if not isinstance(EmbyConnectServers, dict):
+            EmbyConnectServers = json.loads(EmbyConnectServers)
 
         if EmbyConnectServers:
             for EmbyConnectServer in EmbyConnectServers:
