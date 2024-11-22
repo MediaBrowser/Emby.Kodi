@@ -170,7 +170,6 @@ BoxSetsToTags = False
 MovieToSeries = True
 SyncFavorites = False
 Dialog = xbmcgui.Dialog()
-XbmcPlayer = xbmc.Player()  # Init Player
 WizardCompleted = True
 LiveTVEnabled = False
 ThemesEnabled = False

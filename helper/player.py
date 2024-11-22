@@ -8,6 +8,7 @@ from emby import listitem
 from helper import utils, pluginmenu, playerops, queue
 from dialogs import skipintrocredits
 
+XbmcPlayer = xbmc.Player()  # Init Player
 SkipItem = ()
 TrailerStatus = "READY"
 PlaylistRemoveItem = -1
@@ -90,7 +91,7 @@ def PlayerCommands():
             FullPath = ""
 
             try:
-                FullPath = utils.XbmcPlayer.getPlayingFile()
+                FullPath = XbmcPlayer.getPlayingFile()
             except Exception as Error:
                 xbmc.log(f"EMBY.helper.player: getPlayingFile issue {Error}", 3) # LOGERROR
 
@@ -158,8 +159,8 @@ def PlayerCommands():
 
                             pluginmenu.QueryCache["Video"]["Theme"] = [True, ((FullPath, ListItem, False), )]
 
-                        if utils.XbmcPlayer.isPlaying():
-                            utils.XbmcPlayer.updateInfoTag(ListItem)
+                        if XbmcPlayer.isPlaying():
+                            XbmcPlayer.updateInfoTag(ListItem)
                         else:
                             xbmc.log("EMBY.helper.player: XbmcPlayer not playing 2", 3) # LOGERROR
                             continue
@@ -536,7 +537,7 @@ def play_Trailer(EmbyServer):
     del EmbyServer.http.Intros[0]
     globals()["TrailerStatus"] = "PLAYING"
     li.setPath(Path)
-    utils.XbmcPlayer.play(Path, li)
+    XbmcPlayer.play(Path, li)
 
 def PositionTracker():
     TasksRunning.append("PositionTracker")
@@ -755,8 +756,8 @@ def load_unsynced_content(FullPath, PlaylistPosition, KodiType):
                 if CachedItem[0] == FullPath:
                     xbmc.log("EMBY.hooks.player: Update player info", 1) # LOGINFO
 
-                    if utils.XbmcPlayer.isPlaying():
-                        utils.XbmcPlayer.updateInfoTag(CachedItem[1])
+                    if XbmcPlayer.isPlaying():
+                        XbmcPlayer.updateInfoTag(CachedItem[1])
 
                         if QueuedPlayingItem: # Dynamic widget -> item played via addon mode or multicontent native content item
                             CachedItemFound = True

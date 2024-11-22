@@ -627,6 +627,5 @@ def StartUp():
         xbmc.log("EMBY.hooks.monitor: [ Shutdown Emby-next-gen ]", 2) # LOGWARNING
 
     player.PlayerEventsQueue.put("QUIT")
-    utils.XbmcPlayer = None
     utils.SystemShutdown = True
     xbmc.log("EMBY.hooks.monitor: Exit Emby-next-gen", 1) # LOGINFO
