@@ -59,6 +59,7 @@ SyncNodes = {
         ('recentlyadded', utils.Translate(30256), 'DefaultRecentlyAddedMusicVideos.png', "musicvideos", (("tag", "is", "LIBRARYTAG"), ("playcount", "is", "0")), ("descending", "dateadded"), True, False),
         ('years', utils.Translate(33218), 'DefaultMusicYears.png', "musicvideos", (("tag", "is", "LIBRARYTAG"),), ("descending", "year"), True, "years"),
         ('genres', utils.Translate(33248), 'DefaultGenre.png', "musicvideos", (("tag", "is", "LIBRARYTAG"),), ("ascending", "sorttitle"), False, "genres"),
+        ('albums', utils.Translate(33362), 'DefaultMusicAlbums.png', "musicvideos", (("tag", "is", "LIBRARYTAG"),), ("ascending", "sorttitle"), False, "albums"),
         ('inprogress', utils.Translate(30257), 'DefaultInProgressShows.png', "musicvideos", (("tag", "is", "LIBRARYTAG"), ("inprogress", "true")), ("descending", "lastplayed"), False, False),
         ('random', utils.Translate(30229), 'special://home/addons/plugin.service.emby-next-gen/resources/random.png', "musicvideos", (("tag", "is", "LIBRARYTAG"),), ("random",), True, False),
         ('unwatched', utils.Translate(30258), 'OverlayUnwatched.png', "musicvideos", (("tag", "is", "LIBRARYTAG"), ("inprogress", "false"), ("playcount", "is", "0")), ("random",), True, False),

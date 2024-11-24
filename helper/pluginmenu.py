@@ -899,7 +899,7 @@ def cache_textures_generator(selection):
 def reset_querycache(Content):
     if not playerops.RemoteMode: # keep cache in remote client mode -> don't overload Emby server
         for CacheContent, CachedItems in list(QueryCache.items()):
-            if not Content or CacheContent.find(Content) != -1 or CacheContent == "All" or CacheContent == "BoxSet":
+            if not Content or str(CacheContent).find(Content) != -1 or CacheContent == "All" or CacheContent == "BoxSet":
                 xbmc.log(f"EMBY.helper.pluginmenu: Clear QueryCache: {CacheContent}", 1) # LOGINFO
 
                 for CachedContentItems in list(CachedItems.values()):

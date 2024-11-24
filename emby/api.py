@@ -798,6 +798,10 @@ class API:
         return []
 
 def get_Limit(MediaType):
+    if not MediaType:
+        xbmc.log(f"EMBY.emby.api: Invalid content 1: {MediaType}", 3) # LOGERROR
+        return 5000
+
     Type = MediaType.lower()
 
     if Type == "musicartist":
@@ -869,7 +873,7 @@ def get_Limit(MediaType):
     if Type == "all":
         return utils.AllPaging
 
-    xbmc.log(f"EMBY.emby.api: Invalid content: {MediaType}", 3) # LOGERROR
+    xbmc.log(f"EMBY.emby.api: Invalid content 2: {MediaType}", 3) # LOGERROR
     return 5000
 
 def update_sessioninfo(EmbySessionInfo, EventName, PlaylistKodi, PlaylistEmby):

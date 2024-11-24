@@ -49,9 +49,9 @@ class Episode:
         # Check if ParentIndexNumber (Season number) not in Kodi database
         if Item['ParentIndexNumber']:
             if SeasonNumber != Item['ParentIndexNumber']:
-                xbmc.log(f"EMBY.core.episode: Season number, assigned by episode (ParentIndexNumber) [{Item['ParentIndexNumber']}] not matching season number by SeasonId [{SeasonNumber}]", 2) # LOGWARNING
+                xbmc.log(f"EMBY.core.episode: Episode name: {Item['Name']} / SeriesName: {Item.get('SeriesName', 'unknown')} -> Season number, assigned by episode (ParentIndexNumber) [{Item['ParentIndexNumber']}] not matching season number by SeasonId [{SeasonNumber}]", 2) # LOGWARNING
         else:
-            xbmc.log("EMBY.core.episode: ParentIndexNumber not found, try to detect season by SeasonNumber", 2) # LOGWARNING
+            xbmc.log(f"EMBY.core.episode: Episode name: {Item['Name']} / SeriesName: {Item.get('SeriesName', 'unknown')} -> ParentIndexNumber not found, try to detect season by SeasonNumber", 2) # LOGWARNING
             Item['ParentIndexNumber'] = SeasonNumber
 
         if Item['UpdateItem']:

@@ -1,3 +1,4 @@
+from _thread import allocate_lock
 import sys
 import os
 import shutil
@@ -23,6 +24,7 @@ try:
 except Exception as error:
     sys.exit(0)
 
+WidgetsRefreshLock = allocate_lock()
 EmbyTypeMapping = {"Person": "actor", "Video": "movie", "Movie": "movie", "Series": "tvshow", "Season": "season", "Episode": "episode", "Audio": "song", "MusicAlbum": "album", "MusicArtist": "artist", "Genre": "genre", "MusicGenre": "genre", "Tag": "tag" , "Studio": "studio" , "BoxSet": "set", "Folder": None, "MusicVideo": "musicvideo", "Playlist": "Playlist"}
 KodiTypeMapping = {"actor": "Person", "tvshow": "Series", "season": "Season", "episode": "Episode", "song": "Audio", "album": "MusicAlbum", "artist": "MusicArtist", "genre": "Genre", "tag": "Tag", "studio": "Studio" , "set": "BoxSet", "musicvideo": "MusicVideo", "playlist": "Playlist", "movie": "Movie", "videoversion": "Video"}
 addon_version = Addon.getAddonInfo('version')
@@ -212,21 +214,22 @@ followhttp = False
 followhttptimeout = 5
 
 def refresh_widgets(isVideo):
-    xbmc.log("EMBY.helper.utils: Refresh widgets initialized", 1) # LOGINFO
+    with WidgetsRefreshLock:
+        xbmc.log("EMBY.helper.utils: Refresh widgets initialized", 1) # LOGINFO
 
-    if isVideo and not WidgetRefresh['video']:
-        globals()["WidgetRefresh"]['video'] = True
-        xbmc.log("EMBY.helper.utils: Refresh widgets video started", 1) # LOGINFO
+        if isVideo and not WidgetRefresh['video']:
+            globals()["WidgetRefresh"]['video'] = True
+            xbmc.log("EMBY.helper.utils: Refresh widgets video started", 1) # LOGINFO
 
-        if not SendJson('{"jsonrpc":"2.0","method":"VideoLibrary.Scan","params":{"showdialogs":false,"directory":"EMBY_widget_refresh_trigger"},"id":1}', True):
-            globals()["WidgetRefresh"]['video'] = False
+            if not SendJson('{"jsonrpc":"2.0","method":"VideoLibrary.Scan","params":{"showdialogs":false,"directory":"EMBY_widget_refresh_trigger"},"id":1}', True):
+                globals()["WidgetRefresh"]['video'] = False
 
-    if not isVideo and not WidgetRefresh['music']:
-        globals()["WidgetRefresh"]['music'] = True
-        xbmc.log("EMBY.helper.utils: Refresh widgets music started", 1) # LOGINFO
+        if not isVideo and not WidgetRefresh['music']:
+            globals()["WidgetRefresh"]['music'] = True
+            xbmc.log("EMBY.helper.utils: Refresh widgets music started", 1) # LOGINFO
 
-        if not SendJson('{"jsonrpc":"2.0","method":"AudioLibrary.Scan","params":{"showdialogs":false,"directory":"EMBY_widget_refresh_trigger"},"id":1}', True):
-            globals()["WidgetRefresh"]['music'] = False
+            if not SendJson('{"jsonrpc":"2.0","method":"AudioLibrary.Scan","params":{"showdialogs":false,"directory":"EMBY_widget_refresh_trigger"},"id":1}', True):
+                globals()["WidgetRefresh"]['music'] = False
 
 def SendJson(JsonString, ForceBreak=False):
     LogSend = False

@@ -293,13 +293,13 @@ class HTTP:
             # Close sessions
             if ConnectionId == "WEBSOCKET": # close websocket
                 try:
-                    self.Connection[ConnectionId]["Socket"].settimeout(3) # set timeout
+                    self.Connection[ConnectionId]["Socket"].settimeout(1) # set timeout
                     self.websocket_send(b"", 0x8)  # Close
                 except Exception as error:
                     xbmc.log(f"EMBY.emby.http: Socket {ConnectionId} send close error: {error}", 2) # LOGWARNING
             elif ConnectionId in ("MAIN", "ASYNC"): # send final ping to change tcp session from keep-alive to close
                 try:
-                    self.Connection[ConnectionId]["Socket"].settimeout(3) # set timeout
+                    self.Connection[ConnectionId]["Socket"].settimeout(1) # set timeout
                     self.Connection[ConnectionId]["Socket"].send(f'POST {self.Connection[ConnectionId]["SubUrl"]}System/Ping HTTP/1.1\r\nHost: {self.Connection[ConnectionId]["Hostname"]}:{self.Connection[ConnectionId]["Port"]}\r\nContent-type: application/json; charset=utf-8\r\nAccept-Charset: utf-8\r\nAccept-encoding: gzip\r\nUser-Agent: {utils.addon_name}/{utils.addon_version}\r\nConnection: close\r\nAuthorization: Emby Client="{utils.addon_name}", Device="{utils.device_name}", DeviceId="{self.EmbyServer.ServerData["DeviceId"]}", Version="{utils.addon_version}"\r\nContent-Length: 0\r\n\r\n'.encode("utf-8"))
                     self.Connection[ConnectionId]["Socket"].recv(1048576)
                 except Exception as error:
@@ -854,7 +854,9 @@ class HTTP:
                 return
 
             self.inProgressWebSocket = True
-            self.websocket_send('{"MessageType": "ScheduledTasksInfoStart", "Data": "0,1500"}', 0x1) # subscribe notifications
+
+            if not self.websocket_send('{"MessageType": "ScheduledTasksInfoStart", "Data": "0,1500"}', 0x1): # subscribe notifications
+                continue
 
             if "WEBSOCKET" not in self.Connection:
                 continue
@@ -866,7 +868,7 @@ class HTTP:
             payload = b''
 
             while self.Running:
-                StatusCodeSocket, PayloadRecv = self.socket_io("", "WEBSOCKET", 0)
+                StatusCodeSocket, PayloadRecv = self.socket_io("", "WEBSOCKET", 6)
 
                 if StatusCodeSocket:
                     xbmc.log(f"EMBY.emby.emby: Websocket receive interupted {StatusCodeSocket}", 1) # LOGINFO
@@ -932,7 +934,8 @@ class HTTP:
                         ConnectionClosed = True
                         break
                     elif opcode == 0x9: # Ping
-                        self.websocket_send(payload, 0xa)  # Pong
+                        if not self.websocket_send(payload, 0xa):  # Pong:
+                            break
                     elif opcode == 0xa: # Pong
                         xbmc.log("EMBY.emby.emby: Websocket Pong received", 0) # LOGDEBUG
                     else:
@@ -965,7 +968,13 @@ class HTTP:
 
         mask_key = os.urandom(4)
         data = frame_header + mask_key + maskData(mask_key, payload)
-        self.socket_io(data, "WEBSOCKET", 300)
+        StatusCodeSocket, _ = self.socket_io(data, "WEBSOCKET", 12)
+
+        if StatusCodeSocket:
+            xbmc.log(f"EMBY.emby.emby: Websocket send interupted {StatusCodeSocket}", 1) # LOGINFO
+            return False
+
+        return True
 
     def update_header(self, ConnectionId):
         if 'X-Emby-Token' not in self.Connection[ConnectionId]["RequestHeader"] and self.EmbyServer.ServerData['AccessToken'] and self.EmbyServer.ServerData['UserId']:

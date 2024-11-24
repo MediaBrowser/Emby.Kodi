@@ -1,3 +1,15 @@
+11.1.5
+=============
+add musicvideo album node
+inject --NO INFO-- when musicvideo album is empty
+improve websocket reconnect
+fix issue when using invalid dynamic nodes
+improve episode debug messages
+improve Kodi shutdown
+fix minor sync pause issue
+
+
+
 11.1.4
 =============
 fix emby connect
