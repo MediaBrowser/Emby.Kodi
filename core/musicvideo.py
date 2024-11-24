@@ -35,7 +35,7 @@ class MusicVideo:
         common.set_MetaItems(Item, self.SQLs, self.StudioObject, self.EmbyServer, "Studio",'Studios', None, -1, IncrementalSync)
         common.set_people(Item, self.SQLs, self.PersonObject, self.EmbyServer, IncrementalSync)
         self.SQLs["emby"].add_streamdata(Item['Id'], Item['MediaSources'])
-        Item['Album'] = Item.get('Album', None)
+        Item['Album'] = Item.get('Album', "--NO INFO--")
 
         if Item['UpdateItem']:
             common.delete_ContentItemReferences(Item, self.SQLs, "musicvideo")

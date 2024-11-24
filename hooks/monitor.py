@@ -10,6 +10,7 @@ QueueItemsStatusupdate = ()
 QueryItemStatusThread = False
 QueueItemsRemove = ()
 QueryItemRemoveThread = False
+FullShutdown = False
 utils.FavoriteQueue = queue.Queue()
 syncEmbyLock = allocate_lock()
 VideoLibrary_OnUpdateLock = allocate_lock()
@@ -64,7 +65,7 @@ class monitor(xbmc.Monitor):
             EmbyServer_DisconnectAll()
         elif method == 'System.OnQuit':
             xbmc.log("EMBY.hooks.monitor: System_OnQuit", 1) # LOGINFO
-            utils.SystemShutdown = True
+            ShutDown()
         elif method == 'Other.managelibsselection':
             start_new_thread(pluginmenu.select_managelibs, ())
         elif method == 'Other.deduplicate':
@@ -120,9 +121,11 @@ class monitor(xbmc.Monitor):
         xbmc.log(f"EMBY.hooks.monitor: --<[ kodi scan / {library} ]", 1) # LOGINFO
         utils.WidgetRefresh[library] = False
 
-        if not utils.WidgetRefresh['music'] and not utils.WidgetRefresh['video'] and not playerops.RemoteMode:
+        if not utils.WidgetRefresh['music'] and not utils.WidgetRefresh['video']:
             utils.SyncPause['kodi_rw'] = False
-            start_new_thread(syncEmby, ())
+
+            if not playerops.RemoteMode:
+                start_new_thread(syncEmby, ())
 
     def onCleanStarted(self, library):
         xbmc.log(f"EMBY.hooks.monitor: -->[ kodi clean / {library} ]", 1) # LOGINFO
@@ -134,9 +137,11 @@ class monitor(xbmc.Monitor):
         xbmc.log(f"EMBY.hooks.monitor: --<[ kodi clean / {library} ]", 1) # LOGINFO
         utils.WidgetRefresh[library] = False
 
-        if not utils.WidgetRefresh['music'] and not utils.WidgetRefresh['video'] and not playerops.RemoteMode:
+        if not utils.WidgetRefresh['music'] and not utils.WidgetRefresh['video']:
             utils.SyncPause['kodi_rw'] = False
-            start_new_thread(syncEmby, ())
+
+            if not playerops.RemoteMode:
+                start_new_thread(syncEmby, ())
 
     def onSettingsChanged(self):
         xbmc.log("EMBY.hooks.monitor: Seetings changed", 1) # LOGINFO
@@ -587,6 +592,7 @@ def StartUp():
         utils.restart_kodi()
     else:  # Regular start
         xbmc.log("EMBY.hooks.monitor: Monitor listening", 1) # LOGINFO
+        globals()['FullShutdown'] = True
         XbmcMonitor = monitor()  # Init Monitor
         start_new_thread(favorites.monitor_Favorites, ())
         start_new_thread(favorites.emby_change_Favorite, ())
@@ -607,7 +613,12 @@ def StartUp():
 
         XbmcMonitor.waitForAbort(0) # Waiting/blocking function till Kodi stops
 
+    ShutDown()
+
+def ShutDown():
+    if FullShutdown:
         # Shutdown
+        globals()['FullShutdown'] = False
         utils.SystemShutdown = True
         utils.FavoriteQueue.put("QUIT")
 
@@ -623,7 +634,6 @@ def StartUp():
             RemoteCommandQueue.put("QUIT")
 
         webservice.close()
-        EmbyServer_DisconnectAll()
         xbmc.log("EMBY.hooks.monitor: [ Shutdown Emby-next-gen ]", 2) # LOGWARNING
 
     player.PlayerEventsQueue.put("QUIT")

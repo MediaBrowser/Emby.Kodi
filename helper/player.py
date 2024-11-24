@@ -1,4 +1,4 @@
-from _thread import start_new_thread
+from _thread import start_new_thread, allocate_lock
 import uuid
 from urllib.parse import unquote_plus
 import json
@@ -20,6 +20,7 @@ if PlayerVolume:
     Volume = PlayerVolume.get('volume', 100)
     Muted = PlayerVolume.get('muted', False)
 
+PlayerBusyLock = allocate_lock()
 RepeatMode = ['RepeatNone', 'RepeatNone', 'RepeatNone']
 Shuffled = [False, False, False]
 PlaybackRate = [1.0, 1.0, 1.0]
@@ -709,22 +710,23 @@ def sync_workers():
 
 # Interrupt syncs while player is busy -> 5 seconds delay
 def PlayerBusy():
-    Wait = PlayerBusyDelay == 5
-    globals()["PlayerBusyDelay"] = 4
+    globals()["PlayerBusyDelay"] = 5
 
-    if Wait:
+    if not PlayerBusyLock.locked():
         start_new_thread(PlayerBusyThread, ())
 
 def PlayerBusyThread():
     xbmc.log("EMBY.hooks.player: THREAD: --->[ PlayerBusyThread ]", 0) # LOGDEBUG
-    utils.SyncPause['playerbusy'] = True
 
-    while PlayerBusyDelay > 0:
-        utils.sleep(1)
-        globals()["PlayerBusyDelay"] -= 1
+    with PlayerBusyLock:
+        utils.SyncPause['playerbusy'] = True
 
-    utils.SyncPause['playerbusy'] = False
-    globals()["PlayerBusyDelay"] = 5
+        while PlayerBusyDelay >= 0:
+            utils.sleep(1)
+            globals()["PlayerBusyDelay"] -= 1
+
+        utils.SyncPause['playerbusy'] = False
+
     xbmc.log("EMBY.hooks.player: THREAD: ---<[ PlayerBusyThread ]", 0) # LOGDEBUG
 
 def load_unsynced_content(FullPath, PlaylistPosition, KodiType):
