@@ -231,11 +231,11 @@ def worker_Query(fd):  # thread by caller
                 CacheId1 = f"0Search0{ServerId}0"
                 CacheId2 = f"0Search0{ServerId}0{utils.maxnodeitems}"
 
-                if "All" in pluginmenu.QueryCache:
-                    if CacheId1 in pluginmenu.QueryCache["All"]:
-                        pluginmenu.QueryCache["All"][CacheId1][0] = False
-                    elif CacheId2 in pluginmenu.QueryCache["All"]:
-                        pluginmenu.QueryCache["All"][CacheId2][0] = False
+                if "All" in utils.QueryCache:
+                    if CacheId1 in utils.QueryCache["All"]:
+                        utils.QueryCache["All"][CacheId1][0] = False
+                    elif CacheId2 in utils.QueryCache["All"]:
+                        utils.QueryCache["All"][CacheId2][0] = False
 
                 utils.SendJson(f'{{"jsonrpc": "2.0", "id": 1, "method": "GUI.ActivateWindow", "params": {{"window": "videos", "parameters": ["plugin://plugin.service.emby-next-gen/?id=0&mode=browse&query=Search&server={ServerId}&parentid=0&content=All&libraryid=0", "return"]}}}}')
 
@@ -691,7 +691,7 @@ def http_Query(client, Payload, isHEAD, isPictureQuery):
     player.PlayerEventsQueue.put((("play", f'{{"player":{{"playerid":{PlayerId}}}}}'),))
 
     # Cinnemamode
-    if ((utils.enableCinemaMovies and QueryData['Type'] == "movie") or (utils.enableCinemaEpisodes and QueryData['Type'] == "episode")) and not playerops.RemoteMode and not player.TrailerStatus == "PLAYING":
+    if ((utils.enableCinemaMovies and QueryData['Type'] == "movie") or (utils.enableCinemaEpisodes and QueryData['Type'] == "episode")) and not utils.RemoteMode and not player.TrailerStatus == "PLAYING":
         if not QueryData['isDynamic']:
             videoDB = dbio.DBOpenRO("video", "http_Query")
             Progress = videoDB.get_Progress_by_KodiType_KodiId(QueryData['Type'], QueryData['KodiId'])
@@ -741,7 +741,7 @@ def http_Query(client, Payload, isHEAD, isPictureQuery):
         if player.TrailerStatus == "CONTENT":
             player.TrailerStatus = "READY"
 
-    if len(QueryData['MediaSources']) == 1 or playerops.RemoteMode or (QueryData['MediaType'] in ("i", "v", "m") and not QueryData['isDynamic']):
+    if len(QueryData['MediaSources']) == 1 or utils.RemoteMode or (QueryData['MediaType'] in ("i", "v", "m") and not QueryData['isDynamic']):
         if QueryData['MediaType'] == 'i':
             if add_DelayedContent(QueryData, client):
                 return

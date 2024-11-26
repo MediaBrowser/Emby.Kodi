@@ -5,7 +5,7 @@ import xbmc
 import xbmcaddon
 import xbmcgui
 from core import movies, videos, musicvideo, folder, boxsets, genre, musicgenre, musicartist, musicalbum, audio, tag, person, studio, playlist, series, season, episode, common
-from helper import utils, pluginmenu
+from helper import utils
 from hooks import favorites
 from . import dbio
 
@@ -589,7 +589,7 @@ class Library:
                 self.worker_library_add()
 
             self.EmbyServer.Views.update_nodes()
-            pluginmenu.reset_querycache(None)
+            utils.reset_querycache(None)
 
         xbmc.log("EMBY.database.library: --<[ worker library completed ]", 0) # LOGDEBUG
         return True
@@ -718,7 +718,7 @@ class Library:
                     favorites.update_MusicArtist(self.EmbyServer)
 
                 self.EmbyServer.Views.update_nodes()
-                pluginmenu.reset_querycache(None)
+                utils.reset_querycache(None)
                 xbmc.log("EMBY.database.library: --<[ worker library completed ]", 0) # LOGDEBUG
         #        utils.sleep(2) # give Kodi time to catch up (otherwise could cause crashes)
         #        xbmc.executebuiltin('ReloadSkin()') # Skin reload broken in Kodi 21
@@ -853,17 +853,23 @@ class Library:
     def RunJobs(self, IncrementalSync):
         self.worker_userdata()
 
-        if self.worker_remove(IncrementalSync):
-            if self.worker_update(IncrementalSync):
-                if self.worker_library_remove():
-                    self.worker_library_add()
+        if not utils.SyncPause.get(f"server_busy_{self.EmbyServer.ServerData['ServerId']}", False):
+            if self.worker_remove(IncrementalSync):
+                if self.worker_update(IncrementalSync):
+                    if self.worker_library_remove():
+                        self.worker_library_add()
+        else:
+            xbmc.log("EMBY.database.library: RunJobs limited due to server busy", 1) # LOGINFO
+
+            if self.worker_library_remove():
+                self.worker_library_add()
 
     # Select from libraries synced. Either update or repair libraries.
     # Send event back to service.py
     def select_libraries(self, mode):
         LibrariesSelected = ()
         LibrariesSelectedIds = ()
-        pluginmenu.reset_querycache(None)
+        utils.reset_querycache(None)
         embydb = dbio.DBOpenRO(self.EmbyServer.ServerData['ServerId'], "select_libraries")
 
         if mode in ('RepairLibrarySelection', 'RemoveLibrarySelection', 'UpdateLibrarySelection'):
@@ -1340,7 +1346,11 @@ class Library:
                 SQLs["emby"].add_UpdateItem(Item[0], Item[1], Item[2])
 
             self.close_EmbyDBRW("updated", SQLs)
-            self.worker_update(IncrementalSync)
+
+            if not utils.SyncPause.get(f"server_busy_{self.EmbyServer.ServerData['ServerId']}", False):
+                self.worker_update(IncrementalSync)
+            else:
+                xbmc.log("EMBY.database.library: updated trigger skipped due to server busy", 1) # LOGINFO
 
         xbmc.log("EMBY.database.library: --<[ updated ]", 0) # LOGDEBUG
 
@@ -1355,7 +1365,11 @@ class Library:
                 SQLs["emby"].add_RemoveItem(Id, None)
 
             self.close_EmbyDBRW("removed", SQLs)
-            self.worker_remove(IncrementalSync)
+
+            if not utils.SyncPause.get(f"server_busy_{self.EmbyServer.ServerData['ServerId']}", False):
+                self.worker_remove(IncrementalSync)
+            else:
+                xbmc.log("EMBY.database.library: removed trigger skipped due to server busy", 1) # LOGINFO
 
         xbmc.log("EMBY.database.library: --<[ removed ]", 0) # LOGDEBUG
 
@@ -1453,7 +1467,7 @@ def set_recording_type(Item):
                 Item['Type'] = 'Movie'
 
 def refresh_dynamic_nodes():
-    pluginmenu.reset_querycache(None)
+    utils.reset_querycache(None)
     MenuPath = xbmc.getInfoLabel('Container.FolderPath')
 
     if MenuPath.startswith("plugin://plugin.service.emby-next-gen/") and "mode=browse" in MenuPath.lower():

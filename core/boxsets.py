@@ -1,5 +1,5 @@
 import xbmc
-from helper import pluginmenu, utils
+from helper import utils
 from . import common, tag
 
 KodiTypeMapping = {"Movie": "movie", "Series": "tvshow", "MusicVideo": "musicvideo", "Video": "movie"}
@@ -111,7 +111,7 @@ class BoxSets:
             self.SQLs["emby"].update_favourite(Item['IsFavorite'], EmbyTagId, "Tag")
 
         self.set_favorite(Item['IsFavorite'], Item['KodiItemId'], Item['Id'])
-        pluginmenu.reset_querycache("BoxSet")
+        utils.reset_querycache("BoxSet")
         xbmc.log(f"EMBY.core.boxsets: USERDATA {Item['Id']}", 1) # LOGINFO
         utils.notify_event("content_changed", {"EmbyId": f"{Item['Id']}", "KodiId": f"{Item['KodiItemId']}", "KodiType": "set"}, True)
 

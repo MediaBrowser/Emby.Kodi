@@ -1,5 +1,5 @@
 import xbmc
-from helper import pluginmenu, utils
+from helper import utils
 from . import common, musicgenre
 
 KodiDBs = ("video", "music")
@@ -190,7 +190,7 @@ class MusicArtist:
                 utils.notify_event("content_changed", {"EmbyId": f"{Item['Id']}", "KodiId": f"{KodiItemId}", "KodiType": "artist"}, True)
 
         self.SQLs["emby"].update_favourite(Item['IsFavorite'], Item['Id'], "MusicArtist")
-        pluginmenu.reset_querycache("MusicArtist")
+        utils.reset_querycache("MusicArtist")
 
     def set_favorite(self, KodiItemId, isFavorite, KodiDB, EmbyItemId):
         if KodiDB == "music":

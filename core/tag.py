@@ -1,5 +1,5 @@
 import xbmc
-from helper import pluginmenu, utils
+from helper import utils
 from . import common
 
 class Tag:
@@ -48,7 +48,7 @@ class Tag:
 
         self.set_favorite(Item['IsFavorite'], Item['KodiItemId'], ImageUrl, Item['Id'])
         self.SQLs["emby"].update_favourite(Item['IsFavorite'], Item['Id'], "Tag")
-        pluginmenu.reset_querycache("Tag")
+        utils.reset_querycache("Tag")
         xbmc.log(f"EMBY.core.tag: USERDATA [{Item['KodiItemId']}] {Item['Id']}", 1) # LOGINFO
         utils.notify_event("content_changed", {"EmbyId": f"{Item['Id']}", "KodiId": f"{Item['KodiItemId']}", "KodiType": "tag"}, True)
 

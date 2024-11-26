@@ -6,10 +6,8 @@ from database import dbio
 from emby import emby
 from . import webservice, favorites
 
-QueueItemsStatusupdate = ()
-QueryItemStatusThread = False
 QueueItemsRemove = ()
-QueryItemRemoveThread = False
+QueueItemsStatusupdate = ()
 FullShutdown = False
 utils.FavoriteQueue = queue.Queue()
 syncEmbyLock = allocate_lock()
@@ -77,7 +75,7 @@ class monitor(xbmc.Monitor):
         elif method == 'Other.restore':
             start_new_thread(BackupRestore, ())
         elif method == 'Other.skinreload':
-            start_new_thread(pluginmenu.reset_querycache, (None,)) # Clear Cache
+            start_new_thread(utils.reset_querycache, (None,)) # Clear Cache
             xbmc.executebuiltin('ReloadSkin()')
             xbmc.log("EMBY.hooks.monitor: Reload skin by notification", 1) # LOGINFO
         elif method == 'Other.manageserver':
@@ -97,24 +95,22 @@ class monitor(xbmc.Monitor):
                 utils.Dialog.notification(heading=utils.addon_name, icon=utils.icon, message=utils.Translate(33226), sound=False, time=utils.displayMessage)
             else:
                 start_new_thread(pluginmenu.cache_textures, ())
-        elif method == 'VideoLibrary.OnUpdate' and not playerops.RemoteMode:  # Buffer updated items -> not overloading threads
+        elif method == 'VideoLibrary.OnUpdate' and not utils.RemoteMode:  # Buffer updated items -> not overloading threads
             globals()["QueueItemsStatusupdate"] += (data,)
 
-            if not QueryItemStatusThread:
-                globals()["QueryItemStatusThread"] = True
+            if not VideoLibrary_OnUpdateLock.locked():
                 start_new_thread(VideoLibrary_OnUpdate, ())
-        elif method == 'VideoLibrary.OnRemove' and not playerops.RemoteMode:  # Buffer updated items -> not overloading threads
+        elif method == 'VideoLibrary.OnRemove' and not utils.RemoteMode:  # Buffer updated items -> not overloading threads
             if utils.enableDeleteByKodiEvent:
                 globals()["QueueItemsRemove"] += (data,)
 
-                if not QueryItemRemoveThread:
-                    globals()["QueryItemRemoveThread"] = True
+                if not VideoLibrary_OnRemoveLock.locked():
                     start_new_thread(VideoLibrary_OnRemove, ())
 
     def onScanStarted(self, library):
         xbmc.log(f"EMBY.hooks.monitor: -->[ kodi scan / {library} ]", 1) # LOGINFO
 
-        if not playerops.RemoteMode:
+        if not utils.RemoteMode:
             utils.SyncPause['kodi_rw'] = True
 
     def onScanFinished(self, library):
@@ -124,13 +120,13 @@ class monitor(xbmc.Monitor):
         if not utils.WidgetRefresh['music'] and not utils.WidgetRefresh['video']:
             utils.SyncPause['kodi_rw'] = False
 
-            if not playerops.RemoteMode:
+            if not utils.RemoteMode and not syncEmbyLock.locked():
                 start_new_thread(syncEmby, ())
 
     def onCleanStarted(self, library):
         xbmc.log(f"EMBY.hooks.monitor: -->[ kodi clean / {library} ]", 1) # LOGINFO
 
-        if not playerops.RemoteMode:
+        if not utils.RemoteMode:
             utils.SyncPause['kodi_rw'] = True
 
     def onCleanFinished(self, library):
@@ -140,7 +136,7 @@ class monitor(xbmc.Monitor):
         if not utils.WidgetRefresh['music'] and not utils.WidgetRefresh['video']:
             utils.SyncPause['kodi_rw'] = False
 
-            if not playerops.RemoteMode:
+            if not utils.RemoteMode and not syncEmbyLock.locked():
                 start_new_thread(syncEmby, ())
 
     def onSettingsChanged(self):
@@ -166,15 +162,15 @@ def VideoLibrary_OnRemove(): # Cache queries to minimize database openings
         return
 
     xbmc.log("EMBY.hooks.monitor: THREAD: --->[ VideoLibrary_OnRemove ]", 0) # LOGDEBUG
-    RemoveItems = QueueItemsRemove
-    globals().update({"QueueItemsRemove": (), "QueryItemRemoveThread": False})
 
     with VideoLibrary_OnRemoveLock:
         if utils.Dialog.yesno(heading=utils.addon_name, message=utils.Translate(33264)):
             for ServerId, EmbyServer in list(utils.EmbyServers.items()):
                 embydb = dbio.DBOpenRO(ServerId, "VideoLibrary_OnRemove")
 
-                for RemoveItem in RemoveItems:
+                while QueueItemsRemove:
+                    RemoveItem = QueueItemsRemove[0]
+                    globals()['QueueItemsRemove'] = QueueItemsRemove[1:]
                     data = json.loads(RemoveItem)
 
                     if 'item' in data:
@@ -204,8 +200,6 @@ def VideoLibrary_OnUpdate():
         return
 
     xbmc.log("EMBY.hooks.monitor: THREAD: --->[ VideoLibrary_OnUpdate ]", 0) # LOGDEBUG
-    UpdateItems = QueueItemsStatusupdate
-    globals().update({"QueueItemsStatusupdate": (), "QueryItemStatusThread": False})
 
     with VideoLibrary_OnUpdateLock:
         ItemsSkipUpdateRemove = ()
@@ -215,7 +209,9 @@ def VideoLibrary_OnUpdate():
             embydb = None
             EmbyId = ""
 
-            for UpdateItem in UpdateItems:
+            while QueueItemsStatusupdate:
+                UpdateItem = QueueItemsStatusupdate[0]
+                globals()['QueueItemsStatusupdate'] = QueueItemsStatusupdate[1:]
                 xbmc.log(f"EMBY.hooks.monitor: VideoLibrary_OnUpdate process item: {UpdateItem}", 1) # LOGINFO
                 data = json.loads(UpdateItem)
                 EmbyId = ""
@@ -228,7 +224,7 @@ def VideoLibrary_OnUpdate():
                     KodiType = data['type']
 
                 if KodiType in utils.KodiTypeMapping:
-                    pluginmenu.reset_querycache(utils.KodiTypeMapping[KodiType])
+                    utils.reset_querycache(utils.KodiTypeMapping[KodiType])
 
                 if KodiItemId > 1000000000: # Dynamic Item
                     EmbyId = KodiItemId - 1000000000
@@ -264,7 +260,7 @@ def VideoLibrary_OnUpdate():
                 else:
                     if 'item' not in data:
                         if f"KODI{EmbyId}" not in utils.ItemSkipUpdate and EmbyId:  # Check EmbyID
-                            if f"{{'item':{UpdateItem}}}" not in UpdateItems:
+                            if f"{{'item':{UpdateItem}}}" not in QueueItemsStatusupdate:
                                 xbmc.log(f"EMBY.hooks.monitor: [ VideoLibrary_OnUpdate reset progress {EmbyId} ]", 1) # LOGINFO
 
                                 if int(EmbyId) in EmbyUpdateItems:

@@ -194,7 +194,7 @@ class WebSocket:
                     xbmc.log(f"EMBY.hooks.websocket: UserDataChanged skip by wrong UserId: {IncomingData['Data']['UserId']}", 0) # LOGDEBUG
                     continue
 
-                if playerops.RemoteMode:
+                if utils.RemoteMode:
                     xbmc.log("EMBY.hooks.websocket: UserDataChanged skip by RemoteMode", 1) # LOGINFO
                     continue
 
@@ -244,11 +244,10 @@ class WebSocket:
             elif IncomingData['MessageType'] == 'LibraryChanged':
                 xbmc.log(f"EMBY.hooks.websocket: [ LibraryChanged ] {IncomingData['Data']}", 1) # LOGINFO
 
-                if playerops.RemoteMode:
+                if utils.RemoteMode:
                     xbmc.log("EMBY.hooks.websocket: LibraryChanged skip by RemoteMode", 1) # LOGINFO
                     continue
 
-                start_new_thread(self.EmbyServer.library.removed, (IncomingData['Data']['ItemsRemoved'], True))
                 ItemsUpdated = IncomingData['Data']['ItemsUpdated'] + IncomingData['Data']['ItemsAdded']
                 UpdateItemIds = len(ItemsUpdated) * [None] # preallocate memory
 
@@ -256,12 +255,7 @@ class WebSocket:
                     UpdateItemIds[Index] = (ItemId, "unknown", "unknown")
 
                 UpdateItemIds = list(dict.fromkeys(UpdateItemIds)) # filter duplicates
-                start_new_thread(self.EmbyServer.library.updated, (UpdateItemIds, True))
-
-                if self.EmbyServerSyncCheckRunning:
-                    xbmc.log("EMBY.hooks.websocket: Emby server sync in progress, delay updates", 1) # LOGINFO
-                else:
-                    start_new_thread(self.EmbyServer.library.RunJobs, (True,))
+                start_new_thread(self.LibraryChanged, (UpdateItemIds, IncomingData['Data']['ItemsRemoved']))
             elif IncomingData['MessageType'] == 'ServerRestarting':
                 xbmc.log("EMBY.hooks.websocket: [ ServerRestarting ]", 1) # LOGINFO
                 self.close_EmbyServerBusy()
@@ -357,3 +351,12 @@ class WebSocket:
             self.EmbyServer.API.send_text_msg(SessionId, "remotecommand", f"ack|{self.EmbyServer.EmbySession[0]['Id']}|{self.EmbyServer.EmbySession[0]['DeviceName']}|{self.EmbyServer.EmbySession[0]['UserName']}", True)
 
         xbmc.log("EMBY.hooks.websocket: THREAD: ---<[ Remote confirm ]", 0) # LOGDEBUG
+
+    def LibraryChanged(self, UpdateItemIds, ItemsRemoved):
+        self.EmbyServer.library.removed(ItemsRemoved, True)
+        self.EmbyServer.library.updated(UpdateItemIds, True)
+
+        if self.EmbyServerSyncCheckRunning:
+            xbmc.log("EMBY.hooks.websocket: Emby server sync in progress, delay updates", 1) # LOGINFO
+        else:
+            self.EmbyServer.library.RunJobs(True)

@@ -1,11 +1,11 @@
-from _thread import start_new_thread, allocate_lock
+from _thread import start_new_thread
 import uuid
 from urllib.parse import unquote_plus
 import json
 import xbmc
 from database import dbio
 from emby import listitem
-from helper import utils, pluginmenu, playerops, queue
+from helper import utils, playerops, queue
 from dialogs import skipintrocredits
 
 XbmcPlayer = xbmc.Player()  # Init Player
@@ -20,7 +20,6 @@ if PlayerVolume:
     Volume = PlayerVolume.get('volume', 100)
     Muted = PlayerVolume.get('muted', False)
 
-PlayerBusyLock = allocate_lock()
 RepeatMode = ['RepeatNone', 'RepeatNone', 'RepeatNone']
 Shuffled = [False, False, False]
 PlaybackRate = [1.0, 1.0, 1.0]
@@ -60,6 +59,7 @@ def PlayerCommands():
             set_PlayerId(EventData)
 
             if not PlayingItem[0] or 'RunTimeTicks' not in PlayingItem[0]:
+                playerops.RemoteCommand(None, None, "seek")
                 continue
 
             if 'player' in EventData and 'time' in EventData['player']:
@@ -147,18 +147,18 @@ def PlayerCommands():
                             Item = utils.EmbyServers[ServerId].API.get_Item(EmbyId, ("Audio",), True, False, False)
                             ListItem = listitem.set_ListItem(Item, ServerId, FullPath)
 
-                            if "Audio" not in pluginmenu.QueryCache:
-                                pluginmenu.QueryCache["Audio"] = {}
+                            if "Audio" not in utils.QueryCache:
+                                utils.QueryCache["Audio"] = {}
 
-                            pluginmenu.QueryCache["Audio"]["Theme"] = [True, ((FullPath, ListItem, False), )]
+                            utils.QueryCache["Audio"]["Theme"] = [True, ((FullPath, ListItem, False), )]
                         else:
                             Item = utils.EmbyServers[ServerId].API.get_Item(EmbyId, ("Video",), True, False, False)
                             ListItem = listitem.set_ListItem(Item, ServerId, FullPath)
 
-                            if "Video" not in pluginmenu.QueryCache:
-                                pluginmenu.QueryCache["Video"] = {}
+                            if "Video" not in utils.QueryCache:
+                                utils.QueryCache["Video"] = {}
 
-                            pluginmenu.QueryCache["Video"]["Theme"] = [True, ((FullPath, ListItem, False), )]
+                            utils.QueryCache["Video"]["Theme"] = [True, ((FullPath, ListItem, False), )]
 
                         if XbmcPlayer.isPlaying():
                             XbmcPlayer.updateInfoTag(ListItem)
@@ -183,7 +183,7 @@ def PlayerCommands():
 
             # Clear dynamic cache
             if KodiType and KodiType in utils.KodiTypeMapping:
-                pluginmenu.reset_querycache(utils.KodiTypeMapping[KodiType])
+                utils.reset_querycache(utils.KodiTypeMapping[KodiType])
 
             # native (bluray) content, get actual path
             if FullPath.startswith("bluray://"):
@@ -222,7 +222,7 @@ def PlayerCommands():
                 # Select options for native played content
                 if QueuedPlayingItem:
                     # Cinnemamode
-                    if ((utils.enableCinemaMovies and EmbyType == "Movie") or (utils.enableCinemaEpisodes and EmbyType == "Episode")) and not playerops.RemoteMode:
+                    if ((utils.enableCinemaMovies and EmbyType == "Movie") or (utils.enableCinemaEpisodes and EmbyType == "Episode")) and not utils.RemoteMode:
                         if TrailerStatus == "READY":
                             playerops.Pause()
                             QueuedPlayingItem[4].http.Intros = []
@@ -251,7 +251,7 @@ def PlayerCommands():
                     VideoStreams = embydb.get_videostreams(EmbyId)
                     dbio.DBCloseRO(ServerId, "onAVStarted")
 
-                    if len(MediaSources) > 1 and not playerops.RemoteMode:
+                    if len(MediaSources) > 1 and not utils.RemoteMode:
                         if KodiType == "movie":
                             globals()["QueuedPlayingItem"][7] = "" # disable delete after watched option for multicontent
                         else:
@@ -331,11 +331,13 @@ def PlayerCommands():
             playerops.PlayerPause = True
 
             if not PlayingItem[0]:
+                playerops.RemoteCommand(None, None, "pause")
                 continue
 
             PositionTicks = playerops.PlayBackPosition()
 
             if PositionTicks == -1:
+                playerops.RemoteCommand(None, None, "pause")
                 continue
 
             globals()["PlayingItem"][0].update({'PositionTicks': PositionTicks, 'IsPaused': True})
@@ -352,6 +354,7 @@ def PlayerCommands():
             playerops.PlayerPause = False
 
             if not PlayingItem[0]:
+                playerops.RemoteCommand(None, None, "unpause")
                 continue
 
             if PlayingItem[4]:
@@ -372,9 +375,10 @@ def PlayerCommands():
             playerops.PlayerPause = False
 
             if 'item' in EventData and "type" in EventData['item'] and EventData['item']['type'] in utils.KodiTypeMapping:
-                pluginmenu.reset_querycache(utils.KodiTypeMapping[EventData['item']['type']])
+                utils.reset_querycache(utils.KodiTypeMapping[EventData['item']['type']])
 
             if not PlayingItem[0]:
+                playerops.RemoteCommand(None, None, "stop")
                 continue
 
             if PlayingItem[4] and PlayingItem[4].EmbySession:
@@ -639,7 +643,7 @@ def load_queuePlayingItem():
     xbmc.log("EMBY.hooks.player: [ Queue playing item ]", 1) # LOGINFO
     PlayerBusy()
 
-    if not playerops.RemoteMode:
+    if not utils.RemoteMode:
         utils.ItemSkipUpdate.append(str(QueuedPlayingItem[0]['ItemId'])) # triple add -> for Emby (2 times incoming msg -> userdata changed) and once for Kodi database incoming msg -> VideoLibrary_OnUpdate; "KODI" prefix makes sure, VideoLibrary_OnUpdate is skipped even if more userdata requests from Emby server were received
 
     if QueuedPlayingItem[1]:
@@ -694,7 +698,7 @@ def replace_playlist_listitem(ListItem, Path):
 
 # Sync jobs
 def thread_sync_workers():
-    if "sync_workers" not in TasksRunning and not playerops.RemoteMode:  # skip sync on remote client mode
+    if "sync_workers" not in TasksRunning and not utils.RemoteMode:  # skip sync on remote client mode
         start_new_thread(sync_workers, ())
 
 def sync_workers():
@@ -712,21 +716,20 @@ def sync_workers():
 def PlayerBusy():
     globals()["PlayerBusyDelay"] = 5
 
-    if not PlayerBusyLock.locked():
+    if "PlayerBusy" not in TasksRunning:
+        TasksRunning.append("PlayerBusy")
         start_new_thread(PlayerBusyThread, ())
 
 def PlayerBusyThread():
     xbmc.log("EMBY.hooks.player: THREAD: --->[ PlayerBusyThread ]", 0) # LOGDEBUG
+    utils.SyncPause['playerbusy'] = True
 
-    with PlayerBusyLock:
-        utils.SyncPause['playerbusy'] = True
+    while PlayerBusyDelay >= 0:
+        utils.sleep(1)
+        globals()["PlayerBusyDelay"] -= 1
 
-        while PlayerBusyDelay >= 0:
-            utils.sleep(1)
-            globals()["PlayerBusyDelay"] -= 1
-
-        utils.SyncPause['playerbusy'] = False
-
+    utils.SyncPause['playerbusy'] = False
+    TasksRunning.remove("PlayerBusy")
     xbmc.log("EMBY.hooks.player: THREAD: ---<[ PlayerBusyThread ]", 0) # LOGDEBUG
 
 def load_unsynced_content(FullPath, PlaylistPosition, KodiType):
@@ -746,7 +749,7 @@ def load_unsynced_content(FullPath, PlaylistPosition, KodiType):
     CachedItemFound = False
     CachedItem = []
 
-    for CachedItems in list(pluginmenu.QueryCache.values()):
+    for CachedItems in list(utils.QueryCache.values()):
         if CachedItemFound:
             break
 
@@ -787,7 +790,7 @@ def load_unsynced_content(FullPath, PlaylistPosition, KodiType):
 
     # Dynamic widget item played via native mode
     if CachedItemFound and not QueuedPlayingItem:
-        if MediaSourcesCount > 1 and not playerops.RemoteMode:
+        if MediaSourcesCount > 1 and not utils.RemoteMode:
             playerops.Pause()
             Selection = []
 
@@ -825,7 +828,7 @@ def load_unsynced_content(FullPath, PlaylistPosition, KodiType):
 
 def init_EmbyPlayback(KodiType, RunTimeTicks, PositionTicks, PlaylistPosition):
     if PlayingItem[0]:
-        if not playerops.RemoteMode:
+        if not utils.RemoteMode:
             if KodiType == "song":
                 utils.ItemSkipUpdate += [str(PlayingItem[0]['ItemId'])] # double add -> for Emby (2 times incoming msg -> userdata changed)
             else:

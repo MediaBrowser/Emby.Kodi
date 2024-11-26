@@ -301,7 +301,7 @@ def watchtogether():
     playerops.disable_RemoteClients(ServerId)
     playerops.WatchTogether = False
     playerops.RemoteControl = False
-    playerops.RemoteMode = False
+    utils.RemoteMode = False
 
     if len(playerops.RemoteClientData[ServerId]["SessionIds"]) <= 1:
         add_remoteclients(ServerId)
@@ -353,9 +353,8 @@ def delete_remoteclients():
     SessionIds = []
 
     for RemoteClientSessionId in playerops.RemoteClientData[ServerId]["SessionIds"]:
-        if RemoteClientSessionId != utils.EmbyServers[ServerId].EmbySession[0]['Id']:
-            SelectionLabels.append(f"{playerops.RemoteClientData[ServerId]['Devicenames'][RemoteClientSessionId]}, {playerops.RemoteClientData[ServerId]['Usernames'][RemoteClientSessionId]}")
-            SessionIds.append(RemoteClientSessionId)
+        SelectionLabels.append(f"{playerops.RemoteClientData[ServerId]['Devicenames'][RemoteClientSessionId]}, {playerops.RemoteClientData[ServerId]['Usernames'][RemoteClientSessionId]}")
+        SessionIds.append(RemoteClientSessionId)
 
     Selections = utils.Dialog.multiselect(utils.Translate(33494), SelectionLabels)
 

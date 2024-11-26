@@ -1,5 +1,5 @@
 import xbmc
-from helper import pluginmenu, utils
+from helper import utils
 from . import common
 
 class Person:
@@ -44,7 +44,7 @@ class Person:
     def userdata(self, Item):
         self.SQLs["emby"].update_favourite(Item['IsFavorite'], Item['Id'], "Person")
         self.set_favorite(Item['KodiItemId'], Item['IsFavorite'], Item['Id'])
-        pluginmenu.reset_querycache("Person")
+        utils.reset_querycache("Person")
         xbmc.log(f"EMBY.core.person: USERDATA [{Item['KodiItemId']}] {Item['Id']}", 1) # LOGINFO
         utils.notify_event("content_changed", {"EmbyId": f"{Item['Id']}", "KodiId": f"{Item['KodiItemId']}", "KodiType": "actor"}, True)
 

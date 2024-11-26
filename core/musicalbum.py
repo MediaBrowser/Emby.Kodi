@@ -1,5 +1,5 @@
 import xbmc
-from helper import pluginmenu, utils
+from helper import utils
 from . import common, musicartist, musicgenre
 
 
@@ -81,7 +81,7 @@ class MusicAlbum:
         ImageUrl, Itemname = self.SQLs["music"].get_FavoriteSubcontent(Item['KodiItemId'], "album")
         utils.FavoriteQueue.put(((common.set_Favorites_Artwork_Overlay("Album", "Songs", Item['Id'], self.EmbyServer.ServerData['ServerId'], ImageUrl), Item['IsFavorite'], f"musicdb://albums/{Item['KodiItemId']}/", Itemname, "window", 10502),))
         self.SQLs["emby"].update_favourite(Item['Id'], Item['IsFavorite'], "MusicAlbum")
-        pluginmenu.reset_querycache("MusicAlbum")
+        utils.reset_querycache("MusicAlbum")
         xbmc.log(f"EMBY.core.musicalbum: USERDATA {Item['Type']} [{Item['KodiItemId']}] {Item['Id']}", 1) # LOGINFO
         utils.notify_event("content_changed", {"EmbyId": f"{Item['Id']}", "KodiId": f"{Item['KodiItemId']}", "KodiType": "album"}, True)
 
