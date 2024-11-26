@@ -1,5 +1,5 @@
 import xbmc
-from helper import pluginmenu, utils
+from helper import utils
 from . import common, musicgenre, tag, studio, person, musicartist, boxsets
 
 
@@ -86,7 +86,7 @@ class MusicVideo:
         self.SQLs["video"].update_bookmark_playstate(Item['KodiFileId'], Item['KodiPlayCount'], Item['KodiLastPlayedDate'], Item['KodiPlaybackPositionTicks'], Item['KodiRunTimeTicks'])
         self.SQLs["emby"].update_favourite(Item['IsFavorite'], Item['Id'], "MusicVideo")
         self.set_favorite(Item['IsFavorite'], Item['KodiFileId'], Item['KodiItemId'], Item['Id'])
-        pluginmenu.reset_querycache("MusicVideo")
+        utils.reset_querycache("MusicVideo")
         xbmc.log(f"EMBY.core.musicvideo: New resume point {Item['Id']}: {Item['PlaybackPositionTicks']} / {Item['KodiPlaybackPositionTicks']}", 0) # LOGDEBUG
         xbmc.log(f"EMBY.core.musicvideo: USERDATA [{Item['KodiFileId']} / {Item['KodiItemId']}] {Item['Id']}", 1) # LOGINFO
         utils.notify_event("content_changed", {"EmbyId": f"{Item['Id']}", "KodiId": f"{Item['KodiItemId']}", "KodiType": "musicvideo"}, True)

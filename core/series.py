@@ -1,5 +1,5 @@
 import xbmc
-from helper import pluginmenu, utils
+from helper import utils
 from . import common, genre, tag, studio, person, boxsets
 
 
@@ -97,7 +97,7 @@ class Series:
         self.set_favorite(Item['IsFavorite'], Item['KodiItemId'], Item['Id'])
         self.SQLs["video"].set_Favorite_Tag(Item['IsFavorite'], Item['KodiItemId'], "tvshow")
         self.SQLs["emby"].update_favourite(Item['IsFavorite'], Item['Id'], "Series")
-        pluginmenu.reset_querycache("Series")
+        utils.reset_querycache("Series")
         xbmc.log(f"EMBY.core.series: USERDATA [{Item['KodiFileId']} / {Item['KodiItemId']}] {Item['Id']}", 1) # LOGINFO
         utils.notify_event("content_changed", {"EmbyId": f"{Item['Id']}", "KodiId": f"{Item['KodiItemId']}", "KodiType": "series"}, True)
 

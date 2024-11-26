@@ -34,6 +34,9 @@ ForbiddenCharecters = ("/", "<", ">", ":", '"', "\\", "|", "?", "*", " ", "&", c
 FilesizeSuffixes = ('B', 'KB', 'MB', 'GB', 'TB')
 CustomDialogParameters = (Addon.getAddonInfo('path'), "default", "1080i")
 EmbyServers = {}
+QueryCache = {}
+UpcomingLastQueryTicks = 0
+RemoteMode = False
 ItemSkipUpdate = []
 MinimumVersion = "11.1.0"
 EmbyServerVersionResync = "4.9.0.25"
@@ -1049,6 +1052,28 @@ def check_tvtunes():
 def notify_event(Message, Data, SendOption):
     if NotifyEvents and SendOption:
         SendJson(f'{{"jsonrpc":"2.0", "method":"JSONRPC.NotifyAll", "params":{{"sender": "emby-next-gen", "message": "{Message}", "data": {json.dumps(Data)}}}, "id": 1}}', True)
+
+def reset_querycache(Content):
+    if not RemoteMode: # keep cache in remote client mode -> don't overload Emby server
+        for CacheContent, CachedItems in list(QueryCache.items()):
+            if not Content or str(CacheContent).find(Content) != -1 or CacheContent == "All" or CacheContent == "BoxSet":
+                xbmc.log(f"EMBY.helper.utils: Clear QueryCache: {CacheContent}", 1) # LOGINFO
+
+                for CachedContentItems in list(CachedItems.values()):
+                    CachedContentItemsLen = len(CachedContentItems)
+
+                    if CachedContentItemsLen == 8 and CachedContentItems[7] != "0" or CachedContentItemsLen != 8: # CachedItems[7] = LibraryId -> LibraryId = 0 means search content -> skip
+                        if CachedContentItemsLen == 8 and CachedContentItems[4] == "Upcoming": # skip refresh when last query is < 1 day
+                            CurrentTicks = get_unixtime_emby_format()
+
+                            if UpcomingLastQueryTicks != 0:
+                                if CurrentTicks - 864000000 > UpcomingLastQueryTicks:
+                                    CachedContentItems[0] = False
+                                    globals()["UpcomingLastQueryTicks"] = CurrentTicks
+                            else:
+                                globals()["UpcomingLastQueryTicks"] = CurrentTicks
+                        else:
+                            CachedContentItems[0] = False
 
 mkDir(FolderAddonUserdata)
 mkDir(FolderEmbyTemp)

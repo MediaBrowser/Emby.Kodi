@@ -1,5 +1,5 @@
 import xbmc
-from helper import pluginmenu, utils
+from helper import utils
 from . import common, series, season, genre, studio, person
 
 
@@ -102,7 +102,7 @@ class Episode:
         self.SQLs["video"].update_bookmark_playstate(Item['KodiFileId'], Item['KodiPlayCount'], Item['KodiLastPlayedDate'], Item['KodiPlaybackPositionTicks'], Item['KodiRunTimeTicks'])
         self.set_favorite(Item['IsFavorite'], Item['KodiFileId'], Item['KodiItemId'], Item['Id'])
         self.SQLs["emby"].update_favourite(Item['IsFavorite'], Item['Id'], "Episode")
-        pluginmenu.reset_querycache("Episode")
+        utils.reset_querycache("Episode")
         xbmc.log(f"EMBY.core.episode: USERDATA [{Item['KodiFileId']} / {Item['KodiItemId']}] {Item['Id']}", 1) # LOGINFO
         utils.notify_event("content_changed", {"EmbyId": f"{Item['Id']}", "KodiId": f"{Item['KodiItemId']}", "KodiType": "episode"}, True)
 

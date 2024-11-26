@@ -1,5 +1,5 @@
 import xbmc
-from helper import pluginmenu, utils
+from helper import utils
 from . import common
 
 class Playlist:
@@ -39,7 +39,7 @@ class Playlist:
     def userdata(self, Item):
         utils.FavoriteQueue.put(((common.set_Favorites_Artwork_Overlay("Playlist", "Playlists", Item['Id'], self.EmbyServer.ServerData['ServerId'], ""), Item['IsFavorite'], f"special://profile/playlists/mixed/{utils.valid_Filename(Item['KodiItemId'])}.m3u", Item['KodiItemId'], "window", 10025),))
         self.SQLs["emby"].update_favourite(Item['IsFavorite'], Item['Id'], "Playlist")
-        pluginmenu.reset_querycache("PlayList")
+        utils.reset_querycache("PlayList")
         xbmc.log(f"EMBY.core.playlist: USERDATA [{Item['KodiItemId']}] {Item['Id']}", 1) # LOGINFO
 
     def set_favorite(self, IsFavorite, KodiItemId, EmbyItemId):

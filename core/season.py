@@ -1,5 +1,5 @@
 import xbmc
-from helper import pluginmenu, utils
+from helper import utils
 from . import common, series
 
 
@@ -65,7 +65,7 @@ class Season:
     def userdata(self, Item):
         self.set_favorite(Item['IsFavorite'], Item['KodiItemId'], Item['KodiParentId'], Item['Id'])
         self.SQLs["emby"].update_favourite(Item['IsFavorite'], Item['Id'], "Season")
-        pluginmenu.reset_querycache("Season")
+        utils.reset_querycache("Season")
         xbmc.log(f"EMBY.core.season: USERDATA {Item['Id']}", 1) # LOGINFO
         utils.notify_event("content_changed", {"EmbyId": f"{Item['Id']}", "KodiId": f"{Item['KodiItemId']}", "KodiType": "season"}, True)
 

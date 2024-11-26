@@ -1,3 +1,14 @@
+11.1.6
+=============
+fix to many threads started (edge case when massive and long running updates are pushed via realtime sync)
+improve websocket reconnects on Emby server hard reboot/power cycle
+fix cyclic import
+fix remove client on remote playback
+fix remote playback pause command from clients after init
+fix watch together for multiple participants and one of them stopped the playback -< disabled watch together for all clients
+
+
+
 11.1.5
 =============
 add musicvideo album node

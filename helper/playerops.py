@@ -1,7 +1,7 @@
 from _thread import start_new_thread
 import xbmc
 import xbmcgui
-from helper import utils, queue, pluginmenu
+from helper import utils, queue
 from database import dbio
 from emby import listitem
 from core import common
@@ -14,7 +14,6 @@ RemoteCommandQueue = {}
 RemoteControl = False
 RemotePlaybackInit = False
 EmbyIdPlaying = 0
-RemoteMode = False
 WatchTogether = False
 AVStarted = False
 AVChange = False
@@ -22,7 +21,7 @@ RemoteCommandActive = [0, 0, 0, 0, 0] # prevent loops when client has control [P
 
 def enable_remotemode(ServerId):
     globals()["RemoteControl"] = True
-    globals()["RemoteMode"] = True
+    utils.RemoteMode = True
     send_RemoteClients(ServerId, [], True)
 
 def ClearPlaylist(PlaylistId):
@@ -313,10 +312,11 @@ def PlayEmby(ItemIds, PlayCommand, StartIndex, StartPositionTicks, EmbyServer, T
         return
 
     if utils.remotecontrol_client_control:
-        globals().update({"RemoteMode": False, "WatchTogether": False, "RemotePlaybackInit": True, "RemoteControl": True})
+        globals().update({"WatchTogether": False, "RemotePlaybackInit": True, "RemoteControl": True})
     else:
-        globals().update({"RemoteMode": False, "WatchTogether": False, "RemotePlaybackInit": True, "RemoteControl": False})
+        globals().update({"WatchTogether": False, "RemotePlaybackInit": True, "RemoteControl": False})
 
+    utils.RemoteMode = False
     PlaylistItems = []
     DelayedQueryEmbyIds = ()
     StartIndex = max(StartIndex, 0)
@@ -350,10 +350,10 @@ def PlayEmby(ItemIds, PlayCommand, StartIndex, StartPositionTicks, EmbyServer, T
         else:
             PlaylistItems[StartIndex] = (Item['Id'], Item['Type'], None, None, ListItem, Item['KodiFullPath'], 0)
 
-        if Item['Type'] not in pluginmenu.QueryCache:
-            pluginmenu.QueryCache[Item['Type']] = {}
+        if Item['Type'] not in utils.QueryCache:
+            utils.QueryCache[Item['Type']] = {}
 
-        pluginmenu.QueryCache[Item['Type']]["remoteplayback"] = [True, ((Item['KodiFullPath'], ListItem, False), )]
+        utils.QueryCache[Item['Type']]["remoteplayback"] = [True, ((Item['KodiFullPath'], ListItem, False), )]
 
     globals()["EmbyIdPlaying"] = int(PlaylistItems[StartIndex][0])
 
@@ -369,12 +369,12 @@ def PlayEmby(ItemIds, PlayCommand, StartIndex, StartPositionTicks, EmbyServer, T
     if PlayCommand in ("PlayNow", "PlayNext"):
         KodiPlaylistIndexStartitem = GetPlayerPosition(PlayerIdPlaylistId) + 1
     elif PlayCommand == "PlayInit":
-        globals()['RemoteMode'] = True
+        utils.RemoteMode = True
         globals()['WatchTogether'] = True
         Stop(isRemote)
         KodiPlaylistIndexStartitem = GetPlaylistSize(PlayerIdPlaylistId)
     elif PlayCommand == "PlaySingle":
-        globals()['RemoteMode'] = True
+        utils.RemoteMode = True
         KodiPlaylistIndexStartitem = GetPlaylistSize(PlayerIdPlaylistId)
     else:
         return
@@ -442,10 +442,10 @@ def PlayEmby(ItemIds, PlayCommand, StartIndex, StartPositionTicks, EmbyServer, T
                         else:
                             PlaylistItems[Index] = (Item['Id'], Item['Type'], None, None, ListItem, Item['KodiFullPath'], 0)
 
-                        if Item['Type'] not in pluginmenu.QueryCache:
-                            pluginmenu.QueryCache[Item['Type']] = {}
+                        if Item['Type'] not in utils.QueryCache:
+                            utils.QueryCache[Item['Type']] = {}
 
-                        pluginmenu.QueryCache[Item['Type']]["remoteplayback"] = [True, ((Item['KodiFullPath'], ListItem, False), )]
+                        utils.QueryCache[Item['Type']]["remoteplayback"] = [True, ((Item['KodiFullPath'], ListItem, False), )]
                         continue
 
         for Index, PlaylistItem in enumerate(PlaylistItems):
@@ -498,6 +498,7 @@ def delete_RemoteClient(ServerId, SessionIds, Force=False):
         return
 
     ClientExtendedSupportAck = RemoteClientData[ServerId]["ExtendedSupportAck"].copy()
+    SelfRemove = False
 
     for SessionId in SessionIds:
         if SessionId in RemoteClientData[ServerId]["ExtendedSupport"]:
@@ -513,10 +514,19 @@ def delete_RemoteClient(ServerId, SessionIds, Force=False):
         if SessionId in RemoteCommandQueue:
             globals()['RemoteCommandQueue'][SessionId].put("QUIT")
 
+        if SessionId == utils.EmbyServers[ServerId].EmbySession[0]['Id']:
+            SelfRemove = True
+
     send_RemoteClients(ServerId, ClientExtendedSupportAck, Force)
+
+    # Remove self
+    if SelfRemove:
+        xbmc.log("EMBY.helper.playerops: Self removed from remote clients ]", 0) # LOGDEBUG
+        disable_RemoteClients(ServerId, False)
 
     # Disable remote mode when self device is the only one left
     if len(RemoteClientData[ServerId]["SessionIds"]) == 1 and RemoteClientData[ServerId]["SessionIds"][0] == utils.EmbyServers[ServerId].EmbySession[0]['Id']:
+        xbmc.log("EMBY.helper.playerops: Reset remote clients due to no more participants ]", 0) # LOGDEBUG
         disable_RemoteClients(ServerId)
 
 def update_Remoteclients(ServerId, Data):
@@ -538,7 +548,7 @@ def update_Remoteclients(ServerId, Data):
 
     if ServerSessionId not in SessionIds:
         xbmc.log("EMBY.helper.playerops: delete remote clients", 1) # LOGINFO
-        disable_RemoteClients(ServerId)
+        disable_RemoteClients(ServerId, False)
     else:
         globals()['RemoteClientData'][ServerId] = {"SessionIds": SessionIds, "ExtendedSupport": ExtendedSupport, "ExtendedSupportAck": ExtendedSupportAck, "Usernames": {}, "Devicenames": {}}
 
@@ -555,18 +565,20 @@ def update_Remoteclients(ServerId, Data):
             if utils.remotecontrol_sync_clients:
                 globals()["RemoteControl"] = True
 
-            globals()["RemoteMode"] = True
+            utils.RemoteMode = True
 
-def disable_RemoteClients(ServerId):
+def disable_RemoteClients(ServerId, ResetRemoteClients=True):
     xbmcgui.Window(10000).setProperty('EmbyRemoteclient', 'False')
 
-    if RemoteMode:
-        for SessionId in RemoteClientData[ServerId]["ExtendedSupportAck"]:
-            if SessionId != utils.EmbyServers[ServerId].EmbySession[0]['Id']:
-                utils.EmbyServers[ServerId].API.send_text_msg(SessionId, "remotecommand", "clients|||||", True)
+    if utils.RemoteMode:
+        if ResetRemoteClients:
+            for SessionId in RemoteClientData[ServerId]["ExtendedSupportAck"]:
+                if SessionId != utils.EmbyServers[ServerId].EmbySession[0]['Id']:
+                    utils.EmbyServers[ServerId].API.send_text_msg(SessionId, "remotecommand", "clients|||||", True)
 
         init_RemoteClient(ServerId)
-        globals().update({"RemoteMode": False, "WatchTogether": False, "RemoteControl": False, "RemoteCommandActive": [0, 0, 0, 0, 0]})
+        globals().update({"WatchTogether": False, "RemoteControl": False, "RemoteCommandActive": [0, 0, 0, 0, 0]})
+        utils.RemoteMode = False
 
         if not utils.EmbyServers[ServerId].library.LockKodiStartSync.locked():
             start_new_thread(utils.EmbyServers[ServerId].library.KodiStartSync, (False,))
@@ -602,34 +614,41 @@ def RemoteCommand(ServerId, selfSessionId, Command, EmbyId=-1):
 
     if Command == "stop":
         if WatchTogether:
-            disable_RemoteClients(ServerId)
-            globals().update({'WatchTogether': False, 'RemoteMode': False, 'RemoteControl': False})
+            delete_RemoteClient(ServerId, [utils.EmbyServers[ServerId].EmbySession[0]['Id']])
+            globals().update({'WatchTogether': False, 'RemoteControl': False})
+            utils.RemoteMode = False
 
         if RemoteCommandActive[3] > 0:
             RemoteCommandActive[3] -= 1
         else:
             globals()['RemoteCommandActive'][3] = 0
 
-            if not WatchTogether:
+            if not WatchTogether and ServerId:
                 queue_RemoteCommand(ServerId, selfSessionId, "stop")
     elif Command == "pause":
         if RemoteCommandActive[0] > 0:
             RemoteCommandActive[0] -= 1
         else:
             globals()['RemoteCommandActive'][0] = 0
-            queue_RemoteCommand(ServerId, selfSessionId, "pause")
+
+            if ServerId:
+                queue_RemoteCommand(ServerId, selfSessionId, "pause")
     elif Command == "unpause":
         if RemoteCommandActive[1] > 0:
             RemoteCommandActive[1] -= 1
         else:
             globals()['RemoteCommandActive'][1] = 0
-            queue_RemoteCommand(ServerId, selfSessionId, "unpause")
+
+            if ServerId:
+                queue_RemoteCommand(ServerId, selfSessionId, "unpause")
     elif Command == "seek":
         if RemoteCommandActive[2] > 0:
             RemoteCommandActive[2] -= 1
         else:
             globals()['RemoteCommandActive'][2] = 0
-            queue_RemoteCommand(ServerId, selfSessionId, "seek")
+
+            if ServerId:
+                queue_RemoteCommand(ServerId, selfSessionId, "seek")
     elif Command == "play":
         if RemoteCommandActive[4] > 0:
             RemoteCommandActive[4] -= 1

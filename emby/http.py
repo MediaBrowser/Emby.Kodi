@@ -296,14 +296,14 @@ class HTTP:
                     self.Connection[ConnectionId]["Socket"].settimeout(1) # set timeout
                     self.websocket_send(b"", 0x8)  # Close
                 except Exception as error:
-                    xbmc.log(f"EMBY.emby.http: Socket {ConnectionId} send close error: {error}", 2) # LOGWARNING
+                    xbmc.log(f"EMBY.emby.http: Socket {ConnectionId} send close error 1: {error}", 2) # LOGWARNING
             elif ConnectionId in ("MAIN", "ASYNC"): # send final ping to change tcp session from keep-alive to close
                 try:
                     self.Connection[ConnectionId]["Socket"].settimeout(1) # set timeout
                     self.Connection[ConnectionId]["Socket"].send(f'POST {self.Connection[ConnectionId]["SubUrl"]}System/Ping HTTP/1.1\r\nHost: {self.Connection[ConnectionId]["Hostname"]}:{self.Connection[ConnectionId]["Port"]}\r\nContent-type: application/json; charset=utf-8\r\nAccept-Charset: utf-8\r\nAccept-encoding: gzip\r\nUser-Agent: {utils.addon_name}/{utils.addon_version}\r\nConnection: close\r\nAuthorization: Emby Client="{utils.addon_name}", Device="{utils.device_name}", DeviceId="{self.EmbyServer.ServerData["DeviceId"]}", Version="{utils.addon_version}"\r\nContent-Length: 0\r\n\r\n'.encode("utf-8"))
                     self.Connection[ConnectionId]["Socket"].recv(1048576)
                 except Exception as error:
-                    xbmc.log(f"EMBY.emby.http: Socket {ConnectionId} send close error: {error}", 2) # LOGWARNING
+                    xbmc.log(f"EMBY.emby.http: Socket {ConnectionId} send close error 2: {error}", 2) # LOGWARNING
 
             try:
                 self.Connection[ConnectionId]["Socket"].close()
@@ -819,7 +819,7 @@ class HTTP:
 
             if self.socket_open(self.EmbyServer.ServerData['ServerUrl'], "WEBSOCKET", False):
                 if utils.sleep(10):
-                    xbmc.log(f"EMBY.emby.emby: THREAD: ---<[ Download {self.EmbyServer.ServerData['ServerId']} shutdown ]", 0) # LOGDEBUG
+                    xbmc.log(f"EMBY.emby.emby: THREAD: ---<[ Download {self.EmbyServer.ServerData['ServerId']} shutdown 1 ]", 0) # LOGDEBUG
                     return
 
                 continue
@@ -838,20 +838,32 @@ class HTTP:
                 self.socket_close("WEBSOCKET")
 
                 if utils.sleep(1):
-                    xbmc.log(f"EMBY.emby.emby: THREAD: ---<[ Websocket {self.EmbyServer.ServerData['ServerId']} shutdown ]", 0) # LOGDEBUG
+                    xbmc.log(f"EMBY.emby.emby: THREAD: ---<[ Websocket {self.EmbyServer.ServerData['ServerId']} shutdown 2 ]", 0) # LOGDEBUG
                     return
 
             result = Header.get("sec-websocket-accept", "")
 
             if not result:
+                xbmc.log(f"EMBY.emby.emby: Websocket {self.EmbyServer.ServerData['ServerId']} sec-websocket-accept not found: Header {Header}", 0) # LOGDEBUG
                 utils.Dialog.notification(heading=utils.addon_name, icon="DefaultIconError.png", message=utils.Translate(33235), sound=True, time=utils.newContentTime)
-                return
+
+                if utils.sleep(1):
+                    xbmc.log(f"EMBY.emby.emby: THREAD: ---<[ Websocket {self.EmbyServer.ServerData['ServerId']} shutdown 3 ]", 0) # LOGDEBUG
+                    return
+
+                continue
 
             value = f"{EncodingKey}258EAFA5-E914-47DA-95CA-C5AB0DC85B11".encode("utf-8")
             hashed = base64.b64encode(hashlib.sha1(value).digest()).strip().lower().decode('utf-8')
 
             if hashed != result.lower():
-                return
+                xbmc.log(f"EMBY.emby.emby: Websocket {self.EmbyServer.ServerData['ServerId']} wrong hash", 0) # LOGDEBUG
+
+                if utils.sleep(1):
+                    xbmc.log(f"EMBY.emby.emby: THREAD: ---<[ Websocket {self.EmbyServer.ServerData['ServerId']} shutdown 4 ]", 0) # LOGDEBUG
+                    return
+
+                continue
 
             self.inProgressWebSocket = True
 

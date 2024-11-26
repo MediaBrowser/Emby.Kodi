@@ -1,5 +1,5 @@
 import xbmc
-from helper import pluginmenu
+from helper import utils
 
 class Folder:
     def __init__(self, EmbyServer, SQLs):
@@ -25,4 +25,4 @@ class Folder:
     def userdata(self, Item):
         xbmc.log(f"EMBY.core.folder: USERDATA {Item}", 1) # LOGINFO
         self.change(Item, True)
-        pluginmenu.reset_querycache("Folder")
+        utils.reset_querycache("Folder")

@@ -9,8 +9,6 @@ from core import common
 from . import utils, playerops, xmls, artworkcache
 
 SearchTerm = ""
-UpcomingLastQueryTicks = 0
-QueryCache = {}
 MappingStaggered = {"Series": "Season", "Season": "Episode", "PhotoAlbum": "HomeVideos", "MusicAlbum": "Audio"} # additional stagged content parameter written in the code, based on conditions
 letters = ("0-9", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z")
 MappingContentKodi = {"movies": "movies", "Video": "videos", "Season": "tvshows", "Episode": "episodes", "Series": "tvshows", "Movie": "movies", "Photo": "images", "PhotoAlbum": "images", "MusicVideo": "musicvideos", "MusicArtist": "artists", "MusicAlbum": "albums", "Audio": "songs", "TvChannel": "videos", "musicvideos": "musicvideos", "VideoMusicArtist": "musicvideos", "tvshows": "tvshows", "Folder": "files", "All": "files", "homevideos": "files", "Playlist": "files", "Trailer": "videos", "Person": "videos", "videos": "videos", "music": "songs"}
@@ -72,11 +70,11 @@ def browse(Handle, Id, query, ParentId, Content, ServerId, LibraryId, ContentSup
     ContentQuery = Content
 
     # Load from cache
-    if Content in QueryCache and CacheId in QueryCache[Content] and QueryCache[Content][CacheId][0]:
-        if WindowIdCheck and reload_Window(Content, ContentQuery, WindowId, Handle, QueryCache[Content][CacheId][3], QueryCache[Content][CacheId][4], QueryCache[Content][CacheId][5], QueryCache[Content][CacheId][6], QueryCache[Content][CacheId][7]):
+    if Content in utils.QueryCache and CacheId in utils.QueryCache[Content] and utils.QueryCache[Content][CacheId][0]:
+        if WindowIdCheck and reload_Window(Content, ContentQuery, WindowId, Handle, utils.QueryCache[Content][CacheId][3], utils.QueryCache[Content][CacheId][4], utils.QueryCache[Content][CacheId][5], utils.QueryCache[Content][CacheId][6], utils.QueryCache[Content][CacheId][7]):
             return
 
-        add_ViewItems(Handle, query, Content, QueryCache[Content][CacheId][1], QueryCache[Content][CacheId][2])
+        add_ViewItems(Handle, query, Content, utils.QueryCache[Content][CacheId][1], utils.QueryCache[Content][CacheId][2])
         return
 
     if query in ('NodesDynamic', 'NodesSynced'):
@@ -337,15 +335,15 @@ def browse(Handle, Id, query, ParentId, Content, ServerId, LibraryId, ContentSup
                 if not SortedItems or SortItemContent in ("Folder", "PhotoAlbum"):
                     continue
 
-                if SortItemContent not in QueryCache:
-                    globals()["QueryCache"][SortItemContent] = {}
+                if SortItemContent not in utils.QueryCache:
+                    utils.QueryCache[SortItemContent] = {}
 
                 ItemsListingsCached = ()
 
                 for SortedItem in SortedItems:
                     ItemsListingsCached = load_ListItem(ParentId, SortedItem, ServerId, ItemsListingsCached, Content, LibraryId)
 
-                globals()["QueryCache"][SortItemContent][f"{Id}{SortItemContent}{ParentId}{ServerId}{LibraryId}"] = [True, ItemsListingsCached, Unsorted, Id, SortItemContent, ServerId, ParentId, LibraryId]
+                utils.QueryCache[SortItemContent][f"{Id}{SortItemContent}{ParentId}{ServerId}{LibraryId}"] = [True, ItemsListingsCached, Unsorted, Id, SortItemContent, ServerId, ParentId, LibraryId]
                 ItemsListings = add_ListItem(ItemsListings, f"--{SortItemContent}--", f"plugin://plugin.service.emby-next-gen/?id={Id}&mode=browse&query={SortItemContent}&server={ServerId}&parentid={ParentId}&content={SortItemContent}&libraryid={LibraryId}", IconMapping[SortItemContent], SortItemContent)
 
             WindowIdCheck = False
@@ -368,10 +366,10 @@ def browse(Handle, Id, query, ParentId, Content, ServerId, LibraryId, ContentSup
             for FolderItem in SortItems[SubFolder]:
                 ItemsListings = load_ListItem(ParentId, FolderItem, ServerId, ItemsListings, Content, LibraryId)
 
-    if ContentQuery not in QueryCache:
-        globals()["QueryCache"][ContentQuery] = {}
+    if ContentQuery not in utils.QueryCache:
+        utils.QueryCache[ContentQuery] = {}
 
-    globals()["QueryCache"][ContentQuery][CacheId] = [True, ItemsListings, Unsorted, Id, query, ServerId, ParentId, LibraryId]
+    utils.QueryCache[ContentQuery][CacheId] = [True, ItemsListings, Unsorted, Id, query, ServerId, ParentId, LibraryId]
 
     if WindowIdCheck and reload_Window(Content, ContentQuery, WindowId, Handle, Id, query, ServerId, ParentId, LibraryId):
         return
@@ -681,12 +679,12 @@ def favepisodes(Handle):
     Handle = int(Handle)
     CacheId = "favepisodes"
 
-    if "Episode" not in QueryCache:
-        globals()["QueryCache"]["Episode"] = {}
+    if "Episode" not in utils.QueryCache:
+        utils.QueryCache["Episode"] = {}
 
-    if CacheId in QueryCache["Episode"] and QueryCache["Episode"][CacheId][0]:
+    if CacheId in utils.QueryCache["Episode"] and utils.QueryCache["Episode"][CacheId][0]:
         xbmc.log(f"EMBY.helper.pluginmenu: Using QueryCache: {CacheId}", 1) # LOGINFO
-        ListItems = QueryCache["Episode"][CacheId][1]
+        ListItems = utils.QueryCache["Episode"][CacheId][1]
     else:
         xbmc.log(f"EMBY.helper.pluginmenu: Rebuid QueryCache: {CacheId}", 1) # LOGINFO
         ListItems = ()
@@ -709,7 +707,7 @@ def favepisodes(Handle):
             if KodiItem:
                 isFolder, ListItem = listitem.set_ListItem_from_Kodi_database(KodiItem)
                 ListItems += ((KodiItem['pathandfilename'], ListItem, isFolder),)
-                globals()["QueryCache"]["Episode"][CacheId] = [True, ListItems]
+                utils.QueryCache["Episode"][CacheId] = [True, ListItems]
 
     xbmcplugin.addDirectoryItems(Handle, ListItems, len(ListItems))
     xbmcplugin.addSortMethod(Handle, xbmcplugin.SORT_METHOD_UNSORTED)
@@ -721,12 +719,12 @@ def favseasons(Handle):
     Handle = int(Handle)
     CacheId = "favseasons"
 
-    if "Season" not in QueryCache:
-        globals()["QueryCache"]["Season"] = {}
+    if "Season" not in utils.QueryCache:
+        utils.QueryCache["Season"] = {}
 
-    if CacheId in QueryCache["Season"] and QueryCache["Season"][CacheId][0]:
+    if CacheId in utils.QueryCache["Season"] and utils.QueryCache["Season"][CacheId][0]:
         xbmc.log(f"EMBY.helper.pluginmenu: Using QueryCache: {CacheId}", 1) # LOGINFO
-        ListItems = QueryCache["Season"][CacheId][1]
+        ListItems = utils.QueryCache["Season"][CacheId][1]
     else:
         xbmc.log(f"EMBY.helper.pluginmenu: Rebuid QueryCache: {CacheId}", 1) # LOGINFO
         ListItems = ()
@@ -749,7 +747,7 @@ def favseasons(Handle):
             if KodiItem:
                 isFolder, ListItem = listitem.set_ListItem_from_Kodi_database(KodiItem)
                 ListItems += ((KodiItem['path'], ListItem, isFolder),)
-                globals()["QueryCache"]["Season"][CacheId] = [True, ListItems]
+                utils.QueryCache["Season"][CacheId] = [True, ListItems]
 
     xbmcplugin.addDirectoryItems(Handle, ListItems, len(ListItems))
     xbmcplugin.addSortMethod(Handle, xbmcplugin.SORT_METHOD_UNSORTED)
@@ -759,15 +757,15 @@ def favseasons(Handle):
 
 # Special collection synced node
 def collections(Handle, KodiMediaType, LibraryTag):
-    if "BoxSet" not in QueryCache:
-        globals()["QueryCache"]["BoxSet"] = {}
+    if "BoxSet" not in utils.QueryCache:
+        utils.QueryCache["BoxSet"] = {}
 
     Handle = int(Handle)
     CacheId = f"collections_{LibraryTag}_{KodiMediaType}"
 
-    if CacheId in QueryCache["BoxSet"] and QueryCache["BoxSet"][CacheId][0]:
+    if CacheId in utils.QueryCache["BoxSet"] and utils.QueryCache["BoxSet"][CacheId][0]:
         xbmc.log(f"EMBY.helper.pluginmenu: Using QueryCache: {CacheId}", 1) # LOGINFO
-        ListItems = QueryCache["BoxSet"][CacheId][1]
+        ListItems = utils.QueryCache["BoxSet"][CacheId][1]
     else:
         xbmc.log(f"EMBY.helper.pluginmenu: Rebuid QueryCache: {CacheId}", 1) # LOGINFO
         ListItems = ()
@@ -783,7 +781,7 @@ def collections(Handle, KodiMediaType, LibraryTag):
             ListItem.setContentLookup(False)
             ListItems += ((f"videodb://{KodiMediaType}s/tags/{CollectionTagId}/", ListItem, True),)
 
-        globals()["QueryCache"]["BoxSet"][CacheId] = [True, ListItems]
+        utils.QueryCache["BoxSet"][CacheId] = [True, ListItems]
 
     xbmcplugin.addDirectoryItems(Handle, ListItems, len(ListItems))
     xbmcplugin.addSortMethod(Handle, xbmcplugin.SORT_METHOD_TITLE)
@@ -896,38 +894,16 @@ def cache_textures_generator(selection):
 
         dbio.DBCloseRO("music", "cache_textures")
 
-def reset_querycache(Content):
-    if not playerops.RemoteMode: # keep cache in remote client mode -> don't overload Emby server
-        for CacheContent, CachedItems in list(QueryCache.items()):
-            if not Content or str(CacheContent).find(Content) != -1 or CacheContent == "All" or CacheContent == "BoxSet":
-                xbmc.log(f"EMBY.helper.pluginmenu: Clear QueryCache: {CacheContent}", 1) # LOGINFO
-
-                for CachedContentItems in list(CachedItems.values()):
-                    CachedContentItemsLen = len(CachedContentItems)
-
-                    if CachedContentItemsLen == 8 and CachedContentItems[7] != "0" or CachedContentItemsLen != 8: # CachedItems[7] = LibraryId -> LibraryId = 0 means search content -> skip
-                        if CachedContentItemsLen == 8 and CachedContentItems[4] == "Upcoming": # skip refresh when last query is < 1 day
-                            CurrentTicks = utils.get_unixtime_emby_format()
-
-                            if UpcomingLastQueryTicks != 0:
-                                if CurrentTicks - 864000000 > UpcomingLastQueryTicks:
-                                    CachedContentItems[0] = False
-                                    globals()["UpcomingLastQueryTicks"] = CurrentTicks
-                            else:
-                                globals()["UpcomingLastQueryTicks"] = CurrentTicks
-                        else:
-                            CachedContentItems[0] = False
-
 def get_next_episodes(Handle, libraryname):
-    if "Episode" not in QueryCache:
-        globals()["QueryCache"]["Episode"] = {}
+    if "Episode" not in utils.QueryCache:
+        utils.QueryCache["Episode"] = {}
 
     Handle = int(Handle)
     CacheId = f"next_episodes_{libraryname}"
 
-    if CacheId in QueryCache["Episode"] and QueryCache["Episode"][CacheId][0]:
+    if CacheId in utils.QueryCache["Episode"] and utils.QueryCache["Episode"][CacheId][0]:
         xbmc.log(f"EMBY.helper.pluginmenu: Using QueryCache: {CacheId}", 1) # LOGINFO
-        ListItems = QueryCache["Episode"][CacheId][1]
+        ListItems = utils.QueryCache["Episode"][CacheId][1]
     else:
         xbmc.log(f"EMBY.helper.pluginmenu: Rebuid QueryCache: {CacheId}", 1) # LOGINFO
         ListItems = ()
@@ -945,7 +921,7 @@ def get_next_episodes(Handle, libraryname):
             if KodiItem:
                 isFolder, ListItem = listitem.set_ListItem_from_Kodi_database(KodiItem)
                 ListItems += ((KodiItem['pathandfilename'], ListItem, isFolder),)
-                globals()["QueryCache"]["Episode"][CacheId] = [True, ListItems]
+                utils.QueryCache["Episode"][CacheId] = [True, ListItems]
 
     xbmcplugin.addDirectoryItems(Handle, ListItems, len(ListItems))
     xbmcplugin.addSortMethod(Handle, xbmcplugin.SORT_METHOD_UNSORTED)
@@ -953,15 +929,15 @@ def get_next_episodes(Handle, libraryname):
     xbmcplugin.endOfDirectory(Handle, cacheToDisc=False)
 
 def get_next_episodes_played(Handle, libraryname):
-    if "Episode" not in QueryCache:
-        globals()["QueryCache"]["Episode"] = {}
+    if "Episode" not in utils.QueryCache:
+        utils.QueryCache["Episode"] = {}
 
     Handle = int(Handle)
     CacheId = f"next_episodes_played_{libraryname}"
 
-    if CacheId in QueryCache["Episode"] and QueryCache["Episode"][CacheId][0]:
+    if CacheId in utils.QueryCache["Episode"] and utils.QueryCache["Episode"][CacheId][0]:
         xbmc.log(f"EMBY.helper.pluginmenu: Using QueryCache: {CacheId}", 1) # LOGINFO
-        ListItems = QueryCache["Episode"][CacheId][1]
+        ListItems = utils.QueryCache["Episode"][CacheId][1]
     else:
         xbmc.log(f"EMBY.helper.pluginmenu: Rebuid QueryCache: {CacheId}", 1) # LOGINFO
         ListItems = ()
@@ -979,7 +955,7 @@ def get_next_episodes_played(Handle, libraryname):
             if KodiItem:
                 isFolder, ListItem = listitem.set_ListItem_from_Kodi_database(KodiItem)
                 ListItems += ((KodiItem['pathandfilename'], ListItem, isFolder),)
-                globals()["QueryCache"]["Episode"][CacheId] = [True, ListItems]
+                utils.QueryCache["Episode"][CacheId] = [True, ListItems]
 
     xbmcplugin.addDirectoryItems(Handle, ListItems, len(ListItems))
     xbmcplugin.addSortMethod(Handle, xbmcplugin.SORT_METHOD_UNSORTED)
@@ -987,15 +963,15 @@ def get_next_episodes_played(Handle, libraryname):
     xbmcplugin.endOfDirectory(Handle, cacheToDisc=False)
 
 def get_inprogress_mixed(Handle):
-    if "Episode_Movie_MusicVideo" not in QueryCache:
-        globals()["QueryCache"]["Episode_Movie_MusicVideo"] = {}
+    if "Episode_Movie_MusicVideo" not in utils.QueryCache:
+        utils.QueryCache["Episode_Movie_MusicVideo"] = {}
 
     Handle = int(Handle)
     CacheId = "inprogress_mixed"
 
-    if CacheId in QueryCache["Episode_Movie_MusicVideo"] and QueryCache["Episode_Movie_MusicVideo"][CacheId][0]:
+    if CacheId in utils.QueryCache["Episode_Movie_MusicVideo"] and utils.QueryCache["Episode_Movie_MusicVideo"][CacheId][0]:
         xbmc.log(f"EMBY.helper.pluginmenu: Using QueryCache: {CacheId}", 1) # LOGINFO
-        ListItems = QueryCache["Episode_Movie_MusicVideo"][CacheId][1]
+        ListItems = utils.QueryCache["Episode_Movie_MusicVideo"][CacheId][1]
     else:
         xbmc.log(f"EMBY.helper.pluginmenu: Rebuid QueryCache: {CacheId}", 1) # LOGINFO
         ListItems = ()
@@ -1020,7 +996,7 @@ def get_inprogress_mixed(Handle):
             if KodiItem:
                 isFolder, ListItem = listitem.set_ListItem_from_Kodi_database(KodiItem)
                 ListItems += ((KodiItem['pathandfilename'], ListItem, isFolder),)
-                globals()["QueryCache"]["Episode_Movie_MusicVideo"][CacheId] = [True, ListItems]
+                utils.QueryCache["Episode_Movie_MusicVideo"][CacheId] = [True, ListItems]
 
     xbmcplugin.addDirectoryItems(Handle, ListItems, len(ListItems))
     xbmcplugin.addSortMethod(Handle, xbmcplugin.SORT_METHOD_UNSORTED)
