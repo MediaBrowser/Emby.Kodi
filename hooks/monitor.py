@@ -1,5 +1,5 @@
 import json
-from _thread import start_new_thread, allocate_lock
+from _thread import allocate_lock
 import xbmc
 from helper import pluginmenu, utils, playerops, xmls, player, queue, deduplicate
 from database import dbio
@@ -65,47 +65,47 @@ class monitor(xbmc.Monitor):
             xbmc.log("EMBY.hooks.monitor: System_OnQuit", 1) # LOGINFO
             ShutDown()
         elif method == 'Other.managelibsselection':
-            start_new_thread(pluginmenu.select_managelibs, ())
+            utils.start_thread(pluginmenu.select_managelibs, ())
         elif method == 'Other.deduplicate':
-            start_new_thread(deduplicate.deduplicate, ())
+            utils.start_thread(deduplicate.deduplicate, ())
         elif method == 'Other.settings':
-            start_new_thread(opensettings, ())
+            utils.start_thread(opensettings, ())
         elif method == 'Other.backup':
-            start_new_thread(Backup, ())
+            utils.start_thread(Backup, ())
         elif method == 'Other.restore':
-            start_new_thread(BackupRestore, ())
+            utils.start_thread(BackupRestore, ())
         elif method == 'Other.skinreload':
-            start_new_thread(utils.reset_querycache, (None,)) # Clear Cache
+            utils.start_thread(utils.reset_querycache, (None,)) # Clear Cache
             xbmc.executebuiltin('ReloadSkin()')
             xbmc.log("EMBY.hooks.monitor: Reload skin by notification", 1) # LOGINFO
         elif method == 'Other.manageserver':
-            start_new_thread(pluginmenu.manage_servers, (ServerConnect,))
+            utils.start_thread(pluginmenu.manage_servers, (ServerConnect,))
         elif method == 'Other.databasereset':
-            start_new_thread(pluginmenu.databasereset, (favorites, ))
+            utils.start_thread(pluginmenu.databasereset, (favorites, ))
         elif method == 'Other.nodesreset':
-            start_new_thread(utils.nodesreset, ())
+            utils.start_thread(utils.nodesreset, ())
         elif method == 'Other.databasevacuummanual':
-            start_new_thread(dbio.DBVacuum, ())
+            utils.start_thread(dbio.DBVacuum, ())
         elif method == 'Other.factoryreset':
-            start_new_thread(pluginmenu.factoryreset, (False, favorites))
+            utils.start_thread(pluginmenu.factoryreset, (False, favorites))
         elif method == 'Other.downloadreset':
-            start_new_thread(pluginmenu.downloadreset, ("",))
+            utils.start_thread(pluginmenu.downloadreset, ("",))
         elif method == 'Other.texturecache':
             if not utils.artworkcacheenable:
                 utils.Dialog.notification(heading=utils.addon_name, icon=utils.icon, message=utils.Translate(33226), sound=False, time=utils.displayMessage)
             else:
-                start_new_thread(pluginmenu.cache_textures, ())
+                utils.start_thread(pluginmenu.cache_textures, ())
         elif method == 'VideoLibrary.OnUpdate' and not utils.RemoteMode:  # Buffer updated items -> not overloading threads
             globals()["QueueItemsStatusupdate"] += (data,)
 
             if not VideoLibrary_OnUpdateLock.locked():
-                start_new_thread(VideoLibrary_OnUpdate, ())
+                utils.start_thread(VideoLibrary_OnUpdate, ())
         elif method == 'VideoLibrary.OnRemove' and not utils.RemoteMode:  # Buffer updated items -> not overloading threads
             if utils.enableDeleteByKodiEvent:
                 globals()["QueueItemsRemove"] += (data,)
 
                 if not VideoLibrary_OnRemoveLock.locked():
-                    start_new_thread(VideoLibrary_OnRemove, ())
+                    utils.start_thread(VideoLibrary_OnRemove, ())
 
     def onScanStarted(self, library):
         xbmc.log(f"EMBY.hooks.monitor: -->[ kodi scan / {library} ]", 1) # LOGINFO
@@ -121,7 +121,7 @@ class monitor(xbmc.Monitor):
             utils.SyncPause['kodi_rw'] = False
 
             if not utils.RemoteMode and not syncEmbyLock.locked():
-                start_new_thread(syncEmby, ())
+                utils.start_thread(syncEmby, ())
 
     def onCleanStarted(self, library):
         xbmc.log(f"EMBY.hooks.monitor: -->[ kodi clean / {library} ]", 1) # LOGINFO
@@ -137,11 +137,11 @@ class monitor(xbmc.Monitor):
             utils.SyncPause['kodi_rw'] = False
 
             if not utils.RemoteMode and not syncEmbyLock.locked():
-                start_new_thread(syncEmby, ())
+                utils.start_thread(syncEmby, ())
 
     def onSettingsChanged(self):
         xbmc.log("EMBY.hooks.monitor: Seetings changed", 1) # LOGINFO
-        start_new_thread(settingschanged, ())
+        utils.start_thread(settingschanged, ())
 
 def opensettings():
     xbmc.executebuiltin('Dialog.Close(all,true)') # blocking
@@ -466,7 +466,7 @@ def settingschanged():  # threaded by caller
 
         for EmbyServer in list(utils.EmbyServers.values()):
             EmbyServer.library.set_syncdate(SyncTimestamp)
-            start_new_thread(EmbyServer.library.KodiStartSync, (False,))
+            utils.start_thread(EmbyServer.library.KodiStartSync, (False,))
 
     for EmbyServer in list(utils.EmbyServers.values()):
         EmbyServer.API.update_settings()
@@ -590,8 +590,8 @@ def StartUp():
         xbmc.log("EMBY.hooks.monitor: Monitor listening", 1) # LOGINFO
         globals()['FullShutdown'] = True
         XbmcMonitor = monitor()  # Init Monitor
-        start_new_thread(favorites.monitor_Favorites, ())
-        start_new_thread(favorites.emby_change_Favorite, ())
+        utils.start_thread(favorites.monitor_Favorites, ())
+        utils.start_thread(favorites.emby_change_Favorite, ())
 
         if Ret == "OPENLIBRARY":
             ServersConnect()
@@ -605,7 +605,7 @@ def StartUp():
                 else:
                     EmbyServer.library.select_libraries("AddLibrarySelection")
         else:
-            start_new_thread(ServersConnect, ())
+            utils.start_thread(ServersConnect, ())
 
         XbmcMonitor.waitForAbort(0) # Waiting/blocking function till Kodi stops
 

@@ -1,4 +1,4 @@
-from _thread import allocate_lock
+from _thread import start_new_thread, allocate_lock
 import sys
 import os
 import shutil
@@ -1074,6 +1074,25 @@ def reset_querycache(Content):
                                 globals()["UpcomingLastQueryTicks"] = CurrentTicks
                         else:
                             CachedContentItems[0] = False
+
+def start_thread(Object, Args):
+    Failed = False
+
+    while True:
+        try:
+            start_new_thread(Object, Args)
+
+            if Failed:
+                xbmc.log(f"EMBY.helper.utils: start_thread continue: {Object.__name__} , Error: {error}", 2) # LOGWARNING
+
+            break
+        except RuntimeError as error:
+            Failed = True
+            xbmc.log(f"EMBY.helper.utils: start_thread: {Object.__name__} , Error: {error}", 2) # LOGWARNING
+
+            if sleep(1):
+                xbmc.log("EMBY.helper.utils: start_thread: shutdown", 2) # LOGWARNING
+                break
 
 mkDir(FolderAddonUserdata)
 mkDir(FolderEmbyTemp)

@@ -1,4 +1,3 @@
-from _thread import start_new_thread
 import xbmc
 import xbmcgui
 from helper import utils, queue
@@ -477,7 +476,7 @@ def add_RemoteClient(ServerId, SessionId, DeviceName, UserName):
 
         if utils.EmbyServers[ServerId].EmbySession[0]['Id'] != SessionId:
             globals()['RemoteCommandQueue'][SessionId] = queue.Queue()
-            start_new_thread(thread_RemoteCommands, (ServerId, SessionId))
+            utils.start_thread(thread_RemoteCommands, (ServerId, SessionId))
 
 def add_RemoteClientExtendedSupport(ServerId, SessionId):
     if SessionId not in RemoteClientData[ServerId]["ExtendedSupport"]:
@@ -544,7 +543,7 @@ def update_Remoteclients(ServerId, Data):
     # Stop new threads
     for SessionId in SessionIds:
         globals()['RemoteCommandQueue'][SessionId] = queue.Queue()
-        start_new_thread(thread_RemoteCommands, (ServerId, SessionId))
+        utils.start_thread(thread_RemoteCommands, (ServerId, SessionId))
 
     if ServerSessionId not in SessionIds:
         xbmc.log("EMBY.helper.playerops: delete remote clients", 1) # LOGINFO
@@ -581,7 +580,7 @@ def disable_RemoteClients(ServerId, ResetRemoteClients=True):
         utils.RemoteMode = False
 
         if not utils.EmbyServers[ServerId].library.LockKodiStartSync.locked():
-            start_new_thread(utils.EmbyServers[ServerId].library.KodiStartSync, (False,))
+            utils.start_thread(utils.EmbyServers[ServerId].library.KodiStartSync, (False,))
 
 def send_RemoteClients(ServerId, SendSessionIds, Force):
     if not utils.remotecontrol_sync_clients:
@@ -751,7 +750,7 @@ def thread_RemoteCommands(ServerId, SessionId):
                 API.send_play(SessionId, Command[1], "PlayNow", PlayBackPositionExact(), True)
 
                 if utils.remotecontrol_resync_clients:
-                    start_new_thread(RemoteClientResync, (ServerId, SessionId, EmbyIdPlaying))
+                    utils.start_thread(RemoteClientResync, (ServerId, SessionId, EmbyIdPlaying))
 
             xbmc.log(f"EMBY.helper.playerops: remotecommand send: play {SessionId} {Command[1]} {PositionTicks} {TimeStamp}", 1) # LOGINFO
 

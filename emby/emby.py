@@ -1,6 +1,5 @@
 import uuid
 import json
-from _thread import start_new_thread
 import _socket
 import xbmc
 from dialogs import serverconnect, usersconnect, loginconnect, loginmanual, servermanual
@@ -33,7 +32,7 @@ class EmbyServer:
             return
 
         if not self.ServerReconnecting:
-            start_new_thread(self.worker_ServerReconnect, (ShowMsg,))
+            utils.start_thread(self.worker_ServerReconnect, (ShowMsg,))
 
     def worker_ServerReconnect(self, ShowMsg):
         xbmc.log(f"EMBY.emby.emby: THREAD: --->[ Reconnecting ] {self.ServerData['ServerName']} / {self.ServerData['ServerId']}", 0) # LOGDEBUG
@@ -81,7 +80,7 @@ class EmbyServer:
         self.Views.update_views()
         self.Views.update_nodes()
         self.http.start()
-        start_new_thread(self.library.KodiStartSync, (self.Firstrun,))  # start initial sync
+        utils.start_thread(self.library.KodiStartSync, (self.Firstrun,))  # start initial sync
         self.Firstrun = False
         self.Loaded = True
 
@@ -224,7 +223,7 @@ class EmbyServer:
 
         # re-establish connection
         utils.EmbyServers[self.ServerData['ServerId']] = self
-        start_new_thread(self.EstablishExistingConnection, ())
+        utils.start_thread(self.EstablishExistingConnection, ())
 
     def EstablishExistingConnection(self):
         xbmc.log("EMBY.emby.emby: THREAD: --->[ EstablishExistingConnection ]", 0) # LOGDEBUG

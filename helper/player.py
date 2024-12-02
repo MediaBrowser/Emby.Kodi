@@ -1,4 +1,3 @@
-from _thread import start_new_thread
 import uuid
 from urllib.parse import unquote_plus
 import json
@@ -699,7 +698,7 @@ def replace_playlist_listitem(ListItem, Path):
 # Sync jobs
 def thread_sync_workers():
     if "sync_workers" not in TasksRunning and not utils.RemoteMode:  # skip sync on remote client mode
-        start_new_thread(sync_workers, ())
+        utils.start_thread(sync_workers, ())
 
 def sync_workers():
     xbmc.log("EMBY.hooks.player: THREAD: --->[ sync worker ]", 0) # LOGDEBUG
@@ -718,7 +717,7 @@ def PlayerBusy():
 
     if "PlayerBusy" not in TasksRunning:
         TasksRunning.append("PlayerBusy")
-        start_new_thread(PlayerBusyThread, ())
+        utils.start_thread(PlayerBusyThread, ())
 
 def PlayerBusyThread():
     xbmc.log("EMBY.hooks.player: THREAD: --->[ PlayerBusyThread ]", 0) # LOGDEBUG
@@ -846,7 +845,7 @@ def init_EmbyPlayback(KodiType, RunTimeTicks, PositionTicks, PlaylistPosition):
         playerops.AVStarted = True
 
         if "PositionTracker" not in TasksRunning:
-            start_new_thread(PositionTracker, ())
+            utils.start_thread(PositionTracker, ())
 
 Ret = utils.SendJson('{"jsonrpc": "2.0", "id": 1, "method": "Player.GetProperties", "params": {"playerid": 0, "properties": ["repeat", "shuffled"]}}', False).get('result', {})
 RepeatMode[0] = parse_repeat(Ret.get("repeat", "off"))
@@ -860,4 +859,4 @@ Shuffled[2] = parse_repeat(Ret.get("shuffled", False))
 SkipIntroDialog.set_JumpFunction(jump_Intro)
 SkipIntroDialogEmbuary.set_JumpFunction(jump_Intro)
 SkipCreditsDialog.set_JumpFunction(jump_Credits)
-start_new_thread(PlayerCommands, ())
+utils.start_thread(PlayerCommands, ())

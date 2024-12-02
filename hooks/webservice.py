@@ -1,4 +1,4 @@
-from _thread import start_new_thread, allocate_lock
+from _thread import allocate_lock
 from urllib.parse import unquote, parse_qsl
 import uuid
 import _socket
@@ -38,7 +38,7 @@ def start():
             return False
 
         xbmc.log("EMBY.hooks.webservice: Start", 1) # LOGINFO
-        start_new_thread(Listen, ())
+        utils.start_thread(Listen, ())
         return True
 
     return False
@@ -66,7 +66,7 @@ def Listen():
         except:
             continue
 
-        start_new_thread(worker_Query, (fd,))
+        utils.start_thread(worker_Query, (fd,))
 
     xbmc.log("EMBY.hooks.webservice: THREAD: ---<[ webservice/57342 ]", 1) # LOGDEBUG
 
@@ -883,7 +883,7 @@ def LoadData(QueryData, client):
                 send_redirect(client, QueryData, f"videos/{QueryData['EmbyId']}/main.m3u8?VideoCodec={utils.TranscodeFormatVideo}&AudioCodec={utils.TranscodeFormatAudio}&TranscodeReasons=DirectPlayError")
                 return
 
-        start_new_thread(SubTitlesAdd, (QueryData,))
+        utils.start_thread(SubTitlesAdd, (QueryData,))
         set_QueuedPlayingItem(QueryData, None)
         send_redirect(client, QueryData, f"videos/{QueryData['EmbyId']}/stream?static=true")
         return
@@ -908,7 +908,7 @@ def LoadData(QueryData, client):
     QueryData['SelectionIndexAudioStream'] = max(QueryData['SelectionIndexAudioStream'], 0)
 
     if QueryData['SelectionIndexSubtitleStream'] >= 0:
-        start_new_thread(SubTitlesAdd, (QueryData,))
+        utils.start_thread(SubTitlesAdd, (QueryData,))
 
     TranscodingAudioBitrate = f"&AudioBitrate={utils.audioBitrate}"
     TranscodingVideoBitrate = f"&VideoBitrate={utils.videoBitrate}"
