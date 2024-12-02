@@ -1083,12 +1083,12 @@ def start_thread(Object, Args):
             start_new_thread(Object, Args)
 
             if Failed:
-                xbmc.log(f"EMBY.helper.utils: start_thread continue: {Object.__name__} , Error: {error}", 2) # LOGWARNING
+                xbmc.log(f"EMBY.helper.utils: start_thread continue: {Object.__name__}", 2) # LOGWARNING
 
             break
         except RuntimeError as error:
             Failed = True
-            xbmc.log(f"EMBY.helper.utils: start_thread: {Object.__name__} , Error: {error}", 2) # LOGWARNING
+            xbmc.log(f"EMBY.helper.utils: start_thread: {Object.__name__}, Error: {error}", 2) # LOGWARNING
 
             if sleep(1):
                 xbmc.log("EMBY.helper.utils: start_thread: shutdown", 2) # LOGWARNING
