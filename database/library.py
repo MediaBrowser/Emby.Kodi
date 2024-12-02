@@ -1,4 +1,4 @@
-from _thread import start_new_thread, allocate_lock
+from _thread import allocate_lock
 import json
 import unicodedata
 import xbmc
@@ -1046,10 +1046,10 @@ class Library:
         self.close_EmbyDBRW("select_libraries", SQLs)
 
         if LibraryIdsRemove:
-            start_new_thread(self.worker_library_remove, ())
+            utils.start_thread(self.worker_library_remove, ())
 
         if LibraryIdsAdd and not LibraryIdsRemove:
-            start_new_thread(self.worker_library_add, ())
+            utils.start_thread(self.worker_library_add, ())
 
     def refresh_boxsets(self):  # threaded by caller
         SQLs = self.open_EmbyDBRW("refresh_boxsets", False)

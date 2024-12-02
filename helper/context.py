@@ -12,12 +12,12 @@ def load_item(KodiId=None, KodiType=None):
     ServerId = xbmc.getInfoLabel('ListItem.Property(embyserverid)')
     ListItemEmbyId = xbmc.getInfoLabel('ListItem.Property(embyid)')
 
+    if not KodiType:
+        KodiType = xbmc.getInfoLabel('ListItem.DBTYPE')
+
     if not ServerId:
         if not KodiId:
             KodiId = xbmc.getInfoLabel('ListItem.DBID')
-
-        if not KodiType:
-            KodiType = xbmc.getInfoLabel('ListItem.DBTYPE')
 
         EmbyFavourite = None
         EmbyId = None
@@ -32,7 +32,7 @@ def load_item(KodiId=None, KodiType=None):
 
         return EmbyId, ServerId, EmbyFavourite, KodiType
 
-    return ListItemEmbyId, ServerId, None
+    return ListItemEmbyId, ServerId, None, KodiType
 
 def update_Artwork(KodiId, KodiType, SQLs, Add):
     Artworks = ()

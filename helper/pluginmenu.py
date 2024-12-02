@@ -1,4 +1,3 @@
-from _thread import start_new_thread
 from urllib.parse import urlencode
 import xbmc
 import xbmcgui
@@ -654,7 +653,7 @@ def manage_libraries(ServerSelection):  # threaded by caller
             utils.set_settings_bool("LiveTVEnabled", not utils.LiveTVEnabled)
 
             if utils.LiveTVEnabled:
-                start_new_thread(utils.EmbyServers[EmbyServerId].library.SyncLiveTV, ())
+                utils.start_thread(utils.EmbyServers[EmbyServerId].library.SyncLiveTV, ())
             else:
                 utils.delFile(f"{utils.FolderEmbyTemp}{EmbyServerId}-livetv.m3u")
                 utils.delFile(f"{utils.FolderEmbyTemp}{EmbyServerId}-livetvepg.xml")
@@ -670,7 +669,7 @@ def manage_libraries(ServerSelection):  # threaded by caller
             else:
                 utils.delFolder(utils.PathAddTrailing(f"{utils.DownloadPath}EMBY-themes"))
         elif SelectionMenu[0][Selection] == "RefreshLiveTv":
-            start_new_thread(utils.EmbyServers[EmbyServerId].library.SyncLiveTV, ())
+            utils.start_thread(utils.EmbyServers[EmbyServerId].library.SyncLiveTV, ())
         elif SelectionMenu[0][Selection] == "RefreshThemes":
             utils.EmbyServers[EmbyServerId].library.SyncThemes()
 

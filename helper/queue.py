@@ -13,16 +13,20 @@ class Queue:
         ReturnData = ()
 
         try:
-            with self.Lock:
-                with self.Busy:
-                    if self.QueuedItems:
-                        ReturnData = self.QueuedItems[0]
-                        self.QueuedItems = self.QueuedItems[1:]
-        except Exception as Error:
-            xbmc.log(f"EMBY.helper.queue: get: {Error}", 2) # LOGWARNING
+            self.Lock.acquire()
 
-        if not self.QueuedItems:
-            self.LockQueue()
+            with self.Busy:
+                ReturnData = self.QueuedItems[0]
+                self.QueuedItems = self.QueuedItems[1:]
+
+                if self.Lock.locked():
+                    if self.QueuedItems:
+                        self.Lock.release()
+                else:
+                    if not self.QueuedItems:
+                        self.Lock.acquire()
+        except Exception as Error:
+            xbmc.log(f"EMBY.helper.queue: get: {Error}, queuelen: {len(ReturnData)}", 2) # LOGWARNING
 
         return ReturnData
 
@@ -30,14 +34,18 @@ class Queue:
         ReturnData = ()
 
         try:
-            with self.Lock:
-                with self.Busy:
-                    ReturnData = self.QueuedItems
-                    self.QueuedItems = ()
-        except Exception as Error:
-            xbmc.log(f"EMBY.helper.queue: getall: {Error}", 2) # LOGWARNING
+            self.Lock.acquire()
 
-        self.LockQueue()
+            with self.Busy:
+                ReturnData = self.QueuedItems
+                self.QueuedItems = ()
+
+                if not self.Lock.locked():
+                    self.Lock.acquire()
+
+        except Exception as Error:
+            xbmc.log(f"EMBY.helper.queue: getall: {Error}, queuelen: {len(ReturnData)}", 2) # LOGWARNING
+
         return ReturnData
 
     def put(self, Data):
@@ -49,19 +57,14 @@ class Queue:
             else:
                 self.QueuedItems += (Data,)
 
-        self.UnLockQueue()
-
-    def LockQueue(self):
-        if not self.Lock.locked():
-            self.Lock.acquire()
-
-    def UnLockQueue(self):
-        if self.Lock.locked():
-            self.Lock.release()
+            if self.Lock.locked():
+                self.Lock.release()
 
     def clear(self):
         with self.Busy:
-            self.LockQueue()
+            if not self.Lock.locked():
+                self.Lock.acquire()
+
             self.QueuedItems = ()
 
     def isEmpty(self):

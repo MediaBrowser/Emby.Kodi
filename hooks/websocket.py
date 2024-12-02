@@ -1,5 +1,4 @@
 import json
-from _thread import start_new_thread
 import xbmc
 import xbmcgui
 from helper import utils, playerops, queue
@@ -53,7 +52,7 @@ class WebSocket:
                         if Event == "clients":
                             playerops.update_Remoteclients(self.EmbyServer.ServerData['ServerId'], Command)
                         elif Event == "connect":
-                            start_new_thread(self.confirm_remote, (Command[1], Command[2]))
+                            utils.start_thread(self.confirm_remote, (Command[1], Command[2]))
                         elif Event == "support":
                             playerops.add_RemoteClientExtendedSupport(self.EmbyServer.ServerData['ServerId'], Command[1])
                         elif Event == "ack":
@@ -149,7 +148,7 @@ class WebSocket:
 
                             if not self.EmbyServerSyncCheckRunning:
                                 self.EmbyServerSyncCheckRunning = True
-                                start_new_thread(self.EmbyServerSyncCheck, ())
+                                utils.start_thread(self.EmbyServerSyncCheck, ())
 
                         if utils.busyMsg and Task['Name'] in self.ProgressBar and self.ProgressBar[Task['Name']]:
                             if 'CurrentProgressPercentage' in Task:
@@ -181,7 +180,7 @@ class WebSocket:
 
                     if not self.EmbyServerSyncCheckRunning:
                         self.EmbyServerSyncCheckRunning = True
-                        start_new_thread(self.EmbyServerSyncCheck, ())
+                        utils.start_thread(self.EmbyServerSyncCheck, ())
 
                 if utils.busyMsg and "RefreshProgress" in self.ProgressBar and self.ProgressBar["RefreshProgress"][1] == "Loaded":
                     self.ProgressBar["RefreshProgress"][0].update(int(float(IncomingData['Data']['Progress'])), utils.Translate(33199), utils.Translate(33414))
@@ -240,7 +239,7 @@ class WebSocket:
                     utils.ItemSkipUpdate.remove(RemoveSkippedItem)
 
                 if UpdateData:
-                    start_new_thread(self.EmbyServer.library.userdata, (UpdateData,))
+                    utils.start_thread(self.EmbyServer.library.userdata, (UpdateData,))
             elif IncomingData['MessageType'] == 'LibraryChanged':
                 xbmc.log(f"EMBY.hooks.websocket: [ LibraryChanged ] {IncomingData['Data']}", 1) # LOGINFO
 
@@ -255,7 +254,7 @@ class WebSocket:
                     UpdateItemIds[Index] = (ItemId, "unknown", "unknown")
 
                 UpdateItemIds = list(dict.fromkeys(UpdateItemIds)) # filter duplicates
-                start_new_thread(self.LibraryChanged, (UpdateItemIds, IncomingData['Data']['ItemsRemoved']))
+                utils.start_thread(self.LibraryChanged, (UpdateItemIds, IncomingData['Data']['ItemsRemoved']))
             elif IncomingData['MessageType'] == 'ServerRestarting':
                 xbmc.log("EMBY.hooks.websocket: [ ServerRestarting ]", 1) # LOGINFO
                 self.close_EmbyServerBusy()
@@ -311,7 +310,7 @@ class WebSocket:
             Compare = [False] * len(self.Tasks)
 
         self.close_EmbyServerBusy()
-        start_new_thread(self.EmbyServer.library.RunJobs, (True,))
+        utils.start_thread(self.EmbyServer.library.RunJobs, (True,))
 
         if self.EPGRefresh:
             self.EmbyServer.library.SyncLiveTVEPG()

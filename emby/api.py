@@ -1,4 +1,3 @@
-from _thread import start_new_thread
 import xbmc
 from helper import utils, queue
 from database import dbio
@@ -108,7 +107,7 @@ class API:
             embydb = None
             videodb = None
             musicdb = None
-            start_new_thread(self.async_get_Items, (Request, ItemsQueue, Params, "", CustomLimit, None))
+            utils.start_thread(self.async_get_Items, (Request, ItemsQueue, Params, "", CustomLimit, None))
 
             for BasicItem in ItemsQueue.getall():
                 if BasicItem == "QUIT":
@@ -223,7 +222,7 @@ class API:
             if 'SortBy' not in Params:
                 Params['SortBy'] = "None"
 
-            start_new_thread(self.async_get_Items_Ids, (f"Users/{self.EmbyServer.ServerData['UserId']}/Items", ItemsQueue, Params, Ids, Dynamic, ProcessProgressId, LibraryId, BusyFunction))
+            utils.start_thread(self.async_get_Items_Ids, (f"Users/{self.EmbyServer.ServerData['UserId']}/Items", ItemsQueue, Params, Ids, Dynamic, ProcessProgressId, LibraryId, BusyFunction))
 
             while True:
                 Items = ItemsQueue.getall()
@@ -360,9 +359,9 @@ class API:
                 Params['SortBy'] = "None"
 
             if UserData and MediaType != "Folder":
-                start_new_thread(self.async_get_Items, (f"Users/{self.EmbyServer.ServerData['UserId']}/Items", ItemsQueue, Params, ProcessProgressId, CustomLimit, BusyFunction))
+                utils.start_thread(self.async_get_Items, (f"Users/{self.EmbyServer.ServerData['UserId']}/Items", ItemsQueue, Params, ProcessProgressId, CustomLimit, BusyFunction))
             else:
-                start_new_thread(self.async_get_Items, ("Items", ItemsQueue, Params, ProcessProgressId, CustomLimit, BusyFunction))
+                utils.start_thread(self.async_get_Items, ("Items", ItemsQueue, Params, ProcessProgressId, CustomLimit, BusyFunction))
 
             while True:
                 Items = ItemsQueue.getall()
@@ -385,7 +384,7 @@ class API:
         Limit = get_Limit("livetv")
         Params = {'UserId': self.EmbyServer.ServerData['UserId'], 'Fields': "Overview", 'EnableTotalRecordCount': False, 'Limit': Limit}
         ItemsQueue = queue.Queue()
-        start_new_thread(self.async_get_Items, ("LiveTv/Programs", ItemsQueue, Params, "", False, None))
+        utils.start_thread(self.async_get_Items, ("LiveTv/Programs", ItemsQueue, Params, "", False, None))
 
         while True:
             Items = ItemsQueue.getall()

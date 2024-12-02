@@ -1,3 +1,17 @@
+11.1.8
+=============
+fix log issue
+
+
+
+11.1.7
+=============
+fix to many threads running (edge case for slow devices on heavy load)
+fix minor queue issues
+fix deleting files by dynamic nodes
+
+
+
 11.1.6
 =============
 fix to many threads started (edge case when massive and long running updates are pushed via realtime sync)

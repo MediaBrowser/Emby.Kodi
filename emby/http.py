@@ -1,4 +1,4 @@
-from _thread import start_new_thread, allocate_lock
+from _thread import allocate_lock
 import base64
 import os
 import array
@@ -48,14 +48,14 @@ class HTTP:
                 self.Queues["ASYNC"].clear()
                 self.Queues["DOWNLOAD"].clear()
                 self.Queues["QUEUEDREQUEST"].clear()
-                start_new_thread(self.queued_request, ())
-                start_new_thread(self.Ping, ())
-                start_new_thread(self.async_commands, ())
-                start_new_thread(self.download_file, ())
+                utils.start_thread(self.queued_request, ())
+                utils.start_thread(self.Ping, ())
+                utils.start_thread(self.async_commands, ())
+                utils.start_thread(self.download_file, ())
 
                 if utils.websocketenabled:
-                    start_new_thread(self.Websocket.Message, ())
-                    start_new_thread(self.websocket_listen, ())
+                    utils.start_thread(self.Websocket.Message, ())
+                    utils.start_thread(self.websocket_listen, ())
 
     def stop(self):
         with self.Connecting:
@@ -1147,7 +1147,7 @@ class HTTP:
                     break
 
             for Intro in ReceivedIntros[Index + 1:]:
-                start_new_thread(self.verify_intros, (Intro,))
+                utils.start_thread(self.verify_intros, (Intro,))
 
     def getPayloadByFrames(self, PayloadTotal, PayloadTotalLength, PayloadRecv, ConnectionId, TimeoutRecv, PayloadFrameLenght, DownloadName, OutFile, ProgressBar, ProgressBarTotal):
         PayloadFrameTotalLenght = PayloadFrameLenght + PayloadTotalLength
