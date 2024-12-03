@@ -498,8 +498,11 @@ class EmbyDatabase:
             for Path in Paths:
                 # Emby has poorly designed unique IDs (EmbyId, MediasourceID) definitition, therefore this "by path" query is required
                 self.cursor.execute(f"SELECT EmbyId FROM {EmbyType} WHERE EmbyFolder = ?", (Path[0],))
-                EmbyIds += self.cursor.fetchone()
-                PathData += (Path[0],)
+                Data = self.cursor.fetchone()
+
+                if Data:
+                    EmbyIds += Data
+                    PathData += (Path[0],)
 
             return "\n".join(PathData), EmbyIds
 
@@ -851,11 +854,18 @@ class EmbyDatabase:
 
     def get_EmbyId_by_KodiId_KodiType(self, KodiId, KodiType):
         if KodiType not in utils.KodiTypeMapping:
-            xbmc.log(f"EMBY.database.emby_db: KodiType invalid (get_EmbyId_EmbyFavourite_by_KodiId_KodiType): {KodiType}", 3) # LOGERROR
+            xbmc.log(f"EMBY.database.emby_db: KodiType invalid (get_EmbyId_by_KodiId_KodiType): {KodiType}", 3) # LOGERROR
             return None
 
         self.cursor.execute(f"SELECT EmbyId FROM {utils.KodiTypeMapping[KodiType]} WHERE KodiId = ?", (KodiId,))
         Data = self.cursor.fetchone()
+
+        if Data:
+            return Data[0]
+
+        if KodiType == "movie": # Emby homevideos are synced as "movie" content into Kodi
+            self.cursor.execute("SELECT EmbyId FROM Video WHERE KodiId = ?", (KodiId,))
+            Data = self.cursor.fetchone()
 
         if Data:
             return Data[0]
@@ -891,11 +901,19 @@ class EmbyDatabase:
         if Data:
             return Data[0], Data[1]
 
+        if KodiType == "movie": # Emby homevideos are synced as "movie" content into Kodi
+            self.cursor.execute("SELECT EmbyId, EmbyFavourite FROM Video WHERE KodiId = ?", (KodiId,))
+            Data = self.cursor.fetchone()
+
+        if Data:
+            return Data[0], Data[1]
+
         return None, None
 
     def get_nativemode_data(self, KodiId, KodiType):
         if KodiType == "videoversion":
             self.cursor.execute("SELECT EmbyId FROM Video WHERE KodiFileId = ?", (KodiId,))
+            Data = self.cursor.fetchone()
             EmbyType = "Video"
         else:
             if KodiType not in utils.KodiTypeMapping:
@@ -904,8 +922,12 @@ class EmbyDatabase:
 
             EmbyType = utils.KodiTypeMapping[KodiType]
             self.cursor.execute(f"SELECT EmbyId FROM {EmbyType} WHERE KodiId = ?", (KodiId,))
+            Data = self.cursor.fetchone()
 
-        Data = self.cursor.fetchone()
+            if not Data and KodiType == "movie": # Emby homevideos are synced as "movie" content into Kodi
+                self.cursor.execute("SELECT EmbyId FROM Video WHERE KodiId = ?", (KodiId,))
+                Data = self.cursor.fetchone()
+                EmbyType = "Video"
 
         if Data:
             self.cursor.execute("SELECT IntroStart, IntroEnd, CreditsStart FROM MediaSources WHERE EmbyId = ?", (Data[0],))

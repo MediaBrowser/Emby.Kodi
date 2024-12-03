@@ -1,3 +1,11 @@
+11.1.9
+=============
+fix delete homevideos via dyanmic nodes
+fix download homevideos
+fix progress updates for homevideo in native mode
+
+
+
 11.1.8
 =============
 fix log issue
