@@ -15,6 +15,8 @@ def load_item(KodiId=None, KodiType=None):
     if not KodiType:
         KodiType = xbmc.getInfoLabel('ListItem.DBTYPE')
 
+    xbmc.log(f"EMBY.helper.context: load_item ServerId: {ServerId}, KodiType: {KodiType}, ListItemEmbyId: {ListItemEmbyId}, ListItem.FolderPath: {xbmc.getInfoLabel('ListItem.FolderPath')}", 0) # LOGDEBUG
+
     if not ServerId:
         if not KodiId:
             KodiId = xbmc.getInfoLabel('ListItem.DBID')
@@ -217,16 +219,18 @@ def favorites():
 def refreshitem():
     EmbyId, ServerId, _, KodiType = load_item()
 
-    if not EmbyId or KodiType not in utils.KodiTypeMapping:
+    if not EmbyId:
         return
 
     utils.EmbyServers[ServerId].API.refresh_item(EmbyId)
-    utils.EmbyServers[ServerId].library.updated([(EmbyId, utils.KodiTypeMapping[KodiType], "unknown")], True)
+
+    if KodiType in utils.KodiTypeMapping:
+        utils.EmbyServers[ServerId].library.updated([(EmbyId, utils.KodiTypeMapping[KodiType], "unknown")], True)
 
 def deleteitem():
     EmbyId, ServerId, _, KodiType = load_item()
 
-    if not EmbyId or KodiType not in utils.KodiTypeMapping:
+    if not EmbyId:
         return
 
     EmbyIds = ()
@@ -236,8 +240,16 @@ def deleteitem():
         Path, EmbyIds = embydb.get_EpisodePathsBySeason(EmbyId)
     elif KodiType == "tvshow":
         Path, EmbyIds = embydb.get_EpisodePathsBySeries(EmbyId)
-    else:
+    elif KodiType == "movie":
+        Path, EmbyIds = embydb.get_SinglePath(EmbyId, "Movie")
+
+        if not EmbyIds: # Emby homevideos are synced as "movie" content into Kodi
+            Path, EmbyIds = embydb.get_SinglePath(EmbyId, "Video")
+    elif KodiType in utils.KodiTypeMapping:
         Path, EmbyIds = embydb.get_SinglePath(EmbyId, utils.KodiTypeMapping[KodiType])
+    else:
+        Path = ""
+        EmbyIds = ()
 
     EmbyIds += (EmbyId,)
     EmbyIds = set(EmbyIds) # deduplicate Items
