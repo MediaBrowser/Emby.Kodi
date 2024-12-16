@@ -170,7 +170,7 @@ def set_path_filename(Item, ServerId, MediaSource, isDynamic=False):
     if Item['Type'] in ('Photo', 'PhotoAlbum'):
         if 'Primary' in Item['ImageTags']:
             if 'Path' in Item:
-                Item['KodiFullPath'] = f"http://127.0.0.1:57342/picture/{ServerId}/p-{Item['Id']}-0-p-{Item['ImageTags']['Primary']}--{utils.get_Filename(Item['Path'], False)}|redirect-limit=1000"
+                Item['KodiFullPath'] = f"http://127.0.0.1:57342/picture/{ServerId}/p-{Item['Id']}-0-p-{Item['ImageTags']['Primary']}--{quote(utils.get_Filename(Item['Path'], ''))}|redirect-limit=1000"
                 return
 
             Item['KodiFullPath'] = f"http://127.0.0.1:57342/picture/{ServerId}/p-{Item['Id']}-0-p-{Item['ImageTags']['Primary']}|redirect-limit=1000"
