@@ -1,5 +1,5 @@
 import xbmc
-from helper import pluginmenu, utils
+from helper import utils
 from . import common
 
 class Studio:
@@ -7,8 +7,10 @@ class Studio:
         self.EmbyServer = EmbyServer
         self.SQLs = SQLs
 
-    def change(self, Item):
-        common.load_ExistingItem(Item, self.EmbyServer, self.SQLs["emby"], "Studio")
+    def change(self, Item, IncrementalSync):
+        if not common.load_ExistingItem(Item, self.EmbyServer, self.SQLs["emby"], "Studio"):
+            return False
+
         xbmc.log(f"EMBY.core.studio: Process item: {Item['Name']}", 0) # DEBUG
         isFavorite = common.set_Favorite(Item)
         ImageUrl = common.set_Favorites_Artwork(Item, self.EmbyServer.ServerData['ServerId'])
@@ -20,20 +22,23 @@ class Studio:
 
             self.SQLs["video"].update_studio(Item['Name'], Item['KodiItemId'])
             self.SQLs["emby"].update_reference_studio(Item['Id'], isFavorite, ImageUrl, Item['LibraryId'])
-            xbmc.log(f"EMBY.core.studio: UPDATE [{Item['KodiItemId']}] {Item['Name']}: {Item['Id']}", 0) # LOGDEBUG
+            xbmc.log(f"EMBY.core.studio: UPDATE [{Item['KodiItemId']}] {Item['Name']}: {Item['Id']}", int(IncrementalSync)) # LOG
+            utils.notify_event("content_update", {"EmbyId": f"{Item['Id']}", "KodiId": f"{Item['KodiItemId']}", "KodiType": "studio"}, IncrementalSync)
         else:
             Item['KodiItemId'] = self.SQLs["video"].get_add_studio(Item['Name'])
             self.SQLs["emby"].add_reference_studio(Item['Id'], Item['LibraryId'], Item['KodiItemId'], isFavorite, ImageUrl)
-            xbmc.log(f"EMBY.core.studio: ADD [{Item['KodiItemId']}] {Item['Name']}: {Item['Id']}", 0) # LOGDEBUG
+            xbmc.log(f"EMBY.core.studio: ADD [{Item['KodiItemId']}] {Item['Name']}: {Item['Id']}", int(IncrementalSync)) # LOG
+            utils.notify_event("content_add", {"EmbyId": f"{Item['Id']}", "KodiId": f"{Item['KodiItemId']}", "KodiType": "studio"}, IncrementalSync)
 
         self.set_favorite(isFavorite, Item['KodiItemId'], ImageUrl, Item['Id'])
         return not Item['UpdateItem']
 
-    def remove(self, Item):
+    def remove(self, Item, IncrementalSync):
         if self.SQLs["emby"].remove_item(Item['Id'], "Studio", Item['LibraryId']):
             self.set_favorite(False, Item['KodiItemId'], "", Item['Id'])
             self.SQLs["video"].delete_studio_by_Id(Item['KodiItemId'])
-            xbmc.log(f"EMBY.core.studio: DELETE [{Item['KodiItemId']}] {Item['Id']}", 1) # LOGINFO
+            xbmc.log(f"EMBY.core.studio: DELETE [{Item['KodiItemId']}] {Item['Id']}", int(IncrementalSync)) # LOG
+            utils.notify_event("content_remove", {"EmbyId": f"{Item['Id']}", "KodiId": f"{Item['KodiItemId']}", "KodiType": "studio"}, IncrementalSync)
 
     def userdata(self, Item):
         ImageUrl = ""
@@ -43,8 +48,9 @@ class Studio:
 
         self.set_favorite(Item['IsFavorite'], Item['KodiItemId'], ImageUrl, Item['Id'])
         self.SQLs["emby"].update_favourite(Item['IsFavorite'], Item['Id'], "Studio")
-        pluginmenu.reset_querycache("Studio")
+        utils.reset_querycache("Studio")
         xbmc.log(f"EMBY.core.sudio: USERDATA studio [{Item['KodiItemId']}] {Item['Id']}", 1) # LOGINFO
+        utils.notify_event("content_changed", {"EmbyId": f"{Item['Id']}", "KodiId": f"{Item['KodiItemId']}", "KodiType": "studio"}, True)
 
     def set_favorite(self, isFavorite, KodiItemId, ImageUrl, EmbyItemId):
         Name, hasMusicVideos, hasMovies, hasTVShows = self.SQLs["video"].get_Studio_Name(KodiItemId)

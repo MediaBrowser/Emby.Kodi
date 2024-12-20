@@ -59,6 +59,7 @@ SyncNodes = {
         ('recentlyadded', utils.Translate(30256), 'DefaultRecentlyAddedMusicVideos.png', "musicvideos", (("tag", "is", "LIBRARYTAG"), ("playcount", "is", "0")), ("descending", "dateadded"), True, False),
         ('years', utils.Translate(33218), 'DefaultMusicYears.png', "musicvideos", (("tag", "is", "LIBRARYTAG"),), ("descending", "year"), True, "years"),
         ('genres', utils.Translate(33248), 'DefaultGenre.png', "musicvideos", (("tag", "is", "LIBRARYTAG"),), ("ascending", "sorttitle"), False, "genres"),
+        ('albums', utils.Translate(33362), 'DefaultMusicAlbums.png', "musicvideos", (("tag", "is", "LIBRARYTAG"),), ("ascending", "sorttitle"), False, "albums"),
         ('inprogress', utils.Translate(30257), 'DefaultInProgressShows.png', "musicvideos", (("tag", "is", "LIBRARYTAG"), ("inprogress", "true")), ("descending", "lastplayed"), False, False),
         ('random', utils.Translate(30229), 'special://home/addons/plugin.service.emby-next-gen/resources/random.png', "musicvideos", (("tag", "is", "LIBRARYTAG"),), ("random",), True, False),
         ('unwatched', utils.Translate(30258), 'OverlayUnwatched.png', "musicvideos", (("tag", "is", "LIBRARYTAG"), ("inprogress", "false"), ("playcount", "is", "0")), ("random",), True, False),
@@ -91,16 +92,20 @@ SyncNodes = {
     'music': [
         ('letter', utils.Translate(33611), 'special://home/addons/plugin.service.emby-next-gen/resources/letter.png', "artists", (("disambiguation", "is", "LIBRARYTAG"), ("artist", "startswith")), ("ascending", "artist"), False, False, ("letter", "LETTER")),
         ('all', "LIBRARYNAME", 'DefaultAddonMusic.png', "artists", (("disambiguation", "is", "LIBRARYTAG"),), ("ascending", "sorttitle"), False, False),
-        ('years', utils.Translate(33218), 'DefaultMusicYears.png', "albums", (("type", "is", "LIBRARYTAG"),), ("descending", "year"), True, "years"),
+        ('years', utils.Translate(33697), 'DefaultMusicYears.png', "albums", (("type", "is", "LIBRARYTAG"),), ("descending", "year"), True, "years"),
+        ('singlesyears', utils.Translate(33698), 'DefaultMusicYears.png', "songs", (("comment", "endswith", "LIBRARYTAG"),), ("descending", "year"), True, "singles"),
         ('genres', utils.Translate(33248), 'DefaultMusicGenres.png', "artists", (("artists", "disambiguation", "LIBRARYTAG"),), ("ascending", "sorttitle"), False, "genres"),
         ('songsbygenres', utils.Translate(33435), 'DefaultMusicGenres.png', "songs", (("comment", "endswith", "LIBRARYTAG"), ("genre", "is")), ("ascending", "title"), True, False, ("genres", "DBMUSICGENRE")),
         ('artists', utils.Translate(33343), 'DefaultMusicArtists.png', "artists", (("disambiguation", "is", "LIBRARYTAG"), ("role", "is", "artist")), ("ascending", "artists"), False, False),
         ('composers', utils.Translate(33426), 'DefaultMusicArtists.png', "artists", (("disambiguation", "is", "LIBRARYTAG"), ("role", "is", "composer")), ("ascending", "artists"), False, False),
         ('albums', utils.Translate(33362), 'DefaultMusicAlbums.png', "albums", (("type", "is", "LIBRARYTAG"),), ("descending", "title"), False, "albums"),
+        ('singles', utils.Translate(33699), 'DefaultMusicAlbums.png', "songs", (("comment", "endswith", "LIBRARYTAG"),), ("descending", "title"), False, "singles"),
         ('recentlyaddedalbums', utils.Translate(33388), 'DefaultMusicRecentlyAdded.png', "albums", (("type", "is", "LIBRARYTAG"),), ("descending", "dateadded"), True, False),
+        ('recentlyaddedsingles', utils.Translate(33700), 'DefaultMusicRecentlyAdded.png', "songs", (("comment", "endswith", "LIBRARYTAG"),), ("descending", "dateadded"), False, "singles"),
         ('recentlyadded', utils.Translate(33390), 'DefaultMusicRecentlyAdded.png', "songs", (("comment", "endswith", "LIBRARYTAG"), ("playcount", "is", "0")), ("descending", "dateadded"), True, False),
         ('recentlyplayedmusic', utils.Translate(33350), 'DefaultMusicRecentlyPlayed.png', "songs", (("comment", "endswith", "LIBRARYTAG"), ("playcount", "greaterthan", "0")), ("descending", "lastplayed"), True, False),
         ('randomalbums', utils.Translate(33391), 'special://home/addons/plugin.service.emby-next-gen/resources/random.png', "albums", (("type", "is", "LIBRARYTAG"),), ("random",), True, False),
+        ('randomsingles', utils.Translate(33701), 'special://home/addons/plugin.service.emby-next-gen/resources/random.png', "songs", (("type", "is", "LIBRARYTAG"),), ("random",), True, "singles"),
         ('random', utils.Translate(33392), 'special://home/addons/plugin.service.emby-next-gen/resources/random.png', "songs", (("comment", "endswith", "LIBRARYTAG"),), ("random",), True, False),
     ],
     'audiobooks': [
@@ -322,7 +327,7 @@ class Views:
                 if view['ContentType'] in ("books", "games", "photos"):
                     continue
 
-                if Dynamic or f"'{view['LibraryId']}'" in str(self.EmbyServer.library.Whitelist):
+                if Dynamic or f"'{view['LibraryId']}'" in str(self.EmbyServer.library.LibrarySynced):
                     if view['ContentType'] in ('music', 'audiobooks', 'podcasts'):
                         view['Tag'] = f"EmbyLibraryId-{library_id}"
 
@@ -474,11 +479,11 @@ class Views:
                 Data += '<node order="0">\n'
 
                 if Dynamic:
-                    Data += f'    <label>EMBY DYNAMIC: {view["Name"]} ({view["ContentType"]})</label>\n'
+                    Data += f'    <label>EMBY DYNAMIC: {utils.encode_XML(view["Name"])} ({view["ContentType"]})</label>\n'
                 else:
-                    Data += f'    <label>EMBY: {view["Name"]} ({view["ContentType"]})</label>\n'
+                    Data += f'    <label>EMBY: {utils.encode_XML(view["Name"])} ({view["ContentType"]})</label>\n'
 
-                Data += f'    <icon>{view["Icon"]}</icon>\n'
+                Data += f'    <icon>{utils.encode_XML(view["Icon"])}</icon>\n'
                 Data += '</node>'
                 utils.writeFileBinary(FilePath, Data.encode("utf-8"))
         else:
@@ -509,8 +514,8 @@ class Views:
                         if not utils.checkFileExists(FilePath):
                             Data = '<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>\n'
                             Data += '<node order="0">\n'
-                            Data += f'    <label>{node[1]}</label>\n'
-                            Data += f'    <icon>{node[2]}</icon>\n'
+                            Data += f'    <label>{utils.encode_XML(node[1])}</label>\n'
+                            Data += f'    <icon>{utils.encode_XML(node[2])}</icon>\n'
                             Data += '</node>'
                             utils.writeFileBinary(FilePath, Data.encode("utf-8"))
 
@@ -548,8 +553,8 @@ class Views:
                     if not utils.checkFileExists(FilePath):
                         Data = '<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>\n'
                         Data += f'<node order="{NodeIndex}" type="folder">\n'
-                        Data += f'    <label>{node[1]}</label>\n'
-                        Data += f'    <icon>{node[2]}</icon>\n'
+                        Data += f'    <label>{utils.encode_XML(node[1])}</label>\n'
+                        Data += f'    <icon>{utils.encode_XML(node[2])}</icon>\n'
                         Data += f'    <path>plugin://plugin.service.emby-next-gen/?mode=browse&amp;id={view["LibraryId"]}&amp;parentid={view["LibraryId"]}&amp;libraryid={view["LibraryId"]}&amp;content={node[3]}&amp;server={view["ServerId"]}&amp;query={node[0]}</path>\n'
 
                         if node[4]:
@@ -565,8 +570,8 @@ class Views:
                     if not utils.checkFileExists(FilePath) and self.EmbyServer.ServerData["ServerId"]:
                         Data = '<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>\n'
                         Data += f'<node order="{NodeIndex}" type="folder">\n'
-                        Data += f'    <label>EMBY DYNAMIC: {node[1]}</label>\n'
-                        Data += f'    <icon>{node[2]}</icon>\n'
+                        Data += f'    <label>EMBY DYNAMIC: {utils.encode_XML(node[1])}</label>\n'
+                        Data += f'    <icon>{utils.encode_XML(node[2])}</icon>\n'
 
                         if node[0] == "Search":
                             Data += f'    <path>plugin://plugin.service.emby-next-gen/?mode=search&amp;server={self.EmbyServer.ServerData["ServerId"]}</path>\n'
@@ -643,8 +648,8 @@ class Views:
                     if not utils.checkFileExists(FilePath):
                         Data = '<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>\n'
                         Data += '<node order="0">\n'
-                        Data += f'    <label>{node[1]}</label>\n'
-                        Data += f'    <icon>{node[2]}</icon>\n'
+                        Data += f'    <label>{utils.encode_XML(node[1])}</label>\n'
+                        Data += f'    <icon>{utils.encode_XML(node[2])}</icon>\n'
                         Data += '</node>'
                         utils.writeFileBinary(FilePath, Data.encode("utf-8"))
                 else:
@@ -662,13 +667,13 @@ def set_synced_node(Folder, view, node, NodeIndex, LimitFactor):
 
         if node[4][0][0] == "PLUGIN":
             Data += f'<node order="{NodeIndex}" type="folder">\n'
-            Data += f'    <label>{Label}</label>\n'
-            Data += f'    <icon>{node[2]}</icon>\n'
+            Data += f'    <label>{utils.encode_XML(Label)}</label>\n'
+            Data += f'    <icon>{utils.encode_XML(node[2])}</icon>\n'
             Data += f'    <path>plugin://plugin.service.emby-next-gen/?mode={node[4][0][1]}&amp;mediatype={node[4][0][2]}&amp;libraryname={quote(view.get("Name", "unknown"))}</path>\n'
         else:
             Data += f'<node order="{NodeIndex}" type="filter">\n'
-            Data += f'    <label>{Label}</label>\n'
-            Data += f'    <icon>{node[2]}</icon>\n'
+            Data += f'    <label>{utils.encode_XML(Label)}</label>\n'
+            Data += f'    <icon>{utils.encode_XML(node[2])}</icon>\n'
             Data += f'    <content>{node[3]}</content>\n'
 
             if len(node[4]) > 1:
