@@ -11,7 +11,7 @@ SearchTerm = ""
 MappingStaggered = {"Series": "Season", "Season": "Episode", "PhotoAlbum": "HomeVideos", "MusicAlbum": "Audio"} # additional stagged content parameter written in the code, based on conditions
 letters = ("0-9", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z")
 MappingContentKodi = {"movies": "movies", "Video": "videos", "Season": "tvshows", "Episode": "episodes", "Series": "tvshows", "Movie": "movies", "Photo": "images", "PhotoAlbum": "images", "MusicVideo": "musicvideos", "MusicArtist": "artists", "MusicAlbum": "albums", "Audio": "songs", "TvChannel": "videos", "musicvideos": "musicvideos", "VideoMusicArtist": "musicvideos", "tvshows": "tvshows", "Folder": "files", "All": "files", "homevideos": "files", "Playlist": "files", "Trailer": "videos", "Person": "videos", "videos": "videos", "music": "songs"}
-Subcontent = {"tvshows": ("Series", "Season", "Episode", "Genre", "BoxSet"), "movies": ("Movie", "Genre", "BoxSet"), "music": ("MusicArtist", "MusicAlbum", "MusicGenre", "BoxSet", "Audio"), "musicvideos": ("MusicArtist", "MusicGenre", "BoxSet"), "homevideos": ("Photo", "PhotoAlbum", "Video"), "videos": ("Series", "Season", "Episode", "Genre", "BoxSet", "Movie", "Video", "Person")}
+Subcontent = {"tvshows": ("Series", "Season", "Episode", "Genre", "BoxSet"), "movies": ("Movie", "Genre", "BoxSet"), "music": ("MusicArtist", "MusicAlbum", "MusicGenre", "BoxSet", "Audio"), "musicvideos": ("MusicArtist", "MusicGenre", "BoxSet"), "homevideos": ("Photo", "PhotoAlbum", "Video"), "videos": ("Series", "Season", "Episode", "Genre", "BoxSet", "Movie", "Video", "Person"), "playablevideos": ("MusicVideo", "Episode", "Movie", "Video")}
 IconMapping = {"MusicArtist": "DefaultMusicArtists.png", "MusicAlbum": "DefaultMusicAlbums.png", "Audio": "DefaultMusicSongs.png", "Movie": "DefaultMovies.png", "Trailer": "DefaultAddonVideo.png", "BoxSet": "DefaultSets.png", "Series": "DefaultTVShows.png", "Season": "DefaultTVShowTitle.png", "Episode": "DefaultAddonVideo.png", "MusicVideo": "DefaultMusicVideos.png", "Video": "DefaultAddonVideo.png", "Photo": "DefaultPicture.png.png", "PhotoAlbum": "DefaultAddonPicture.png", "TvChannel": "DefaultAddonPVRClient.png", "Folder": "DefaultFolder.png", "Playlist": "DefaultPlaylist.png", "Genre": "DefaultGenre.png", "MusicGenre": "DefaultMusicGenres.png", "Person": "DefaultActor.png", "Tag": "DefaultTags.png", "Channel": "DefaultFolder.png", "CollectionFolder": "DefaultFolder.png", "Studio": "DefaultStudios.png"}
 LibraryMenu = {"LibraryAdd": utils.Translate(33154), "LibraryRemove": utils.Translate(33184), "LibraryUpdate": utils.Translate(33139), "LibraryRepair": utils.Translate(33140), "RefreshBoxsets": utils.Translate(33098), "ToggleLiveTv": "", "RefreshLiveTv": utils.Translate(33706), "ToggleThemes": "", "RefreshThemes": utils.Translate(33707)}
 
@@ -108,9 +108,14 @@ def browse(Handle, Id, query, ParentId, Content, ServerId, LibraryId, ContentSup
         if Content in ('VideoMusicArtist', 'MusicArtist'):
             LocalContent = 'MusicArtist'
             LocalParentId = ParentId
-        elif Content == "Playlist":
+        elif Content == "PlaylistsVideo":
             LocalParentId = None
-            LocalContent = Content
+            LocalContent = "Playlist"
+            Content = "playablevideos"
+        elif Content == "PlaylistsAudio":
+            LocalParentId = None
+            LocalContent = "Playlist"
+            Content = "Audio"
         else:
             LocalContent = Content
             LocalParentId = ParentId
@@ -169,8 +174,12 @@ def browse(Handle, Id, query, ParentId, Content, ServerId, LibraryId, ContentSup
     elif query == "Playlist":
         ParentId = Id
         Extras.update({"SortBy": "SortName"})
-        EmbyContentQuery = (ParentId, ["Episode", "Movie", "Trailer", "MusicVideo", "Audio", "Video"], True, Extras, False, LibraryId)
         Unsorted = True
+
+        if Content in Subcontent:
+            EmbyContentQuery = (ParentId, Subcontent[Content], True, Extras, False, LibraryId)
+        else:
+            EmbyContentQuery = (ParentId, [Content], True, Extras, False, LibraryId)
     elif query == "Playlists":
         Extras.update({"SortBy": "SortName"})
         EmbyContentQuery = (None, ["Playlist"], True, Extras, False, LibraryId)
@@ -352,7 +361,7 @@ def browse(Handle, Id, query, ParentId, Content, ServerId, LibraryId, ContentSup
                     if SortItemContent in ("Folder", "PhotoAlbum"):
                         continue
 
-                    if SortItemContent not in ("Genre", "MusicGenre", "Tag"): # Skip subqueries
+                    if SortItemContent not in ("Genre", "MusicGenre", "Tag", "Playlist"): # Skip subqueries
                         Content = SortItemContent
 
                     for SortedItem in SortedItems:
@@ -1056,8 +1065,12 @@ def factoryreset(KeepServerConfig, favoritesObj):
                 EmbyServer.stop()
 
             utils.delFolder(utils.FolderAddonUserdata, "")
-            utils.delete_playlists()
-            utils.delete_nodes()
+
+        # remove nodes
+        utils.delete_nodes()
+
+        # remove playlists
+        utils.delete_playlists()
 
         # remove favorites
         favoritesObj.set_Favorites(False)

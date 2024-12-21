@@ -24,10 +24,9 @@ class Library:
         self.LibrarySyncedNames = {}
         self.LastSyncTime = ""
         self.ContentObject = None
-        self.EmbyDBOpen = False
         self.SettingsLoaded = False
         self.LockKodiStartSync = allocate_lock()
-        self.LockDBRWOpen = {}
+        self.LockDBRWOpen = allocate_lock()
 
     # Wait for database init
     def wait_DatabaseInit(self, WorkerName):
@@ -63,7 +62,6 @@ class Library:
 
     def close_Worker(self, WorkerName, RefreshVideo, RefreshAudio, ProgressBar, SQLs):
         self.close_EmbyDBRW(WorkerName, SQLs)
-        utils.SyncPause['kodi_rw'] = False
 
         if RefreshVideo:
             utils.refresh_widgets(True)
@@ -75,25 +73,21 @@ class Library:
         del ProgressBar
 
     def open_EmbyDBRW(self, WorkerName, Priority):
-        if WorkerName not in self.LockDBRWOpen:
-            self.LockDBRWOpen[WorkerName] = allocate_lock()
-
-        self.LockDBRWOpen[WorkerName].acquire()
-        SQLs = {}
-
         # if worker in progress, interrupt workers database ops (worker has lower priority) compared to all other Emby database (rw) ops
-        if Priority and self.EmbyDBOpen and LockLowPriorityWorkers.locked():
+        if Priority and LockLowPriorityWorkers.locked() and self.LockDBRWOpen.locked():
             utils.SyncPause['priority'] = True
 
+        self.LockDBRWOpen.acquire()
+        SQLs = {}
         dbio.DBOpenRW(self.EmbyServer.ServerData['ServerId'], WorkerName, SQLs)
-        self.EmbyDBOpen = WorkerName
         return SQLs
 
     def close_EmbyDBRW(self, WorkerName, SQLs):
         dbio.DBCloseRW(self.EmbyServer.ServerData['ServerId'], WorkerName, SQLs)
-        self.EmbyDBOpen = False
         utils.SyncPause['priority'] = False
-        self.LockDBRWOpen[WorkerName].release()
+
+        if self.LockDBRWOpen.locked():
+            self.LockDBRWOpen.release()
 
     def set_syncdate(self, TimestampUTC):
         # Update sync update timestamp
@@ -183,6 +177,11 @@ class Library:
             self.RunJobs(False)
             UpdateData = []
 
+            if utils.SystemShutdown:
+                xbmc.log("EMBY.database.library: THREAD: ---<[ retrieve changes ] shutdown 2", 0) # LOGDEBUG
+                return
+
+            # Retrieve changes
             if self.LastSyncTime:
                 xbmc.log(f"EMBY.database.library: Retrieve changes, last synced: {self.LastSyncTime}", 1) # LOGINFO
                 ProgressBar = xbmcgui.DialogProgressBG()
@@ -200,7 +199,7 @@ class Library:
 
                 for LibrarySyncedId, LibrarySyncedName, LibrarySyncedEmbyType, _ in self.LibrarySynced:
                     if utils.SystemShutdown:
-                        xbmc.log("EMBY.database.library: THREAD: ---<[ retrieve changes ] shutdown 2", 0) # LOGDEBUG
+                        xbmc.log("EMBY.database.library: THREAD: ---<[ retrieve changes ] shutdown 3", 0) # LOGDEBUG
                         ProgressBar.close()
                         del ProgressBar
                         return
@@ -229,7 +228,7 @@ class Library:
                         if utils.SystemShutdown:
                             ProgressBar.close()
                             del ProgressBar
-                            xbmc.log("EMBY.database.library: THREAD: ---<[ retrieve changes ] shutdown 3", 0) # LOGDEBUG
+                            xbmc.log("EMBY.database.library: THREAD: ---<[ retrieve changes ] shutdown 4", 0) # LOGDEBUG
                             return
 
                         if ItemIndex >= 10000:
@@ -247,7 +246,7 @@ class Library:
                 del ProgressBar
 
                 if utils.SystemShutdown:
-                    xbmc.log("EMBY.database.library: THREAD: ---<[ retrieve changes ] shutdown 4", 0) # LOGDEBUG
+                    xbmc.log("EMBY.database.library: THREAD: ---<[ retrieve changes ] shutdown 5", 0) # LOGDEBUG
                     return
 
             # Run jobs
@@ -426,8 +425,11 @@ class Library:
 
         for LibraryId, UpdateItemsArray in list(UpdateItems.items()):
             for ContentType, UpdateItemsIds in list(UpdateItemsArray.items()):
+                if not UpdateItemsIds:
+                    continue
+
                 if ContentType == "unknown":
-                    ContentType = ["Folder", "Episode", "Movie", "Trailer", "MusicVideo", "BoxSet", "MusicAlbum", "MusicArtist", "Season", "Series", "Audio", "Video", "Genre", "MusicGenre", "Tag", "Person", "Studio"]
+                    ContentType = ["Folder", "Episode", "Movie", "Trailer", "MusicVideo", "BoxSet", "MusicAlbum", "MusicArtist", "Season", "Series", "Audio", "Video", "Genre", "MusicGenre", "Tag", "Person", "Studio", "Playlist"]
                 else:
                     ContentType = [ContentType]
 
@@ -730,6 +732,7 @@ class Library:
             self.load_libraryObject(Item['Type'], SQLs)
 
         if WorkerName in ("worker_library_add", "worker_update"):
+
             with LockPause:
                 Ret = self.ContentObject.change(Item, IncrementalSync)
 
@@ -760,10 +763,8 @@ class Library:
             self.ContentObject.userdata(Item)
 
         if utils.SystemShutdown:
-            ProgressBar.close()
-            del ProgressBar
-            dbio.DBCloseRW(f"{self.EmbyServer.ServerData['ServerId']},{KodiDBs}", WorkerName, SQLs)
-            self.EmbyDBOpen = False
+            dbio.DBCloseRW(KodiDBs, WorkerName, SQLs)
+            self.close_Worker(WorkerName, False, False, ProgressBar, SQLs)
             xbmc.log("EMBY.database.library: [ worker exit (shutdown 2) ]", 1) # LOGINFO
             return False
 
@@ -790,7 +791,8 @@ class Library:
                 if Databases:
                     dbio.DBCloseRW(Databases, WorkerName, SQLs)
 
-                self.EmbyDBOpen = False
+                    if self.LockDBRWOpen.locked():
+                        self.LockDBRWOpen.release()
 
                 # Wait on progress updates
                 while Worker_is_paused(WorkerName):
@@ -798,12 +800,15 @@ class Library:
                         ProgressBar.close()
                         del ProgressBar
                         xbmc.log(f"EMBY.database.library: -->[ worker delay {WorkerName} ] shutdown", 0) # LOGDEBUG
+                        LockPause.release()
                         return False
 
-                self.EmbyDBOpen = True
                 xbmc.log(f"EMBY.database.library: --<[ worker delay {WorkerName} ] {utils.SyncPause}", 0) # LOGDEBUG
 
                 if Databases:
+                    if not self.LockDBRWOpen.locked():
+                        self.LockDBRWOpen.acquire()
+
                     dbio.DBOpenRW(Databases, WorkerName, SQLs)
 
                 if ItemType:
@@ -1036,7 +1041,9 @@ class Library:
                     elif library_type == 'playlists':
                         SQLs["emby"].add_LibraryAdd(LibraryId, library_name, "Playlist", "none")
 
-                    SQLs["emby"].add_LibraryAdd(LibraryId, library_name, "Folder", "none")
+                    if library_type != 'playlists':
+                        SQLs["emby"].add_LibraryAdd(LibraryId, library_name, "Folder", "none")
+
                     xbmc.log(f"EMBY.database.library: ---[ added library: {LibraryId} ]", 1) # LOGINFO
                 else:
                     xbmc.log(f"EMBY.database.library: ---[ added library not found: {LibraryId} ]", 1) # LOGINFO

@@ -168,7 +168,8 @@ DownloadPath = "special://profile/addon_data/plugin.service.emby-next-gen/"
 FolderAddonUserdata = "special://profile/addon_data/plugin.service.emby-next-gen/"
 FolderEmbyTemp = "special://profile/addon_data/plugin.service.emby-next-gen/temp/"
 FolderUserdataThumbnails = "special://profile/Thumbnails/"
-PlaylistPath = "special://profile/playlists/mixed/"
+PlaylistPathMusic = "special://profile/playlists/music/"
+PlaylistPathVideo = "special://profile/playlists/video/"
 SystemShutdown = False
 SyncPause = {}  # keys: playing, kodi_sleep, embyserverID, , kodi_rw, priority (thread with higher priorit needs access)
 WidgetRefresh = {"video": False, "music": False}
@@ -564,13 +565,13 @@ def get_url_info(ConnectionString):
 
 # Remove all emby playlists
 def delete_playlists():
-    SearchFolders = ['special://profile/playlists/video/', 'special://profile/playlists/music/']
+    SearchFolders = [PlaylistPathVideo, PlaylistPathMusic]
 
     for SearchFolder in SearchFolders:
         _, files = listDir(SearchFolder)
 
         for Filename in files:
-            if Filename.startswith('emby'):
+            if Filename.endswith('_(video).m3u') or Filename.endswith('_(audio).m3u'):
                 delFile(f"{SearchFolder}{Filename}")
 
 # Remove all nodes

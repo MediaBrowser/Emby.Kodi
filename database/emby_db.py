@@ -872,6 +872,18 @@ class EmbyDatabase:
 
         return None
 
+    def get_LibraryIds_by_EmbyIds(self, EmbyIds):
+        LibraryIds = {}
+
+        for EmbyId in EmbyIds:
+            self.cursor.execute("SELECT EmbyLibraryId FROM EmbyLibraryMapping WHERE EmbyId = ?", (EmbyId,))
+            Datas = self.cursor.fetchall()
+
+            if Datas:
+                LibraryIds[EmbyId] = Datas
+
+        return LibraryIds
+
     def get_EmbyIds_LibraryIds_by_KodiIds_EmbyType(self, KodiId, EmbyType):
         self.cursor.execute(f"SELECT EmbyId FROM {EmbyType} WHERE KodiId = ?", (KodiId,))
         EmbyId = self.cursor.fetchone()
@@ -1178,7 +1190,12 @@ class EmbyDatabase:
                 return KodiIds[1], "music"
 
             if EmbyType in ("MusicAlbum", "Audio"):
-                LibraryIndex = Data[1].index(EmbyLibraryId)
+                LibraryIds = Data[1].split(",")
+
+                if EmbyLibraryId not in LibraryIds:
+                    return None, None
+
+                LibraryIndex = LibraryIds.index(EmbyLibraryId)
                 KodiIds = Data[0].split(",")
                 return KodiIds[LibraryIndex], "music"
 

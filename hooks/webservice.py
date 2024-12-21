@@ -23,6 +23,7 @@ KeyBoard = xbmc.Keyboard()
 DelayedContent = {}
 ArtworkCacheLock = allocate_lock()
 DelayedContentLock = allocate_lock()
+EmbyIdCurrentlyPlaying = 0
 
 def start():
     if not Running:
@@ -642,6 +643,7 @@ def http_Query(client, Payload, isHEAD, isPictureQuery):
         return
 
     playerops.PlayerId = 1
+    globals()['EmbyIdCurrentlyPlaying'] = QueryData['EmbyId']
 
     if QueryData['Type'] == 'tvchannel':
         MediasourceId, LiveStreamId, PlaySessionId, Container = utils.EmbyServers[QueryData['ServerId']].API.open_livestream(QueryData['EmbyId'])
@@ -823,10 +825,15 @@ def SubTitlesAdd(QueryData):
 
             BinaryData = utils.EmbyServers[QueryData['ServerId']].API.get_Subtitle_Binary(QueryData['EmbyId'], QueryData['MediaSources'][QueryData['SelectionIndexMediaSource']][0]['Id'], Subtitle['Index'], Subtitle['Codec'])
 
+            if QueryData['EmbyId'] != EmbyIdCurrentlyPlaying: # check if Kodi is still playing the same file
+                del BinaryData
+                return
+
             if BinaryData:
                 SubtitleCodec = Subtitle['Codec']
                 Path = f"{utils.FolderEmbyTemp}{utils.valid_Filename(f'{CounterSubTitle}.{SubtileLanguage}.{SubtitleCodec}')}"
                 utils.writeFileBinary(Path, BinaryData)
+                del BinaryData
 
                 if DefaultVideoSettings["SubtitlesLanguage"].lower() in Subtitle['DisplayTitle'].lower():
                     DefaultSubtitlePath = Path

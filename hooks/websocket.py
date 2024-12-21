@@ -26,7 +26,6 @@ class WebSocket:
             IncomingData = self.MessageQueue.get()
 
             if IncomingData == "QUIT":
-                self.Running = False
                 xbmc.log("EMBY.hooks.websocket: Queue closed", 1) # LOGINFO
                 break
 
@@ -294,6 +293,7 @@ class WebSocket:
 
                 xbmc.log(f"EMBY.hooks.websocket: command: {IncomingData['Data']['Command']} / PlayedId: {playerops.PlayerId}", 1) # LOGINFO
 
+        self.Running = False
         xbmc.log("EMBY.hooks.websocket: THREAD: ---<[ message ]", 0) # LOGDEBUG
 
     def EmbyServerSyncCheck(self):
@@ -310,11 +310,13 @@ class WebSocket:
             Compare = [False] * len(self.Tasks)
 
         self.close_EmbyServerBusy()
-        utils.start_thread(self.EmbyServer.library.RunJobs, (True,))
 
-        if self.EPGRefresh:
-            self.EmbyServer.library.SyncLiveTVEPG()
-            self.EPGRefresh = False
+        if self.Running:
+            utils.start_thread(self.EmbyServer.library.RunJobs, (True,))
+
+            if self.EPGRefresh:
+                self.EmbyServer.library.SyncLiveTVEPG()
+                self.EPGRefresh = False
 
         xbmc.log("EMBY.hooks.websocket: THREAD: ---<[ Emby server is busy, sync in progress ]", 1) # LOGINFO
 
