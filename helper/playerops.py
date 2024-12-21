@@ -97,7 +97,7 @@ def GetActivePlayer():
     return False
 
 def PlayPlaylistItem(PlaylistId, Index):
-    utils.SendJson(f'{{"jsonrpc":"2.0","method":"Player.Open","params":{{"item":{{"playlistid":{PlaylistId},"position":{Index}}} ,"options": {{"resume": true}}   }},"id":1}}')
+    utils.SendJson(f'{{"jsonrpc":"2.0","method":"Player.Open","params":{{"item":{{"playlistid":{PlaylistId},"position":{Index}}} ,"options": {{"resume": false}}   }},"id":1}}')
     globals()['PlayerId'] = PlaylistId
 
 def AddSubtitle(Path):

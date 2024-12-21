@@ -54,7 +54,7 @@ class monitor(xbmc.Monitor):
             xbmc.log("EMBY.hooks.monitor: -->[ sleep ]", 1) # LOGINFO
             utils.SyncPause['kodi_sleep'] = True
 
-            if not player.PlayBackEnded and player.PlayingItem[4]:
+            if player.EmbyPlaying and player.PlayingItem[4]:
                 player.PlayerEventsQueue.put((("stop", '{"end":"quit"}'),))
 
                 while not player.PlayerEventsQueue.isEmpty():
@@ -618,7 +618,7 @@ def ShutDown():
         utils.SystemShutdown = True
         utils.FavoriteQueue.put("QUIT")
 
-        if not player.PlayBackEnded and player.PlayingItem[4]:
+        if player.EmbyPlaying and player.PlayingItem[4]:
             player.PlayerEventsQueue.put((("stop", '{"end":"quit"}'),))
 
             while not player.PlayerEventsQueue.isEmpty():

@@ -377,7 +377,8 @@ def set_multipart(Item, EmbyServer):
             Item['KodiPath'] = utils.AddonModePath
 
 def set_streams(Item):
-    if 'MediaSources' not in Item:
+    if 'MediaSources' not in Item or not Item['MediaSources']:
+        xbmc.log(f"EMBY.core.common: set_streams -> Mediasources not found: {Item['Name']}", 0) # LOGDEBUG
         return
 
     # Sort mediasources -> core infos must reference first mediasource

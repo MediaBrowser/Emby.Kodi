@@ -260,9 +260,13 @@ DynamicNodes = {
         ('Recentlyadded', utils.Translate(33566), 'DefaultRecentlyAddedMovies.png', "PhotoAlbum", False),
         ('Recentlyadded', utils.Translate(33375), 'DefaultRecentlyAddedMovies.png', "Video", False)
     ],
-    'playlists': [
-        ('Letter', utils.Translate(33611), 'special://home/addons/plugin.service.emby-next-gen/resources/letter.png', "Playlist", False),
-        ('Playlists', utils.Translate(33376), 'DefaultPlaylist.png', "Playlist", True)
+    'playlistsaudio': [
+        ('Letter', utils.Translate(33611), 'special://home/addons/plugin.service.emby-next-gen/resources/letter.png', "PlaylistsAudio", False),
+        ('Playlists', utils.Translate(33376), 'DefaultPlaylist.png', "Audio", True)
+    ],
+    'playlistsvideo': [
+        ('Letter', utils.Translate(33611), 'special://home/addons/plugin.service.emby-next-gen/resources/letter.png', "PlaylistsVideo", False),
+        ('Playlists', utils.Translate(33376), 'DefaultPlaylist.png', "playablevideos", True)
     ],
     'audiobooks': [
         ('Letter', utils.Translate(33611), 'special://home/addons/plugin.service.emby-next-gen/resources/letter.png', "MusicArtist", False),
@@ -331,15 +335,24 @@ class Views:
                     if view['ContentType'] in ('music', 'audiobooks', 'podcasts'):
                         view['Tag'] = f"EmbyLibraryId-{library_id}"
 
-                    if view['ContentType'] == 'mixed':
+                    if view['ContentType'] in ('mixed', 'playlists'):
                         if Dynamic:
-                            viewMod = view.copy()
-                            viewMod['ContentType'] = 'music'
-                            add_playlist(viewMod)
-                            self.add_nodes(viewMod, Dynamic)
-                            viewMod['ContentType'] = 'mixedvideo'
-                            add_playlist(viewMod)
-                            self.add_nodes(viewMod, Dynamic)
+                            if view['ContentType'] == 'mixed':
+                                viewMod = view.copy()
+                                viewMod['ContentType'] = 'music'
+                                add_xpsplaylist(viewMod)
+                                self.add_nodes(viewMod, Dynamic)
+                                viewMod['ContentType'] = 'mixedvideo'
+                                add_xpsplaylist(viewMod)
+                                self.add_nodes(viewMod, Dynamic)
+                            else:
+                                viewMod = view.copy()
+                                viewMod['ContentType'] = 'playlistsaudio'
+                                add_xpsplaylist(viewMod)
+                                self.add_nodes(viewMod, Dynamic)
+                                viewMod['ContentType'] = 'playlistsvideo'
+                                add_xpsplaylist(viewMod)
+                                self.add_nodes(viewMod, Dynamic)
                         else:
                             viewMod = view.copy()
 
@@ -354,15 +367,15 @@ class Views:
                                 if media == 'music':
                                     viewMod['Tag'] = f"EmbyLibraryId-{library_id}"
 
-                                add_playlist(viewMod)
+                                add_xpsplaylist(viewMod)
                                 self.add_nodes(viewMod, Dynamic)
                     elif not Dynamic and view['ContentType'] == 'homevideos':
                         viewMod = view.copy()
                         viewMod['ContentType'] = "movies"
-                        add_playlist(viewMod)
+                        add_xpsplaylist(viewMod)
                         self.add_nodes(viewMod, Dynamic)
                     else:
-                        add_playlist(view)
+                        add_xpsplaylist(view)
                         self.add_nodes(view, Dynamic)
 
         self.add_nodes({'ContentType': "root"}, False)
@@ -444,7 +457,7 @@ class Views:
 
     # Create or update the video node file
     def add_nodes(self, view, Dynamic):
-        if not Dynamic and view['ContentType'] == "playlists":
+        if not Dynamic and view['ContentType'] in ("playlistsaudio", "playlistsvideo"):
             return
 
         if 'Icon' not in view or not view['Icon']:
@@ -460,7 +473,7 @@ class Views:
                 view['Icon'] = "special://home/addons/plugin.service.emby-next-gen/resources/icon.png"
 
         if view['ContentType'] != "root":
-            if view['ContentType'] in ('music', 'audiobooks', 'podcasts'):
+            if view['ContentType'] in ('music', 'audiobooks', 'podcasts', 'playlistsaudio'):
                 if Dynamic:
                     folder = f"special://profile/library/music/emby_dynamic_{view['ContentType']}_{view['FilteredName']}/"
                 else:
@@ -493,7 +506,7 @@ class Views:
         # Dynamic nodes
         if Dynamic:
             if view['ContentType'] != "root":
-                if view['ContentType'] in ('music', 'audiobooks', 'podcasts'):
+                if view['ContentType'] in ('music', 'audiobooks', 'podcasts', 'playlistsaudio'):
                     self.Nodes['NodesDynamic'].append({'title': view['Name'], 'path': f"library://music/emby_dynamic_{view['ContentType']}_{view['FilteredName']}/", 'icon': view['Icon']})
                 elif view['ContentType'] == "homevideos":
                     self.Nodes['NodesDynamic'].append({'title': view['Name'], 'path': f"library://video/emby_dynamic_{view['ContentType']}_{view['FilteredName']}/", 'icon': view['Icon']})
@@ -724,7 +737,7 @@ def get_node_playlist_path(ContentType):
     return node_path, playlist_path
 
 # Create or update the xsp file
-def add_playlist(view):
+def add_xpsplaylist(view):
     if not utils.xspplaylists:
         return
 
