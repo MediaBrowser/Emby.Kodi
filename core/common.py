@@ -265,11 +265,11 @@ def set_path_filename(Item, ServerId, MediaSource, isDynamic=False):
     else:
         if Item['Type'] == "Audio": # Do NOT use different pathes for Audio content, a Kodi audio scan would take very long -> Kodi audio scan does not respect the directory paramerter -> jsonrpc AudioLibrary.Scan
             if MediaSourcesLocal and "Id" in MediaSourcesLocal[0]:
-                Item['KodiFilename'] = f"a-{Item['Id']}-{MediaSourcesLocal[0]['Id']}-{base64.b16encode(Item['KodiPath'].encode('utf-8')).decode('utf-8')}-{Item['KodiFilename']}"
+                Item['KodiFilename'] = f"a-{Item['Id']}-{MediaSourcesLocal[0]['Id']}-{base64.b16encode(Item['KodiPath'].encode('utf-8')).decode('utf-8')}-{quote(Item['KodiFilename'].replace('-', '_'))}"
             else:
-                Item['KodiFilename'] = f"a-{Item['Id']}--{base64.b16encode(Item['KodiPath'].encode('utf-8')).decode('utf-8')}-{Item['KodiFilename']}"
+                Item['KodiFilename'] = f"a-{Item['Id']}--{base64.b16encode(Item['KodiPath'].encode('utf-8')).decode('utf-8')}-{quote(Item['KodiFilename'].replace('-', '_'))}"
 
-            Item['KodiPath'] = f"{utils.AddonModePath}{Dynamic}audio/{ServerId}/{Item['LibraryId']}/0/"
+            Item['KodiPath'] = f"http://127.0.0.1:57342/{Dynamic}audio/{ServerId}/{Item['LibraryId']}/0/"
         elif Item['Type'] in EmbyTypeMappingShort:
             HasSpecials = ""
             MediaID = EmbyTypeMappingShort[Item['Type']]

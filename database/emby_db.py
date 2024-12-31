@@ -31,7 +31,7 @@ class EmbyDatabase:
             self.cursor.execute("CREATE TABLE IF NOT EXISTS MusicVideo (EmbyId INTEGER PRIMARY KEY, KodiId INTEGER, EmbyFavourite BOOL, KodiFileId INTEGER, EmbyPresentationKey TEXT COLLATE NOCASE, EmbyFolder TEXT COLLATE NOCASE, KodiPathId INTEGER) WITHOUT ROWID")
             self.cursor.execute("CREATE TABLE IF NOT EXISTS MusicAlbum (EmbyId INTEGER PRIMARY KEY, KodiId TEXT COLLATE NOCASE, EmbyFavourite BOOL, LibraryIds TEXT COLLATE NOCASE) WITHOUT ROWID")
             self.cursor.execute("CREATE TABLE IF NOT EXISTS Audio (EmbyId INTEGER PRIMARY KEY, KodiId TEXT COLLATE NOCASE, EmbyFavourite BOOL, EmbyFolder TEXT COLLATE NOCASE, KodiPathId INTEGER, LibraryIds TEXT COLLATE NOCASE, EmbyAlbumId INTEGER) WITHOUT ROWID")
-            self.cursor.execute("CREATE TABLE IF NOT EXISTS Playlist (EmbyId INTEGER PRIMARY KEY, KodiId TEXT COLLATE NOCASE, EmbyFavourite BOOL) WITHOUT ROWID")
+            self.cursor.execute("CREATE TABLE IF NOT EXISTS Playlist (EmbyId INTEGER PRIMARY KEY, KodiId TEXT COLLATE NOCASE, EmbyFavourite BOOL, EmbyArtwork TEXT COLLATE NOCASE) WITHOUT ROWID")
             self.cursor.execute("CREATE TABLE IF NOT EXISTS MediaSources (EmbyId INTEGER, MediaSourceId TEXT COLLATE NOCASE, Path TEXT COLLATE NOCASE, Name TEXT COLLATE NOCASE, Size INTEGER, IntroStart INTEGER, IntroEnd INTEGER, CreditsStart INTEGER, PRIMARY KEY(EmbyId, MediaSourceId))")
             self.cursor.execute("CREATE TABLE IF NOT EXISTS VideoStreams (EmbyId INTEGER, StreamIndex INTEGER, Codec TEXT COLLATE NOCASE, BitRate INTEGER, Width INTEGER, PRIMARY KEY(EmbyId, StreamIndex))")
             self.cursor.execute("CREATE TABLE IF NOT EXISTS AudioStreams (EmbyId INTEGER, StreamIndex INTEGER, DisplayTitle TEXT COLLATE NOCASE, Codec TEXT COLLATE NOCASE, BitRate INTEGER, PRIMARY KEY(EmbyId, StreamIndex))")
@@ -163,7 +163,13 @@ class EmbyDatabase:
             self.cursor.execute("SELECT name FROM pragma_table_info('Playlist')")
             Cols = self.cursor.fetchall()
 
-            if Cols != [('EmbyId',), ('KodiId',), ('EmbyFavourite',)]:
+            if ('EmbyArtwork',) not in Cols:
+                xbmc.log("EMBY.database.emby_db: Appand EmbyArtwork to Playlist", 0) # LOGDEBUG
+                self.cursor.execute("ALTER TABLE Playlist ADD COLUMN EmbyArtwork 'TEXT COLLATE NOCASE'")
+                self.cursor.execute("SELECT name FROM pragma_table_info('Playlist')")
+                Cols = self.cursor.fetchall()
+
+            if Cols != [('EmbyId',), ('KodiId',), ('EmbyFavourite',), ('EmbyArtwork',)]:
                 xbmc.log(f"EMBY.database.emby_db: Playlist invalid: {Cols}", 3) # LOGERROR
                 Invalid = True
 
@@ -561,6 +567,16 @@ class EmbyDatabase:
 
         return ""
 
+    def get_id_by_albumid(self, EmbyAlbumId):
+        ReturnData = ()
+        self.cursor.execute("SELECT EmbyId FROM Audio WHERE EmbyAlbumId = ?", (EmbyAlbumId,))
+        EmbyIds = self.cursor.fetchall()
+
+        for EmbyId in EmbyIds:
+            ReturnData += (str(EmbyId[0]),)
+
+        return ReturnData
+
     def add_reference_audio(self, EmbyId, EmbyLibraryId, KodiIds, EmbyFavourite, EmbyFolder, KodiPathId, EmbyLibraryIds, EmbyAlbumId):
         self.cursor.execute("INSERT OR REPLACE INTO Audio (EmbyId, KodiId, EmbyFavourite, EmbyFolder, KodiPathId, LibraryIds, EmbyAlbumId) VALUES (?, ?, ?, ?, ?, ?, ?)", (EmbyId, ",".join(KodiIds), EmbyFavourite, EmbyFolder, KodiPathId, ",".join(EmbyLibraryIds), EmbyAlbumId))
         self.cursor.execute("INSERT OR IGNORE INTO EmbyLibraryMapping (EmbyLibraryId, EmbyId) VALUES (?, ?)", (EmbyLibraryId, EmbyId))
@@ -615,6 +631,10 @@ class EmbyDatabase:
 
     def add_reference_genre(self, EmbyId, EmbyLibraryId, KodiId, EmbyFavourite, EmbyArtwork):
         self.cursor.execute("INSERT OR REPLACE INTO Genre (EmbyId, KodiId, EmbyFavourite, EmbyArtwork) VALUES (?, ?, ?, ?)", (EmbyId, KodiId, EmbyFavourite, EmbyArtwork))
+        self.cursor.execute("INSERT OR IGNORE INTO EmbyLibraryMapping (EmbyLibraryId, EmbyId) VALUES (?, ?)", (EmbyLibraryId, EmbyId))
+
+    def add_reference_playlist(self, EmbyId, EmbyLibraryId, KodiId, EmbyFavourite, EmbyArtwork):
+        self.cursor.execute("INSERT OR REPLACE INTO Playlist (EmbyId, KodiId, EmbyFavourite, EmbyArtwork) VALUES (?, ?, ?, ?)", (EmbyId, KodiId, EmbyFavourite, EmbyArtwork))
         self.cursor.execute("INSERT OR IGNORE INTO EmbyLibraryMapping (EmbyLibraryId, EmbyId) VALUES (?, ?)", (EmbyLibraryId, EmbyId))
 
     def add_reference_studio(self, EmbyId, EmbyLibraryId, KodiId, EmbyFavourite, EmbyArtwork):
@@ -1018,7 +1038,7 @@ class EmbyDatabase:
 
     # favorite infos
     def get_FavoriteInfos(self, Table):
-        if Table in ("Person", "MusicArtist", "Series", "Audio", "BoxSet", "MusicAlbum", "Playlist"):
+        if Table in ("Person", "MusicArtist", "Series", "Audio", "BoxSet", "MusicAlbum",):
             self.cursor.execute(f"SELECT EmbyFavourite, KodiId, EmbyId FROM {Table}")
         elif Table == "Season":
             self.cursor.execute("SELECT EmbyFavourite, KodiId, KodiParentId, EmbyId FROM Season")
@@ -1171,25 +1191,38 @@ class EmbyDatabase:
 
         return None
 
+    def get_Records_by_EmbyType(self, EmbyType):
+        self.cursor.execute(f"SELECT * FROM {EmbyType}")
+        return self.cursor.fetchall()
+
     def get_KodiId_by_EmbyId_and_LibraryId(self, EmbyId, EmbyType, EmbyLibraryId, EmbyServer):
         self.cursor.execute(f"SELECT KodiId, LibraryIds FROM {EmbyType} WHERE EmbyId = ?", (EmbyId,))
         Data = self.cursor.fetchone()
 
         if Data:
             if EmbyType == "MusicArtist":
-                KodiDB = EmbyServer.library.LibrarySyncedKodiDBs[f"{EmbyLibraryId}{EmbyType}"]
+                Id = f"{EmbyLibraryId}{EmbyType}"
 
-                if KodiDB == "video,music": # mixed content
-                    return None, None
+                if Id in EmbyServer.library.LibrarySyncedKodiDBs:
+                    KodiDB = EmbyServer.library.LibrarySyncedKodiDBs[Id]
 
-                KodiIds = Data[0].split(";")
+                    if KodiDB == "video,music": # mixed content
+                        return None, None
 
-                if KodiDB == "video":
-                    return KodiIds[0], "video"
+                    KodiIds = Data[0].split(";")
 
-                return KodiIds[1], "music"
+                    if KodiDB == "video":
+                        return KodiIds[0], "video"
+
+                    return KodiIds[1], "music"
+
+                return None, None
 
             if EmbyType in ("MusicAlbum", "Audio"):
+                if f"{EmbyLibraryId}Playlist" in EmbyServer.library.LibrarySyncedKodiDBs: # Request by Playlist library, accept any valid synced EmbyId
+                    KodiIds = Data[0].split(",")
+                    return KodiIds[0], "music"
+
                 LibraryIds = Data[1].split(",")
 
                 if EmbyLibraryId not in LibraryIds:

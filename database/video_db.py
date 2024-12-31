@@ -1212,12 +1212,38 @@ class VideoDatabase:
         if PlaybackPositionTicks:
             self.cursor.execute("INSERT INTO bookmark(idFile, timeInSeconds, totalTimeInSeconds, player, type) VALUES (?, ?, ?, ?, ?)", (KodiFileId, PlaybackPositionTicks, RunTimeTicks, "VideoPlayer", 1))
 
-    def update_bookmark_playstate(self, KodiFileId, playcount, date_played, resume, Runtime):
-        self.cursor.execute("DELETE FROM bookmark WHERE idFile = ? AND type = ?", (KodiFileId, "1"))
-        self.cursor.execute("UPDATE files SET playCount = ?, lastPlayed = ? WHERE idFile = ?", (playcount, date_played, KodiFileId))
+    def update_bookmark_playstate(self, KodiFileId, playcount, date_played, Progress, Runtime):
+        Update = False
 
-        if resume:
-            self.cursor.execute("INSERT INTO bookmark(idFile, timeInSeconds, totalTimeInSeconds, player, type) VALUES (?, ?, ?, ?, ?)", (KodiFileId, resume, Runtime, "VideoPlayer", 1))
+        self.cursor.execute("SELECT timeInSeconds FROM bookmark WHERE idFile = ? AND type = ?", (KodiFileId, "1"))
+        Data = self.cursor.fetchone()
+
+        if Data:
+            CurrentProgress = Data[0]
+
+            if Progress:
+                if CurrentProgress != Progress:
+                    self.cursor.execute("UPDATE bookmark SET timeInSeconds = ?, totalTimeInSeconds = ? WHERE idFile = ?", (Progress, Runtime, KodiFileId))
+                    Update = True
+            else:
+                self.cursor.execute("DELETE FROM bookmark WHERE idFile = ? AND type = ?", (KodiFileId, "1"))
+                Update = True
+        elif Progress:
+            Update = True
+            self.cursor.execute("INSERT INTO bookmark(idFile, timeInSeconds, totalTimeInSeconds, player, type) VALUES (?, ?, ?, ?, ?)", (KodiFileId, Progress, Runtime, "VideoPlayer", 1))
+
+        # Update playcounter and last played date
+        self.cursor.execute("SELECT playCount FROM files WHERE idFile = ?", (KodiFileId,))
+        Data = self.cursor.fetchone()
+        CurrentPlayCount = Data[0]
+
+        if CurrentPlayCount != playcount:
+            self.cursor.execute("UPDATE files SET playCount = ?, lastPlayed = ? WHERE idFile = ?", (playcount, date_played, KodiFileId))
+
+            if (CurrentPlayCount and playcount and playcount -1 != CurrentPlayCount) or (not playcount and CurrentPlayCount) or (not CurrentPlayCount and playcount):
+                Update = True
+
+        return Update
 
     # countries
     def delete_links_countries(self, Media_id, media_type):

@@ -129,12 +129,13 @@ class WebSocket:
             elif IncomingData['MessageType'] == 'ScheduledTasksInfo':
                 for Task in IncomingData['Data']:
                     xbmc.log(f"EMBY.hooks.websocket: Task update: {Task['Name']} / {Task['State']}", 0) # LOGDEBUG
+                    Key = Task.get("Key", "")
 
-                    if not Task['Name'].lower().startswith("scan"):
+                    if not Task['Name'].lower().startswith("scan") and Key != "RefreshGuide":
                         continue
 
                     if Task["State"] == "Running":
-                        if Task.get("Key", "") == "RefreshGuide":
+                        if Key == "RefreshGuide":
                             self.EPGRefresh = True
 
                         if Task["Name"] not in self.Tasks:
@@ -200,6 +201,7 @@ class WebSocket:
                 ItemSkipUpdateUniqueIds = set()
                 ItemSkipUpdateEmbyPresentationKeys = ()
                 ItemSkipUpdateAlbumIds = ()
+                ItemSkipUpdateAlbumSongIds = ()
 
                 # Create unique array
                 for ItemSkipId in utils.ItemSkipUpdate:
@@ -216,11 +218,14 @@ class WebSocket:
 
                         if AlbumId:
                             ItemSkipUpdateAlbumIds += (AlbumId,)
+                            ItemSkipUpdateAlbumSongIds += embydb.get_id_by_albumid(AlbumId)
 
                 for ItemData in IncomingData['Data']['UserDataList']:
                     if ItemData['ItemId'] not in utils.ItemSkipUpdate:  # Filter skipped items
                         if ItemData['ItemId'] in ItemSkipUpdateAlbumIds:
                             xbmc.log(f"EMBY.hooks.websocket: UserDataChanged skip by ItemSkipUpdate ancestors (AlbumId) / Id: {ItemData['ItemId']} / ItemSkipUpdate: {utils.ItemSkipUpdate}", 1) # LOGINFO
+                        elif ItemData['ItemId'] in ItemSkipUpdateAlbumSongIds:
+                            xbmc.log(f"EMBY.hooks.websocket: UserDataChanged skip by ItemSkipUpdate ancestors (AlbumSongId) / Id: {ItemData['ItemId']} / ItemSkipUpdate: {utils.ItemSkipUpdate}", 1) # LOGINFO
                         else:
                             EpisodeEmbyPresentationKey = embydb.get_embypresentationkey_by_id_embytype(ItemData['ItemId'], ("Season", "Series")).split("_")[0]
 

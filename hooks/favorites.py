@@ -774,10 +774,10 @@ def update_Playlist(EmbyServer):
             KodiItemIds = PlaylistInfo[1].split(";")
 
             if KodiItemIds[0]:
-                PlaylistObject.set_favorite(PlaylistInfo[0], KodiItemIds[0], PlaylistInfo[2], False)
+                PlaylistObject.set_favorite(PlaylistInfo[0], KodiItemIds[0], PlaylistInfo[2] ,PlaylistInfo[3], False)
 
             if KodiItemIds[1]:
-                PlaylistObject.set_favorite(PlaylistInfo[0], KodiItemIds[1], PlaylistInfo[2], True)
+                PlaylistObject.set_favorite(PlaylistInfo[0], KodiItemIds[1], PlaylistInfo[2] ,PlaylistInfo[3], True)
 
         ProgressBar.update(int(Index / RecordsPercent), "Update playlist favorites", str(PlaylistInfo[1]))
 

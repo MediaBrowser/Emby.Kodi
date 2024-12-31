@@ -1,3 +1,28 @@
+11.1.15
+=============
+disable path substituion for audio content (not necessary for audio content and improves playback performance and stability)
+improve node caching
+skip Emby userdata updates for MusicAlbum when sending = receiving device
+fix root nodes when using multiple Emby servers
+fix EPG refresh on events
+fix minor shutdown issue
+fix minor progress update issue
+fix remote playback position accuracy
+spare unnecessary skin refreshes on progress updates -> Less Kodi load when using same Emby account on multiple devices
+
+
+
+11.1.14
+=============
+fix embedded nodes in homescreen (some special nodes had issues)
+fix dynamic nodes order (e.g for playlists)
+improve hybrid nodes for playlists
+fix synced playlists nodes (avoid using Kodi's native m3u playlists due to lag of metadata, use the synced playlist node)
+fix playlist sorting
+fix audioplayback issue on some devices
+
+
+
 11.1.13
 =============
 minor http improvements

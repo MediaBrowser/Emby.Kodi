@@ -316,7 +316,6 @@ class HTTP:
                 try:
                     self.Connection[ConnectionId]["Socket"].settimeout(1) # set timeout
                     self.Connection[ConnectionId]["Socket"].send(f'POST {self.Connection[ConnectionId]["SubUrl"]}System/Ping HTTP/1.1\r\nHost: {self.Connection[ConnectionId]["Hostname"]}:{self.Connection[ConnectionId]["Port"]}\r\nContent-type: application/json; charset=utf-8\r\nAccept-Charset: utf-8\r\nAccept-encoding: gzip\r\nUser-Agent: {utils.addon_name}/{utils.addon_version}\r\nConnection: close\r\nAuthorization: Emby Client="{utils.addon_name}", Device="{utils.device_name}", DeviceId="{self.EmbyServer.ServerData["DeviceId"]}", Version="{utils.addon_version}"\r\nContent-Length: 0\r\n\r\n'.encode("utf-8"))
-                    self.Connection[ConnectionId]["Socket"].recv(1048576)
                 except Exception as error:
                     xbmc.log(f"EMBY.emby.http: Socket {ConnectionId} send close error 2: {error}", 2) # LOGWARNING
 
@@ -354,7 +353,7 @@ class HTTP:
                 else:
                     IncomingData = self.Connection[ConnectionId]["Socket"].recv(1048576)
 
-                    if not IncomingData: # No Data received -> Socket closed by Emby server
+                    if not IncomingData: # No Data received -> Socket might be closed by Emby server
                         xbmc.log(f"EMBY.emby.http: Socket IO {ConnectionId}: ({Request}): Empty data", 0) # LOGDEBUG
                         StatusCode = 600
 
@@ -698,7 +697,9 @@ class HTTP:
             # trigger busy function: Interrupt query if necessary, e.g. Kodi shutdown or simply wait till BusyFunction continues
             if not BusyFunction["Object"](*BusyFunction["Params"]):
                 del self.Response[RequestId]
-                self.RequestBusy[RequestId].release()
+
+                if RequestId in self.RequestBusy and self.RequestBusy[RequestId].locked():
+                    self.RequestBusy[RequestId].release()
 
                 if ConnectionId in ("MAIN", "MAINFALLBACK"):
                     self.RequestBusy[ConnectionId].release()

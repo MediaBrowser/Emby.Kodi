@@ -115,6 +115,7 @@ class Movies:
 
     # This updates: Favorite, LastPlayedDate, Playcount, PlaybackPositionTicks
     def userdata(self, Item):
+        Update = False
         common.set_playstate(Item)
         common.set_RunTimeTicks(Item)
         self.SQLs["video"].set_Favorite_Tag(Item['IsFavorite'], Item['KodiItemId'], "movie")
@@ -122,12 +123,14 @@ class Movies:
         self.set_favorite(Item['IsFavorite'], Item['KodiFileId'], Item['KodiItemId'], Item['Id'])
 
         for KodieFileId in self.SQLs["video"].get_KodiFileId_by_videoversion(Item['KodiItemId'], "movie"):
-            self.SQLs["video"].update_bookmark_playstate(KodieFileId[0], Item['KodiPlayCount'], Item['KodiLastPlayedDate'], Item['KodiPlaybackPositionTicks'], Item['KodiRunTimeTicks'])
+            if self.SQLs["video"].update_bookmark_playstate(KodieFileId[0], Item['KodiPlayCount'], Item['KodiLastPlayedDate'], Item['KodiPlaybackPositionTicks'], Item['KodiRunTimeTicks']):
+                Update = True
 
         utils.reset_querycache("Movie")
         xbmc.log(f"EMBY.core.movies: New resume point {Item['Id']}: {Item['PlaybackPositionTicks']} / {Item['KodiPlaybackPositionTicks']}", 0) # LOGDEBUG
         xbmc.log(f"EMBY.core.movies: USERDATA [{Item['KodiFileId']} / {Item['KodiItemId']}] {Item['Id']}", 1) # LOGINFO
         utils.notify_event("content_changed", {"EmbyId": f"{Item['Id']}", "KodiId": f"{Item['KodiItemId']}", "KodiType": "movie"}, True)
+        return Update
 
     def remove(self, Item, IncrementalSync):
         if common.delete_ContentItem(Item, self.SQLs, "movie", "Movie"):
