@@ -69,7 +69,7 @@ def Listen():
 
         utils.start_thread(worker_Query, (fd,))
 
-    xbmc.log("EMBY.hooks.webservice: THREAD: ---<[ webservice/57342 ]", 1) # LOGDEBUG
+    xbmc.log("EMBY.hooks.webservice: THREAD: ---<[ webservice/57342 ]", 0) # LOGDEBUG
 
 def worker_Query(fd):  # thread by caller
     xbmc.log("EMBY.hooks.webservice: THREAD: --->[ worker_Query ]", 0) # LOGDEBUG
@@ -211,8 +211,13 @@ def worker_Query(fd):  # thread by caller
             return
 
         # no delay
+        params = args[2]
+
+        if params.endswith("/"):
+            params = params[:-1]
+
         Handle = args[1]
-        params = dict(parse_qsl(args[2][1:]))
+        params = dict(parse_qsl(params[1:]))
         mode = params.get('mode', "")
         ServerId = params.get('server', "")
 
@@ -303,6 +308,8 @@ def worker_Query(fd):  # thread by caller
 
             if query:
                 pluginmenu.browse(Handle, params.get('id'), query, params.get('parentid'), params.get('content'), ServerId, params.get('libraryid'), params.get('contentsupported', ""))
+        elif mode == 'playlist':
+            pluginmenu.get_playlist(Handle, ServerId, params['mediatype'], params.get('id', ""))
         elif mode == 'nextepisodes':
             pluginmenu.get_next_episodes(Handle, params['libraryname'])
         elif mode == 'nextepisodesplayed':
@@ -337,6 +344,8 @@ def worker_Query(fd):  # thread by caller
         client.send(sendOK)
 
     client.close()
+    del client
+    del IncomingData
     xbmc.log("EMBY.hooks.webservice: THREAD: ---<[ worker_Query ]", 0) # LOGDEBUG
 
 def LoadISO(QueryData, client): # native content
@@ -436,7 +445,7 @@ def http_Query(client, Payload, isHEAD, isPictureQuery):
         Data = PayloadMod[PayloadMod.rfind("/") + 1:].split("-") # MetaData
         ServerId = PayloadSplit[2]
         EmbyId = Data[1]
-        MediaSources = [[{'Id': Data[2], 'IntroStartPositionTicks': 0, 'IntroEndPositionTicks': 0, 'CreditsPositionTicks': 0, 'Path': bytes.fromhex(Data[3]).decode('utf-8')}, [], [], []]]
+        MediaSources = [[{'Id': Data[2], 'IntroStartPositionTicks': 0, 'IntroEndPositionTicks': 0, 'CreditsPositionTicks': 0, 'Path': ""}, [], [], []]]
     else:
         EmbyId = PayloadSplit[-3]
         ServerId = PayloadSplit[-6]

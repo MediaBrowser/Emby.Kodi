@@ -304,7 +304,15 @@ class API:
                 _, _, Payload = self.EmbyServer.http.request("GET", Request, Params, {}, False, "", False)
 
                 if 'Items' in Payload and Payload['Items']:
-                    ItemsQueue.put(Payload['Items'])
+                    # Restore item order as requsted -> Emby sorts by ascending Ids
+                    ItemsSorted = len(Payload['Items']) * [()] # pre allocate memory
+
+                    for Item in Payload['Items']:
+                        ItemsSorted[QueryIds.index(Item['Id'])] = Item
+
+                    # Add items into queue
+                    ItemsQueue.put(ItemsSorted)
+                    del ItemsSorted
                     CounterFound += len(Payload['Items'])
 
             del Payload  # release memory
@@ -342,7 +350,7 @@ class API:
             if MediaType != "All":
                 Params['IncludeItemTypes'] = MediaType
 
-            if str(ParentId) != "999999999" and MediaType != "Playlist": # global libraries or playlist (workaround Emby 4.7.X version)
+            if str(ParentId) != "999999999":
                 Params['ParentId'] = ParentId
 
             if Extra:
