@@ -1038,7 +1038,7 @@ class EmbyDatabase:
 
     # favorite infos
     def get_FavoriteInfos(self, Table):
-        if Table in ("Person", "MusicArtist", "Series", "Audio", "BoxSet", "MusicAlbum",):
+        if Table in ("Person", "MusicArtist", "Series", "Audio", "BoxSet", "MusicAlbum"):
             self.cursor.execute(f"SELECT EmbyFavourite, KodiId, EmbyId FROM {Table}")
         elif Table == "Season":
             self.cursor.execute("SELECT EmbyFavourite, KodiId, KodiParentId, EmbyId FROM Season")

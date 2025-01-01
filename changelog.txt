@@ -1,3 +1,10 @@
+11.1.16
+=============
+fix music nodes
+fix playlist nodes
+
+
+
 11.1.15
 =============
 disable path substituion for audio content (not necessary for audio content and improves playback performance and stability)

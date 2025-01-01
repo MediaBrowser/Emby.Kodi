@@ -135,11 +135,11 @@ SyncNodes = {
         ('random', utils.Translate(33394), 'special://home/addons/plugin.service.emby-next-gen/resources/random.png', "songs", (("comment", "endswith", "LIBRARYTAG"),), ("random",), True, False)
     ],
     'rootaudio': [
-        ('emby_inprogressmixed', f"EMBY: {utils.Translate(33628)}", 'DefaultInProgressShows.png', "mixed", (("PLUGIN", "inprogressmixed", "mixed"),)),
-        ('emby_playlists', utils.Translate(33376), 'DefaultMusicPlaylists.png', "audio", (("PLUGIN", "playlist", "audio"),))
+        ('emby_playlists',  f"EMBY: {utils.Translate(33376)}", 'DefaultMusicPlaylists.png', "audio", (("PLUGIN", "playlist", "audio"),), (), False, True),
+        ('emby_inprogressmixed', f"EMBY: {utils.Translate(33628)}", 'DefaultInProgressShows.png', "mixed", (("PLUGIN", "inprogressmixed", "mixed"),))
     ],
     'rootvideo': [
-        ('emby_playlists', utils.Translate(33376), 'DefaultMusicPlaylists.png', "video", (("PLUGIN", "playlist", "video"),)),
+        ('emby_playlists', f"EMBY: {utils.Translate(33376)}", 'DefaultMusicPlaylists.png', "video", (("PLUGIN", "playlist", "video"),), (), False, True),
         ('emby_inprogressmixed', f"EMBY: {utils.Translate(33628)}", 'DefaultInProgressShows.png', "mixed", (("PLUGIN", "inprogressmixed", "mixed"),)),
         ('emby_nextepisodes', f"EMBY: {utils.Translate(33665)}", 'DefaultInProgressShows.png', "tvshows", (("PLUGIN", "nextepisodes", "episode"),)),
         ('emby_nextepisodesplayed', f"EMBY: {utils.Translate(33666)}", 'DefaultInProgressShows.png', "tvshows", (("PLUGIN", "nextepisodesplayed", "episode"),)),
@@ -301,12 +301,12 @@ DynamicNodes = {
         ('Recentlyadded', utils.Translate(33167), 'DefaultRecentlyAddedMovies.png', "Audio", False)
     ],
     'rootaudio': [
-        ('Playlists', utils.Translate(33376), 'DefaultMusicPlaylists.png', "PlaylistsAudio", False),
+        ('Playlists', utils.Translate(33376), 'DefaultMusicPlaylists.png', "PlaylistsAudio", True),
         ('Favorite', utils.Translate(33625), 'DefaultFavourites.png', "music", False),
         ('Search', utils.Translate(33626), 'DefaultAddonsSearch.png', "All", False)
     ],
     'rootvideo': [
-        ('Playlists', utils.Translate(33376), 'DefaultVideoPlaylists.png', "PlaylistsVideo", False),
+        ('Playlists', utils.Translate(33376), 'DefaultVideoPlaylists.png', "PlaylistsVideo", True),
         ('Favorite', utils.Translate(33624), 'DefaultFavourites.png', "Person", False),
         ('Favorite', utils.Translate(33608), 'DefaultFavourites.png', "videos", False),
         ('Search', utils.Translate(33626), 'DefaultAddonsSearch.png', "All", False)
@@ -335,6 +335,8 @@ class Views:
                 if Dynamic or f"'{view['LibraryId']}'" in str(self.EmbyServer.library.LibrarySynced):
                     if view['ContentType'] in ('music', 'audiobooks', 'podcasts'):
                         view['Tag'] = f"EmbyLibraryId-{library_id}"
+                        add_xpsplaylist(view)
+                        self.add_nodes(view, Dynamic)
                     elif view['ContentType'] == 'mixed':
                         if Dynamic:
                             viewMod = view.copy()
@@ -591,6 +593,9 @@ class Views:
                         else:
                             Data += f'    <path>plugin://plugin.service.emby-next-gen/?mode=browse&amp;id=0&amp;parentid=0&amp;libraryid=0&amp;content={node[3]}&amp;server={self.EmbyServer.ServerData["ServerId"]}&amp;query={node[0]}</path>\n'
 
+                        if node[4]:
+                            Data += '    <group/>\n'
+
                         Data += '</node>'
                         utils.writeFileBinary(FilePath, Data.encode("utf-8"))
 
@@ -697,6 +702,9 @@ class Views:
                 Data += f'    <label>{utils.encode_XML(Label)}</label>\n'
                 Data += f'    <icon>{utils.encode_XML(node[2])}</icon>\n'
                 Data += f'    <path>plugin://plugin.service.emby-next-gen/?mode={node[4][0][1]}&amp;mediatype={node[4][0][2]}&amp;libraryname={quote(view.get("Name", "unknown"))}&amp;server={self.EmbyServer.ServerData["ServerId"]}</path>\n'
+
+                if len(node) >= 8 and node[7]:
+                    Data += '    <group/>\n'
             else:
                 Data += f'<node order="{NodeIndex}" type="filter">\n'
                 Data += f'    <label>{utils.encode_XML(Label)}</label>\n'
