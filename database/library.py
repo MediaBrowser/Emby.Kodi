@@ -813,7 +813,7 @@ class Library:
                     if utils.sleep(1):
                         ProgressBar.close()
                         del ProgressBar
-                        xbmc.log(f"EMBY.database.library: -->[ worker delay {WorkerName} ] shutdown ", 0) # LOGDEBUG
+                        xbmc.log(f"EMBY.database.library: -->[ worker delay {WorkerName} ] shutdown", 0) # LOGDEBUG
                         LockPause.release()
                         return False
 

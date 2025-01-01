@@ -213,7 +213,9 @@ def worker_Query(fd):  # thread by caller
         # no delay
         params = args[2]
 
-        if params.endswith("/"):
+        if params.endswith("/&reload="):
+            params = params[:-9]
+        elif params.endswith("/"):
             params = params[:-1]
 
         Handle = args[1]
