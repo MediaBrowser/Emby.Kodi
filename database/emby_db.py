@@ -1287,7 +1287,10 @@ class EmbyDatabase:
         else:
             MovieDefault = (False, 0, item['KodiFileId'], item['KodiPathId'], item['KodiPath'])
 
-        for MediaSource in item['MediaSources'][1:]:
+        for MediaSource in item['MediaSources']:
+            if MediaSource['Type'] == "Default":
+                continue
+
             xbmc.log(f"EMBY.database.emby_db: Multiversion video detected: {item['Id']}", 0) # LOGDEBUG
 
             # Get additional data, actually ParentId and probably PresentationUniqueKey could differ to item's core info
@@ -1302,14 +1305,12 @@ class EmbyDatabase:
             else:
                 EmbyId = MediaSource['ItemId']
 
-            ItemReferenced = item.copy()
-            ItemReferenced.update({'LibraryId': item['LibraryId'], 'KodiItemId': item['KodiItemId'], 'PresentationUniqueKey': item['PresentationUniqueKey'], 'Id': EmbyId, 'MediaSources': [MediaSource]})
-
             # Delete old multiversions
-            KodiIds = self.get_item_by_id(ItemReferenced['Id'], None)
+            KodiIds = self.get_item_by_id(EmbyId, EmbyType)
 
-            if KodiIds:
-                ItemReferenced.update({"KodiFileId": KodiIds[3], "KodiItemId": KodiIds[1], 'LibraryId': None})
+            if KodiIds: # Same content assigned to multiple libraries
+                ItemReferenced = item.copy()
+                ItemReferenced.update({'Id': EmbyId, 'MediaSources': [MediaSource], "KodiFileId": KodiIds[3], "KodiItemId": KodiIds[1], 'LibraryId': None})
 
                 # Remove old Kodi video-db references
                 if str(item['KodiItemId']) != str(ItemReferenced['KodiItemId']) and str(item['KodiFileId']) != str(ItemReferenced['KodiFileId']):
@@ -1324,6 +1325,9 @@ class EmbyDatabase:
                             SQLs['video'].delete_musicvideos(ItemReferenced['KodiItemId'], ItemReferenced['KodiFileId'], KodiIds[6]) # KodiIds[6] = KodiPathId
 
             # Add references
+            ItemReferenced = item.copy()
+            ItemReferenced.update({'Id': EmbyId, 'MediaSources': [MediaSource]})
+
             if EmbyType == "Episode":
                 self.add_reference_episode(ItemReferenced['Id'], ItemReferenced['LibraryId'], None, item['UserData']['IsFavorite'], None, None, ItemReferenced['PresentationUniqueKey'], MediaSource['Path'], None)
             elif EmbyType == "MusicVideo":
@@ -1341,13 +1345,20 @@ class EmbyDatabase:
                 SQLs["video"].add_movie_version(item['KodiItemId'], ItemReferenced['KodiFileId'], ItemReferenced['KodiPathId'], ItemReferenced['KodiFilename'], ItemReferenced['KodiDateCreated'], ItemReferenced['KodiPlayCount'], ItemReferenced['KodiLastPlayedDate'], ItemReferenced['KodiStackedFilename'], MediaSource['Name'], "movie", 0)
                 self.add_reference_movie_musicvideo(ItemReferenced['Id'], item['LibraryId'], ItemReferenced['Type'], item['KodiItemId'], item['UserData']['IsFavorite'], ItemReferenced['KodiFileId'], ItemReferenced['PresentationUniqueKey'], MediaSource['Path'], ItemReferenced['KodiPathId'])
 
-                if MediaSource['KodiStreams']['Video'] and MediaSource['KodiStreams']['Video'][0]['width'] and MediaSource['KodiStreams']['Video'][0]['width'] > MovieDefault[1]:
-                    MovieDefault = (True, MediaSource['KodiStreams']['Video'][0]['width'], ItemReferenced['KodiFileId'], ItemReferenced['KodiPathId'], ItemReferenced['KodiPath'])
+                # Change default movie version to highest resolution (width)
+                if utils.SyncHighestResolutionAsDefault:
+                    if MediaSource['KodiStreams']['Video'] and MediaSource['KodiStreams']['Video'][0]['width'] and MediaSource['KodiStreams']['Video'][0]['width'] > MovieDefault[1]:
+                        MovieDefault = (True, MediaSource['KodiStreams']['Video'][0]['width'], ItemReferenced['KodiFileId'], ItemReferenced['KodiPathId'], ItemReferenced['KodiPath'])
+
+                # Change default movie version to local content
+                if utils.SyncLocalOverPlugins:
+                    if not ItemReferenced['KodiPath'].startswith("plugin://") and MovieDefault[4].startswith("plugin://"):
+                        MovieDefault = (True, 0, ItemReferenced['KodiFileId'], ItemReferenced['KodiPathId'], ItemReferenced['KodiPath'])
             elif EmbyType == "Video":
                 self.add_reference_video(ItemReferenced['Id'], item['LibraryId'], None, item['UserData']['IsFavorite'], None, ItemReferenced['ParentId'], ItemReferenced['PresentationUniqueKey'], MediaSource['Path'], None, False)
 
-        # Change default movie version to highest resolution (width)
-        if utils.SyncHighestResolutionAsDefault and MovieDefault[0]:
+        # Update video version
+        if MovieDefault[0]:
             xbmc.log(f"EMBY.database.emby_db: Update default video version {item['Id']} / {item['KodiItemId']}", 0) # LOGDEBUG
             SQLs["video"].update_default_movieversion(item['KodiItemId'], MovieDefault[2], MovieDefault[3], MovieDefault[4])
 

@@ -56,6 +56,7 @@ class Playlist:
         Item['KodiItemId'] = f"{KodiItemIdVideo};{KodiItemIdAudio}"
         self.SQLs["emby"].add_reference_playlist(Item['Id'], Item['LibraryId'], Item['KodiItemId'], IsFavorite, ImageUrl)
         xbmc.log(f"EMBY.core.playlist: ADD/REPLACE [{Item['KodiItemId']}] {Item['Id']}", int(IncrementalSync)) # LOG
+        utils.reset_querycache("Playlist")
         return False
 
     def remove(self, Item, IncrementalSync):

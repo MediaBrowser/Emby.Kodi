@@ -3010,3 +3010,7 @@ msgstr ""
 msgctxt "#33714"
 msgid "Follow http timeout"
 msgstr ""
+
+msgctxt "#33715"
+msgid "Set local content as default"
+msgstr ""

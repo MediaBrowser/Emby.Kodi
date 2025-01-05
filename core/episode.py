@@ -31,6 +31,7 @@ class Episode:
         if not common.load_ExistingItem(Item, self.EmbyServer, self.SQLs["emby"], "Episode"):
             return False
 
+        common.swap_mediasources(Item)
         common.set_RunTimeTicks(Item)
         common.set_streams(Item)
         common.set_chapters(Item, self.EmbyServer.ServerData['ServerId'])

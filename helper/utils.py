@@ -78,6 +78,7 @@ enableContextRefreshOptions = True
 enableContextGotoOptions = True
 verifyFreeSpace = True
 SyncLiveTvOnEvents = False
+SelectDefaultVideoversion = False
 transcode_h264 = False
 transcode_hevc = False
 transcode_av1 = False
@@ -213,6 +214,7 @@ FolderPaging = 100000
 PersonPaging = 100000
 MaxURILength = 1500
 SyncHighestResolutionAsDefault = True
+SyncLocalOverPlugins = True
 AutoSelectHighestResolution = False
 NotifyEvents = False
 followhttp = False
@@ -870,6 +872,7 @@ def InitSettings():
     load_settings_bool('SyncLiveTvOnEvents')
     load_settings_bool('imdbrating')
     load_settings_bool('SyncHighestResolutionAsDefault')
+    load_settings_bool('SyncLocalOverPlugins')
     load_settings_bool('AutoSelectHighestResolution')
     load_settings_bool('NotifyEvents')
     load_settings_bool('followhttp')
@@ -1138,3 +1141,9 @@ for FolderDatabaseFilename in FolderDatabasefiles:
             if Version > DatabaseFiles['tv-version']:
                 DatabaseFiles['tv'] = translatePath(f"special://profile/Database/{FolderDatabaseFilename}")
                 DatabaseFiles['tv-version'] = Version
+
+# Load playback version selection
+Result = SendJson('{"jsonrpc":"2.0","method":"Settings.GetSettingValue","params":{"setting": "myvideos.selectdefaultversion"},"id":1}', True).get("result", {})
+
+if Result:
+    SelectDefaultVideoversion = Result.get("value", {})
