@@ -1,3 +1,14 @@
+11.1.17
+=============
+fix reset cache for playlists on updates
+add option to prefer local content over "plugin" links (default is on)
+fix minor multiversion sync issues
+fix special features for multiversion content assigned to multiple libraries
+support Kodi's player default version setting for episodes, musicvideos and videos
+fix edge case endless sync loop
+
+
+
 11.1.16
 =============
 fix music nodes

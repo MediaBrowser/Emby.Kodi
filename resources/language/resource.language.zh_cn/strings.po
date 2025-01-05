@@ -3010,3 +3010,7 @@ msgstr "外部http内容将直接访问，而不是通过Emby服务器传输。"
 msgctxt "#33714"
 msgid "Follow http timeout"
 msgstr "遵循http超时"
+
+msgctxt "#33715"
+msgid "Set local content as default"
+msgstr ""

@@ -3010,3 +3010,7 @@ msgstr "Externí http obsah bude přímo přístupný a nebude přenášen přes
 msgctxt "#33714"
 msgid "Follow http timeout"
 msgstr "Podle časového limitu http"
+
+msgctxt "#33715"
+msgid "Set local content as default"
+msgstr ""

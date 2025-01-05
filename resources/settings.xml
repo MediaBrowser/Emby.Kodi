@@ -123,6 +123,11 @@
                     <default>true</default>
                     <control type="toggle"/>
                 </setting>
+                <setting id="SyncLocalOverPlugins" label="33715" type="boolean" help="33691">
+                    <level>2</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                </setting>
                 <setting id="SyncFavorites" label="33564" type="boolean" help="33565">
                     <level>2</level>
                     <default>true</default>

@@ -570,7 +570,7 @@ class Views:
 
                         Data += '</node>'
                         utils.writeFileBinary(FilePath, Data.encode("utf-8"))
-            else:
+            else: # Dynamic root nodes
                 for NodeIndex, node in enumerate(DynamicNodes[view['ContentType']], 1):
                     if view['ContentType'] == "rootvideo":
                         NodePath = f"library://video/emby_dynamic_{node[0].lower()}_{node[3].lower()}_{self.EmbyServer.ServerData['ServerId']}.xml"

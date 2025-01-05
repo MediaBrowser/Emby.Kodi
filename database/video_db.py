@@ -740,9 +740,13 @@ class VideoDatabase:
         self.cursor.execute("SELECT idFile FROM videoversion WHERE idMedia = ? AND media_type = ?", (KodiItemId, KodiType))
         return self.cursor.fetchall()
 
-    def delete_videoversion(self, KodiFileId):
-        self.cursor.execute("DELETE FROM videoversion WHERE idFile = ?", (KodiFileId,))
-        self.cursor.execute("DELETE FROM files WHERE idFile = ?", (KodiFileId,))
+    def delete_videoversion(self, KodiItemId, KodiType):
+        self.cursor.execute("SELECT idFile FROM videoversion WHERE idMedia = ? AND media_type = ?", (KodiItemId, KodiType))
+        KodiFileIdsRef = self.cursor.fetchall()
+        self.cursor.execute("DELETE FROM videoversion WHERE idMedia = ? AND media_type = ?", (KodiItemId, KodiType))
+
+        for KodiFileIdRef in KodiFileIdsRef:
+            self.cursor.execute("DELETE FROM files WHERE idFile = ?", (KodiFileIdRef[0],))
 
     # people
     def add_person(self, PersonName, ArtUrl):

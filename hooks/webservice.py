@@ -16,12 +16,10 @@ BlankWAV = b'\x52\x49\x46\x46\x25\x00\x00\x00\x57\x41\x56\x45\x66\x6d\x74\x20\x1
 sendBlankWAV = ('HTTP/1.1 200 OK\r\nServer: Emby-Next-Gen\r\nConnection: close\r\nContent-length: 45\r\nContent-type: audio/wav\r\n\r\n'.encode(), BlankWAV) # used to "stop" playback by sending a WAV file with silence. File is valid, so Kodi will not raise an error message
 TrailerInitItem = ["", None] # payload/listitem of the trailer initiated content item
 Cancel = False
-ArtworkCache = [0, {}] # total cached size / {HTTP parameters, [binary data, item size]}
 Running = False
 Socket = None
 KeyBoard = xbmc.Keyboard()
 DelayedContent = {}
-ArtworkCacheLock = allocate_lock()
 DelayedContentLock = allocate_lock()
 EmbyIdCurrentlyPlaying = 0
 
@@ -604,47 +602,20 @@ def http_Query(client, Payload, isHEAD, isPictureQuery):
         return
 
     if QueryData['Type'] == 'picture':
-        ArtworkCacheLock.acquire()
+        xbmc.log(f"EMBY.hooks.webservice: Load artwork data into cache: {Payload}", 0) # LOGDEBUG
 
-        if Payload not in ArtworkCache[1]:
-            ArtworkCacheLock.release()
-            xbmc.log(f"EMBY.hooks.webservice: Load artwork data into cache: {Payload}", 0) # LOGDEBUG
+        if add_DelayedContent(QueryData, client):
+            return
 
-            if add_DelayedContent(QueryData, client):
-                return
+        xbmc.log(f"EMBY.hooks.webservice: Load artwork data from Emby: {Payload}", 0) # LOGDEBUG
 
-            xbmc.log(f"EMBY.hooks.webservice: Load artwork data from Emby: {Payload}", 0) # LOGDEBUG
-
-            # Remove items from artwork cache if mem is over 100MB
-            if ArtworkCache[0] > 100000000:
-                with ArtworkCacheLock:
-                    for PayloadId, ArtworkCacheData in list(ArtworkCache[1].items()):
-                        globals()['ArtworkCache'][0] -= ArtworkCacheData[2]
-                        del globals()['ArtworkCache'][1][PayloadId]
-                        xbmc.log(f"EMBY.hooks.webservice: Remove artwork data from cache: {Payload}", 0) # LOGDEBUG
-
-                        if ArtworkCache[0] < 100000000:
-                            break
-
-            if not QueryData['Overlay']:
-                BinaryData, ContentType, _ = utils.EmbyServers[QueryData['ServerId']].API.get_Image_Binary(QueryData['EmbyId'], QueryData['ImageType'], QueryData['ImageIndex'], QueryData['ImageTag'])
-            else:
-                BinaryData, ContentType = utils.image_overlay(QueryData['ImageTag'], QueryData['ServerId'], QueryData['EmbyId'], QueryData['ImageType'], QueryData['ImageIndex'], QueryData['Overlay'])
-
-            with ArtworkCacheLock:
-                ContentSize = len(BinaryData)
-                globals()["ArtworkCache"][0] += ContentSize
-                globals()["ArtworkCache"][1][Payload] = (f"HTTP/1.1 200 OK\r\nServer: Emby-Next-Gen\r\nConnection: close\r\nContent-Length: {ContentSize}\r\nContent-Type: {ContentType}\r\n\r\n".encode(), BinaryData, ContentSize)
-                del BinaryData
-
-            set_DelayedContent(QueryData['Payload'], ArtworkCache[1][Payload][0] + ArtworkCache[1][Payload][1])
-            xbmc.log(f"EMBY.hooks.webservice: Loaded Delayed Content for {Payload}", 0) # LOGDEBUG
+        if not QueryData['Overlay']:
+            BinaryData, ContentType, _ = utils.EmbyServers[QueryData['ServerId']].API.get_Image_Binary(QueryData['EmbyId'], QueryData['ImageType'], QueryData['ImageIndex'], QueryData['ImageTag'])
         else:
-            toSend = ArtworkCache[1][Payload][0] + ArtworkCache[1][Payload][1]
-            ArtworkCacheLock.release()
-            xbmc.log(f"EMBY.hooks.webservice: Load artwork data from cache: {Payload}", 0) # LOGDEBUG
-            client.send(toSend)
+            BinaryData, ContentType = utils.image_overlay(QueryData['ImageTag'], QueryData['ServerId'], QueryData['EmbyId'], QueryData['ImageType'], QueryData['ImageIndex'], QueryData['Overlay'])
 
+        set_DelayedContent(QueryData['Payload'], f"HTTP/1.1 200 OK\r\nServer: Emby-Next-Gen\r\nConnection: close\r\nContent-Length: {len(BinaryData)}\r\nContent-Type: {ContentType}\r\n\r\n".encode() + BinaryData)
+        xbmc.log(f"EMBY.hooks.webservice: Loaded Delayed Content for {Payload}", 0) # LOGDEBUG
         return
 
     if QueryData['Type'] == 'audio':
@@ -770,7 +741,9 @@ def http_Query(client, Payload, isHEAD, isPictureQuery):
         return
 
     # Autoselect mediasource by highest resolution
-    if utils.AutoSelectHighestResolution:
+    if utils.SelectDefaultVideoversion:
+        QueryData['SelectionIndexMediaSource'] = 0
+    elif utils.AutoSelectHighestResolution:
         HighestResolution = 0
         QueryData['SelectionIndexMediaSource'] = 0
 

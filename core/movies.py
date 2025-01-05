@@ -85,6 +85,7 @@ class Movies:
             utils.notify_event("content_add", {"EmbyId": f"{Item['Id']}", "KodiId": f"{Item['KodiItemId']}", "KodiType": "movie"}, IncrementalSync)
 
         common.update_boxsets(IncrementalSync, Item['ParentId'], Item['LibraryId'], self.SQLs, self.EmbyServer) # Update Boxset
+        self.SQLs["emby"].add_multiversion(Item, "Movie", self.EmbyServer.API, self.SQLs, self.EmbyServer.ServerData['ServerId'])
 
         if 'SpecialFeatureCount' in Item:
             if int(Item['SpecialFeatureCount']):
@@ -109,7 +110,6 @@ class Movies:
                     self.SQLs["emby"].add_streamdata(SF_Item['Id'], SF_Item['MediaSources'])
                     self.SQLs["emby"].add_reference_video(SF_Item['Id'], SF_Item['LibraryId'], SF_Item['KodiItemId'], SF_Item['UserData']['IsFavorite'], SF_Item['KodiFileId'], SF_Item['ParentId'], SF_Item['PresentationUniqueKey'], SF_Item['Path'], SF_Item['KodiPathId'], True)
 
-        self.SQLs["emby"].add_multiversion(Item, "Movie", self.EmbyServer.API, self.SQLs, self.EmbyServer.ServerData['ServerId'])
         utils.FavoriteQueue.put(((common.set_Favorites_Artwork_Overlay("Movie", "Movies", Item['Id'], self.EmbyServer.ServerData['ServerId'], Item['KodiArtwork']['favourite']), Item['UserData']['IsFavorite'], f"{Item['KodiPath']}{Item['KodiFilename']}", Item['Name'], "media", 0),))
         return not Item['UpdateItem']
 

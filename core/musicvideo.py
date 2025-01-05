@@ -23,6 +23,7 @@ class MusicVideo:
         if not common.load_ExistingItem(Item, self.EmbyServer, self.SQLs["emby"], "MusicVideo"):
             return False
 
+        common.swap_mediasources(Item)
         common.set_MusicVideoTracks(Item)
         common.set_RunTimeTicks(Item)
         common.set_streams(Item)

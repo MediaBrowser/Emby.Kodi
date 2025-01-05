@@ -265,7 +265,7 @@ def PlayerCommands():
                     VideoStreams = embydb.get_videostreams(EmbyId)
                     dbio.DBCloseRO(ServerId, "onAVStarted")
 
-                    if len(MediaSources) > 1 and not utils.RemoteMode:
+                    if len(MediaSources) > 1 and not utils.RemoteMode and not utils.SelectDefaultVideoversion:
                         if KodiType == "movie":
                             globals()["QueuedPlayingItem"][7] = "" # disable delete after watched option for multicontent
                         else:
