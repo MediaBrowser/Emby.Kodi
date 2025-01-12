@@ -923,9 +923,9 @@ def delete_ContentItemReferences(Item, SQLs, KodiType, isSpecial=False):
         SQLs["video"].common_db.delete_artwork(Item['KodiFileId'], "videoversion") # delete videoversions artwork
 
         if isSpecial:
-            SQLs["video"].delete_videoversion_by_KodiId_notKodiFileId_KodiType(Item['KodiItemId'], Item['KodiFileId'], KodiType) # delete videoversions
-        else:
             SQLs["video"].delete_videoversion(Item['KodiItemId'], KodiType)
+        else:
+            SQLs["video"].delete_videoversion_by_KodiId_notKodiFileId_KodiType(Item['KodiItemId'], Item['KodiFileId'], KodiType) # delete videoversions
 
         SQLs['emby'].remove_item_by_parentid(Item['Id'], "Video", Item['LibraryId']) # delete reference specials
 
