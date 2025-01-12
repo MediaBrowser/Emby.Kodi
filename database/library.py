@@ -374,15 +374,15 @@ class Library:
             UpdateItems, UpdateItemsCount = embydb.get_UpdateItem()
             RemoveItems = embydb.get_RemoveItem()
             dbio.DBCloseRO(self.EmbyServer.ServerData['ServerId'], WorkerName)
+            del embydb
 
-        # Rerun if removed items are added while waiting for updates
+        # Re-run if removed items are added while waiting for updates
         if RemoveItems:
             xbmc.log("EMBY.database.library: Worker update, removed items found, trigger removal", 0) # LOGDEBUG
             self.worker_remove(IncrementalSync)
 
+        # Process updates
         with LockLowPriorityWorkers:
-
-            del embydb
             xbmc.log(f"EMBY.database.library: -->[ worker update started ] queue size: {UpdateItemsCount}", 0) # LOGDEBUG
 
             if not UpdateItemsCount:
