@@ -193,8 +193,8 @@ class VideoDatabase:
         self.cursor.execute("DELETE FROM movielinktvshow WHERE idMovie = ?", (KodiItemId,))
         self.cursor.execute("DELETE FROM videoversion WHERE idFile = ?", (KodiFileId,))
 
-        if KodiPathId:
-            self.cursor.execute("DELETE FROM path WHERE idPath = ?", (KodiPathId,))
+#        if KodiPathId:
+#            self.cursor.execute("DELETE FROM path WHERE idPath = ?", (KodiPathId,))
 
     def get_movie_metadata_for_listitem(self, KodiItemId, PathAndFilename):
         self.cursor.execute("SELECT * FROM movie_view WHERE idMovie = ?", (KodiItemId,))
@@ -247,8 +247,8 @@ class VideoDatabase:
         self.cursor.execute("DELETE FROM musicvideo WHERE idMVideo = ?", (KodiItemId,))
         self.cursor.execute("DELETE FROM files WHERE idFile = ?", (KodiFileId,))
 
-        if KodiPathId:
-            self.cursor.execute("DELETE FROM path WHERE idPath = ?", (KodiPathId,))
+#        if KodiPathId:
+#            self.cursor.execute("DELETE FROM path WHERE idPath = ?", (KodiPathId,))
 
     def get_musicvideos_metadata_for_listitem(self, KodiItemId, PathAndFilename):
         self.cursor.execute("SELECT * FROM musicvideo_view WHERE idMVideo = ?", (KodiItemId,))

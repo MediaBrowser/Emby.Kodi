@@ -1,3 +1,9 @@
+11.1.20
+=============
+fix sync folder removal issue in native mode
+
+
+
 11.1.19
 =============
 fix multiversion update issue
