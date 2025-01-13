@@ -1318,11 +1318,20 @@ class EmbyDatabase:
 
                     if SQLs['video']: # video otherwise unsynced content e.g. specials
                         if EmbyType == "Episode":
-                            SQLs['video'].delete_episode(ItemReferenced['KodiItemId'], ItemReferenced['KodiFileId'], KodiIds[7]) # KodiIds[7] = KodiPathId
+                            if KodiIds[7] != item['KodiPathId']: # KodiIds[7] = KodiPathId
+                                SQLs['video'].delete_episode(ItemReferenced['KodiItemId'], ItemReferenced['KodiFileId'], KodiIds[7])
+                            else: # Do not delete path if default item path matches sub item path
+                                SQLs['video'].delete_episode(ItemReferenced['KodiItemId'], ItemReferenced['KodiFileId'], None)
                         elif EmbyType in ("Movie", "Video"):
-                            SQLs['video'].delete_movie(ItemReferenced['KodiItemId'], ItemReferenced['KodiFileId'], KodiIds[6]) # KodiIds[6] = KodiPathId
+                            if KodiIds[6] != item['KodiPathId']: # KodiIds[6] = KodiPathId
+                                SQLs['video'].delete_movie(ItemReferenced['KodiItemId'], ItemReferenced['KodiFileId'], KodiIds[6])
+                            else: # Do not delete path if default item path matches sub item path
+                                SQLs['video'].delete_movie(ItemReferenced['KodiItemId'], ItemReferenced['KodiFileId'], None)
                         elif EmbyType == "MusicVideo":
-                            SQLs['video'].delete_musicvideos(ItemReferenced['KodiItemId'], ItemReferenced['KodiFileId'], KodiIds[6]) # KodiIds[6] = KodiPathId
+                            if KodiIds[6] != item['KodiPathId']: # KodiIds[6] = KodiPathId
+                                SQLs['video'].delete_musicvideos(ItemReferenced['KodiItemId'], ItemReferenced['KodiFileId'], KodiIds[6])
+                            else: # Do not delete path if default item path matches sub item path
+                                SQLs['video'].delete_musicvideos(ItemReferenced['KodiItemId'], ItemReferenced['KodiFileId'], None)
 
             # Add references
             ItemReferenced = item.copy()

@@ -31,7 +31,7 @@ class Movies:
                     DelteItem = {'KodiFileId': Movieversion[1], 'KodiItemId': Movieversion[2], 'Id': Movieversion[0], 'KodiPathId': Movieversion[3], 'LibraryId': Item['LibraryId']}
                     self.remove(DelteItem, False)
 
-                Item['UpdateItem'] =  False
+                Item['UpdateItem'] = False
 
         common.set_trailer(Item, self.EmbyServer)
         common.set_RunTimeTicks(Item)
